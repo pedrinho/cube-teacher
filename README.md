@@ -1,5 +1,7 @@
 # Cube Teacher
 
+**Try it:** https://pedrinho.github.io/cube-teacher/
+
 A web app that teaches how to solve the Rubik's cube with the **layer method**
 ("método de camadas") as taught by Rafael Cinoto in
 [Montar Cubo Mágico com histórias](https://cinoto.com.br/cubomagico/metodo-de-camadas-com-historias/).
@@ -23,6 +25,9 @@ npm run dev      # start the app
 npm test         # run the tests (includes solving 2,000 random cubes)
 npm run build    # static build in dist/
 ```
+
+Every push to `main` runs the tests, builds the app and publishes it to GitHub Pages
+(`.github/workflows/deploy.yml`).
 
 ## How it's built
 
