@@ -7,14 +7,14 @@ export interface StepDef {
   id: number;
   /** Which layer of the cube the step completes (0 for the notation lesson). */
   layer: 0 | 1 | 2 | 3;
-  /** YouTube video for this step. */
-  videoId: string;
+  /** YouTube videos for this step (Cinoto's), in watching order. */
+  videos: string[];
   /** Whether the full lesson and the solver for this step are available yet. */
   ready: boolean;
 }
 
 export interface MethodDef {
-  id: string;
+  id: "layers" | "fridrich";
   steps: StepDef[];
   /** Credit for the method and its videos. */
   source: { author: string; title: string; url: string };
@@ -27,6 +27,8 @@ export interface Explain {
   piece?: Color[];
   /** Named colors used in the text, e.g. { front: "B" }. */
   colors?: Record<string, Color>;
+  /** Other values used in the text, e.g. { n: 7 }. */
+  values?: Record<string, string | number>;
 }
 
 export type SegmentKind =

@@ -99,6 +99,7 @@ export class CubeScene {
     private container: HTMLElement,
     colors: StickerColors,
     initial: CubeState,
+    options: { fromBelow?: boolean } = {},
   ) {
     this.shown = initial;
     this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -124,7 +125,7 @@ export class CubeScene {
     this.paint();
 
     // Front-right-top view: F on the left, R on the right, like the pictures.
-    const lat = (28 * Math.PI) / 180;
+    const lat = ((options.fromBelow ? -28 : 28) * Math.PI) / 180;
     const lon = (32 * Math.PI) / 180;
     const d = 11;
     this.camera.position.set(Math.sin(lon) * Math.cos(lat) * d, Math.sin(lat) * d, Math.cos(lon) * Math.cos(lat) * d);

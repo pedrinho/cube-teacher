@@ -7,7 +7,17 @@ import { NetEditor, blankNet } from "../components/NetEditor";
 import { SOLVED, applyAlg, randomScramble, type CubeState, type Move } from "../cube/model";
 import { validate, type ValidationError } from "../cube/validate";
 import { holdAs } from "../cube/orientation";
-import { solveLayers } from "../methods/layers/solver";
+import type { MethodInfo } from "../methods/registry";
+import type { LastLayer } from "../methods/fridrich/solver";
+
+const LAST_LAYER_KEY = "cube-teacher.lastLayer";
+function loadLastLayer(): LastLayer {
+  try {
+    return localStorage.getItem(LAST_LAYER_KEY) === "full" ? "full" : "twoLook";
+  } catch {
+    return "twoLook";
+  }
+}
 import type { Stage as SolveStage } from "../methods/types";
 
 export const PAINT_STORAGE_KEY = "cube-teacher.paint";
@@ -51,7 +61,7 @@ function ErrorList({ errors }: { errors: ValidationError[] }) {
   );
 }
 
-export function Solve() {
+export function Solve({ method }: { method: MethodInfo }) {
   const { t } = useI18n();
   const [mode, setMode] = useState<Mode>("paint");
   const [stage, setStage] = useState<Stage>({ kind: "input" });
@@ -59,6 +69,15 @@ export function Solve() {
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [scramble, setScramble] = useState<Move[]>(() => randomScramble());
   const [fixing, setFixing] = useState(false);
+  const [lastLayer, setLastLayer] = useState<LastLayer>(loadLastLayer);
+  const chooseLastLayer = (m: LastLayer) => {
+    setLastLayer(m);
+    try {
+      localStorage.setItem(LAST_LAYER_KEY, m);
+    } catch {
+      // Still used for this solve.
+    }
+  };
 
   useEffect(() => {
     try {
@@ -104,8 +123,8 @@ export function Solve() {
   if (stage.kind === "guide") {
     return (
       <>
-        <h1>{t("solve.title")}</h1>
-        <Guide stages={stage.stages} onDifferent={different} onAgain={startOver} />
+        <h1>{t(method.solveTitle)}</h1>
+        <Guide method={method} stages={stage.stages} onDifferent={different} onAgain={startOver} />
       </>
     );
   }
@@ -118,11 +137,24 @@ export function Solve() {
           <Cube3D state={stage.state} label={t("solve.reviewTitle")} />
           <div>
             <p className="lead">{t("solve.reviewText")}</p>
+            {method.lastLayerChoice && (
+              <div className="last-layer">
+                <span className="speed-label">{t("fr.lastLayer")}</span>
+                <div className="segmented" role="group" aria-label={t("fr.lastLayer")}>
+                  {(["twoLook", "full"] as const).map((m) => (
+                    <button key={m} type="button" aria-pressed={lastLayer === m} onClick={() => chooseLastLayer(m)}>
+                      {t(m === "twoLook" ? "fr.lastLayer.twoLook" : "fr.lastLayer.full")}
+                    </button>
+                  ))}
+                </div>
+                <p className="muted">{t(lastLayer === "twoLook" ? "fr.lastLayer.twoLookText" : "fr.lastLayer.fullText")}</p>
+              </div>
+            )}
             <div className="btn-row">
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => setStage({ kind: "guide", stages: solveLayers(stage.state) })}
+                onClick={() => setStage({ kind: "guide", stages: method.solve(stage.state, { lastLayer }) })}
               >
                 {t("solve.start")}
               </button>
@@ -141,8 +173,8 @@ export function Solve() {
 
   return (
     <>
-      <h1>{t("solve.title")}</h1>
-      <p className="lead">{t("solve.lead")}</p>
+      <h1>{t(method.solveTitle)}</h1>
+      <p className="lead">{t(method.solveLead)}</p>
       <div className="tabs" role="tablist">
         {(["paint", "scramble"] as const).map((m) => (
           <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)}>

@@ -43,7 +43,9 @@ export function Lesson({ step: id, focusCase }: { step: number; focusCase?: stri
 
       <section className="lesson-section">
         <h2>{t("lesson.video")}</h2>
-        <VideoEmbed videoId={step.videoId} title={name} />
+        {step.videos.map((v) => (
+          <VideoEmbed key={v} videoId={v} title={name} sourceUrl={layersMethod.source.url} />
+        ))}
       </section>
 
       <div className="btn-row lesson-end">

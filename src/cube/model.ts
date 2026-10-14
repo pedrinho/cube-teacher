@@ -92,7 +92,9 @@ function quarterTurn(axis: Vec, inLayer: (pos: Vec) => boolean): number[] {
 
 const compose = (first: number[], second: number[]) => second.map((i) => first[i]);
 
-export const BASE_MOVES = ["U", "D", "L", "R", "F", "B", "M", "E", "S", "x", "y", "z"] as const;
+// Outer faces, middle slices, whole-cube rotations, and wide moves (a face plus the slice next to it,
+// written in lowercase or as Rw).
+export const BASE_MOVES = ["U", "D", "L", "R", "F", "B", "M", "E", "S", "x", "y", "z", "u", "d", "l", "r", "f", "b"] as const;
 export type BaseMove = (typeof BASE_MOVES)[number];
 
 const LAYER: Record<BaseMove, [Vec, (p: Vec) => boolean]> = {
@@ -108,6 +110,12 @@ const LAYER: Record<BaseMove, [Vec, (p: Vec) => boolean]> = {
   x: [NORMAL.R, () => true],
   y: [NORMAL.U, () => true],
   z: [NORMAL.F, () => true],
+  u: [NORMAL.U, (p) => p[1] >= 0],
+  d: [NORMAL.D, (p) => p[1] <= 0],
+  r: [NORMAL.R, (p) => p[0] >= 0],
+  l: [NORMAL.L, (p) => p[0] <= 0],
+  f: [NORMAL.F, (p) => p[2] >= 0],
+  b: [NORMAL.B, (p) => p[2] <= 0],
 };
 
 /** The rotation axis of a move and which cubie positions it turns. */
@@ -137,19 +145,39 @@ export function moveToString(m: Move): string {
   return m.base + (m.amount === 1 ? "" : m.amount === 2 ? "2" : "'");
 }
 
+const MOVE_TOKEN = /([UDLRFBMESxyzudlrfb])(w?)(2'|'2|2|')?/y;
+
+/** Reads one move token. Accepts R, R', R2, R2' (a half turn), Rw (= r) and typographic primes. */
 export function parseMove(token: string): Move {
-  const match = /^([UDLRFBMESxyz])(2|'|2')?$/.exec(token.trim());
-  if (!match) throw new Error(`Unknown move: ${token}`);
-  const suffix = match[2] ?? "";
-  const amount: Amount = suffix === "" ? 1 : suffix === "'" ? 3 : 2;
-  return { base: match[1] as BaseMove, amount };
+  const moves = parseAlg(token);
+  if (moves.length !== 1) throw new Error(`Unknown move: ${token}`);
+  return moves[0];
 }
 
+/**
+ * Reads an algorithm in common notation, with or without spaces between moves ("RUR'U'" works too)
+ * and with the typographic primes (‘ ’ ′) found in printed guides.
+ */
 export function parseAlg(alg: string): Move[] {
-  return alg
-    .split(/\s+/)
-    .filter((t) => t.length > 0)
-    .map(parseMove);
+  const text = alg.replace(/[‘’′`´]/g, "'").replace(/[()]/g, " ");
+  const moves: Move[] = [];
+  let i = 0;
+  while (i < text.length) {
+    if (/\s/.test(text[i])) {
+      i++;
+      continue;
+    }
+    MOVE_TOKEN.lastIndex = i;
+    const match = MOVE_TOKEN.exec(text);
+    if (!match) throw new Error(`Unknown move at "${text.slice(i)}"`);
+    const [, letter, wide, suffix = ""] = match;
+    if (wide && !"UDLRFB".includes(letter)) throw new Error(`Unknown move: ${match[0]}`);
+    const base = (wide ? letter.toLowerCase() : letter) as BaseMove;
+    const amount: Amount = suffix === "" ? 1 : suffix === "'" ? 3 : 2;
+    moves.push({ base, amount });
+    i += match[0].length;
+  }
+  return moves;
 }
 
 export const algToString = (moves: readonly Move[]) => moves.map(moveToString).join(" ");
