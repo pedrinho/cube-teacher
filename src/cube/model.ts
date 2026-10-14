@@ -157,6 +157,9 @@ export const algToString = (moves: readonly Move[]) => moves.map(moveToString).j
 export const invertMove = (m: Move): Move => ({ base: m.base, amount: (4 - m.amount) as Amount });
 export const invertAlg = (moves: readonly Move[]) => [...moves].reverse().map(invertMove);
 
+/** Sticker permutation of a move: perm[newIndex] = oldIndex. */
+export const movePerm = (m: Move): readonly number[] => PERMS.get(`${m.base}${m.amount}`)!;
+
 export function applyMove(state: CubeState, m: Move): CubeState {
   const perm = PERMS.get(`${m.base}${m.amount}`)!;
   let out = "";

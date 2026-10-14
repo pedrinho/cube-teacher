@@ -1,0 +1,22 @@
+// The layer method solver: one stage per step, each made of segments the kid follows.
+import type { CubeState } from "../../cube/model";
+import type { Stage } from "../types";
+import type { Recorder } from "./recorder";
+import { solveCross } from "./step1-cross";
+import { solveFirstLayer } from "./step2-corners";
+
+const STEPS: ((state: CubeState) => Recorder)[] = [solveCross, solveFirstLayer];
+
+/** Number of steps the solver can do so far. */
+export const SOLVER_STEPS = STEPS.length;
+
+export function solveLayers(state: CubeState, upToStep = SOLVER_STEPS): Stage[] {
+  const stages: Stage[] = [];
+  let current = state;
+  for (let i = 0; i < Math.min(upToStep, STEPS.length); i++) {
+    const rec = STEPS[i](current);
+    stages.push({ step: i + 1, segments: rec.segments });
+    current = rec.state;
+  }
+  return stages;
+}

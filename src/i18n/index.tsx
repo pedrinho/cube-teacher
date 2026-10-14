@@ -71,3 +71,14 @@ export function useI18n(): I18n {
 
 /** Message key for a step's name or goal (steps 0–7). */
 export const stepKey = (id: number, field: "name" | "goal") => `step.${id}.${field}` as MessageKey;
+
+/** Text for a solver instruction: {piece} becomes the piece's colors ("white-blue"). */
+export function explainText(
+  t: I18n["t"],
+  explain: { key: MessageKey; piece?: string[]; colors?: Record<string, string> },
+): string {
+  const params: Record<string, string> = {};
+  if (explain.piece) params.piece = explain.piece.map((c) => t(`color.${c}` as MessageKey)).join("-");
+  for (const [name, color] of Object.entries(explain.colors ?? {})) params[name] = t(`color.${color}` as MessageKey);
+  return t(explain.key, params);
+}

@@ -1,16 +1,24 @@
 import { useEffect, useState } from "react";
 import { useI18n } from "../i18n";
 import { Cube3D } from "../components/Cube3D";
+import { Guide } from "../components/Guide";
 import { Moves } from "../components/Moves";
 import { NetEditor, blankNet } from "../components/NetEditor";
 import { SOLVED, applyAlg, randomScramble, type CubeState, type Move } from "../cube/model";
 import { validate, type ValidationError } from "../cube/validate";
+import { holdAs } from "../cube/orientation";
+import { solveLayers } from "../methods/layers/solver";
+import type { Stage as SolveStage } from "../methods/types";
 
-const STORAGE_KEY = "cube-teacher.paint";
+export const PAINT_STORAGE_KEY = "cube-teacher.paint";
+const STORAGE_KEY = PAINT_STORAGE_KEY;
 const IMPOSSIBLE = new Set(["flipped-edge", "twisted-corner", "swapped-pieces"]);
 
 type Mode = "paint" | "scramble";
-type Stage = { kind: "input" } | { kind: "review"; state: CubeState };
+type Stage =
+  | { kind: "input" }
+  | { kind: "review"; state: CubeState }
+  | { kind: "guide"; stages: SolveStage[] };
 
 function loadPaint(): CubeState {
   try {
@@ -50,6 +58,7 @@ export function Solve() {
   const [paint, setPaint] = useState<CubeState>(loadPaint);
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [scramble, setScramble] = useState<Move[]>(() => randomScramble());
+  const [fixing, setFixing] = useState(false);
 
   useEffect(() => {
     try {
@@ -68,6 +77,7 @@ export function Solve() {
       return;
     }
     setErrors([]);
+    setFixing(false);
     setStage({ kind: "review", state: paint });
   };
 
@@ -79,8 +89,26 @@ export function Solve() {
     if (mode === "paint") setPaint(blankNet());
     else setScramble(randomScramble());
     setErrors([]);
+    setFixing(false);
     setStage({ kind: "input" });
   };
+
+  const different = (expected: CubeState) => {
+    setPaint(holdAs(expected, "W", "G"));
+    setMode("paint");
+    setFixing(true);
+    setErrors([]);
+    setStage({ kind: "input" });
+  };
+
+  if (stage.kind === "guide") {
+    return (
+      <>
+        <h1>{t("solve.title")}</h1>
+        <Guide stages={stage.stages} onDifferent={different} onAgain={startOver} />
+      </>
+    );
+  }
 
   if (stage.kind === "review") {
     return (
@@ -91,6 +119,13 @@ export function Solve() {
           <div>
             <p className="lead">{t("solve.reviewText")}</p>
             <div className="btn-row">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setStage({ kind: "guide", stages: solveLayers(stage.state) })}
+              >
+                {t("solve.start")}
+              </button>
               <button type="button" className="btn" onClick={() => setStage({ kind: "input" })}>
                 {t(mode === "paint" ? "solve.edit" : "solve.backToScramble")}
               </button>
@@ -98,7 +133,6 @@ export function Solve() {
                 {t("solve.startOver")}
               </button>
             </div>
-            <p className="notice">{t("solve.soon")}</p>
           </div>
         </div>
       </>
@@ -119,7 +153,7 @@ export function Solve() {
 
       {mode === "paint" ? (
         <section role="tabpanel">
-          <p>{t("solve.paintHint")}</p>
+          {fixing ? <p className="notice">{t("solve.fixHint")}</p> : <p>{t("solve.paintHint")}</p>}
           <NetEditor value={paint} onChange={setPaint} marked={marked} />
           {errors.length > 0 && <ErrorList errors={errors} />}
           <div className="btn-row solve-actions">

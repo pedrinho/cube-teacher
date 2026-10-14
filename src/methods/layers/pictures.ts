@@ -1,9 +1,10 @@
 // Pictures of what the cube looks like after each step, like the step icons in Cinoto's guide:
-// pieces that are not solved yet are gray.
+// pieces that are not solved yet are gray. Masks follow the pieces' colors, so they stay right
+// while the cube turns.
 import { SOLVED, applyAlg, type CubeState } from "../../cube/model";
 import { PIECE_OF, pieceColors } from "../../cube/pieces";
 
-type Visible = (stickerIndex: number) => boolean;
+export type Visible = (stickerIndex: number, state: CubeState) => boolean;
 
 export interface StepPicture {
   state: CubeState;
@@ -11,39 +12,32 @@ export interface StepPicture {
 }
 
 /** White on top (as in step 1), and yellow on top, blue in front (as in steps 2–7). */
-const WHITE_UP = SOLVED;
-const YELLOW_UP = applyAlg(SOLVED, "x2");
-
-function rule(state: CubeState, keep: (colors: string[], own: string) => boolean): StepPicture {
-  return {
-    state,
-    visible: (i) => PIECE_OF[i].length === 1 || keep(pieceColors(state, i), state[i]),
-  };
-}
+export const WHITE_UP = SOLVED;
+export const YELLOW_UP = applyAlg(SOLVED, "x2");
 
 const isEdge = (c: string[]) => c.length === 2;
 const isCorner = (c: string[]) => c.length === 3;
-const has = (c: string[], color: string) => c.includes(color);
-const firstLayer = (c: string[]) => has(c, "W");
-const secondLayer = (c: string[]) => isEdge(c) && !has(c, "W") && !has(c, "Y");
+const firstLayer = (c: string[]) => c.includes("W");
+const secondLayer = (c: string[]) => isEdge(c) && !c.includes("W") && !c.includes("Y");
+
+/** Which pieces are drawn in color once each step is done (own = the sticker's own color). */
+const DONE: Record<number, (colors: string[], own: string) => boolean> = {
+  0: () => true,
+  1: (c) => isEdge(c) && c.includes("W"),
+  2: firstLayer,
+  3: (c) => firstLayer(c) || secondLayer(c),
+  4: (c, own) => firstLayer(c) || secondLayer(c) || (isEdge(c) && own === "Y"),
+  5: (c, own) => firstLayer(c) || secondLayer(c) || own === "Y",
+  6: (c, own) => firstLayer(c) || secondLayer(c) || own === "Y" || isCorner(c),
+  7: () => true,
+};
+
+/** Colors the pieces that are done after `step`; centers always show. */
+export function stepMask(step: number): Visible {
+  const keep = DONE[step] ?? DONE[7];
+  return (i, state) => PIECE_OF[i].length === 1 || keep(pieceColors(state, i), state[i]);
+}
 
 export function stepPicture(step: number): StepPicture {
-  switch (step) {
-    case 0:
-      return { state: YELLOW_UP, visible: () => true };
-    case 1:
-      return rule(WHITE_UP, (c) => isEdge(c) && has(c, "W"));
-    case 2:
-      return rule(YELLOW_UP, firstLayer);
-    case 3:
-      return rule(YELLOW_UP, (c) => firstLayer(c) || secondLayer(c));
-    case 4:
-      return rule(YELLOW_UP, (c, own) => firstLayer(c) || secondLayer(c) || (isEdge(c) && own === "Y"));
-    case 5:
-      return rule(YELLOW_UP, (c, own) => firstLayer(c) || secondLayer(c) || own === "Y");
-    case 6:
-      return rule(YELLOW_UP, (c, own) => firstLayer(c) || secondLayer(c) || own === "Y" || isCorner(c));
-    default:
-      return { state: YELLOW_UP, visible: () => true };
-  }
+  return { state: step === 1 ? WHITE_UP : YELLOW_UP, visible: stepMask(step) };
 }
