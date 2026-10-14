@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SOLVED, algToString, applyAlg, centers, isRotation, parseAlg, randomScramble } from "../../cube/model";
+import { SOLVED, algToString, applyAlg, centers, isRotation, isSolved, parseAlg, randomScramble } from "../../cube/model";
 import { ALGS } from "./algs";
 import { STEP_GOALS } from "./goals";
 import { SOLVER_STEPS, solveLayers } from "./solver";
@@ -9,7 +9,7 @@ const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const DOCUMENTED = new Set<string>(Object.values(ALGS));
 
 describe("layer solver", () => {
-  it("solves 2,000 random cubes step by step, as far as the solver goes", () => {
+  it("solves 2,000 random cubes step by step", () => {
     const moves: number[][] = Array.from({ length: SOLVER_STEPS }, () => []);
     for (let n = 0; n < 2000; n++) {
       const scrambled = applyAlg(SOLVED, randomScramble(25, random));
@@ -27,11 +27,16 @@ describe("layer solver", () => {
         }
         // This step's goal holds, and so do the earlier ones.
         for (let s = 1; s <= stage.step; s++) expect(STEP_GOALS[s](state)).toBe(true);
+        if (stage.step === 7) expect(isSolved(state)).toBe(true);
         moves[i].push(stage.segments.filter((g) => g.kind !== "rotate").reduce((k, g) => k + g.moves.length, 0));
       });
     }
     const stats = moves.map((m, i) => `step ${i + 1}: avg ${(m.reduce((a, b) => a + b, 0) / m.length).toFixed(1)}, max ${Math.max(...m)}`);
     console.info(stats.join(" | "));
+  }, 60_000);
+
+  it("always solves all seven steps", () => {
+    expect(SOLVER_STEPS).toBe(7);
   });
 
   it("holds the cube white on top for the cross and yellow on top afterwards", () => {

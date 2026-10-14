@@ -72,7 +72,7 @@ export function TopView({ state, visible, arrows, label, className }: Props) {
       aria-hidden={label ? undefined : true}
     >
       <defs>
-        <marker id="tv-head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+        <marker id="tv-head" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--ink)" />
         </marker>
       </defs>
@@ -96,7 +96,7 @@ export function TopView({ state, visible, arrows, label, className }: Props) {
             key={k}
             {...a}
             stroke="var(--ink)"
-            strokeWidth={0.09}
+            strokeWidth={0.13}
             strokeLinecap="round"
             markerEnd="url(#tv-head)"
           />

@@ -14,6 +14,8 @@ import {
   topCornersDone,
 } from "../../methods/layers/goals";
 import { headlights } from "../../methods/layers/step6-corners";
+import { isSolved, EDGE_SLOTS } from "../../cube/model";
+import { homeOf } from "../../cube/pieces";
 import { CORNER_SLOTS } from "../../cube/model";
 import { LESSONS, demoMoves } from "./lessons";
 
@@ -122,6 +124,28 @@ describe("lesson 6 cases", () => {
   it.each(["6.1", "6.2"])("%s: the demo puts the top corners in place", (id) => {
     const c = byId(6, id);
     expect(topCornersDone(applyAlg(c.setup, demoMoves(c)))).toBe(true);
+  });
+});
+
+describe("lesson 7 cases", () => {
+  // Where each top edge has to go, as "from>to" slot names.
+  const moves = (id: string) => {
+    const s = byId(7, id).setup;
+    return EDGE_SLOTS.filter((e) => e.faces[0] === "U")
+      .map((e) => [e.name, homeOf(s, e.stickers.map((i) => s[i]) as Color[]).name])
+      .filter(([a, b]) => a !== b)
+      .map(([a, b]) => `${a}>${b}`)
+      .sort();
+  };
+  it("7.1: back finished, edges go round clockwise (front to left)", () =>
+    expect(moves("7.1")).toEqual(["UF>UL", "UL>UR", "UR>UF"]));
+  it("7.2: back finished, edges go round counterclockwise (front to right)", () =>
+    expect(moves("7.2")).toEqual(["UF>UR", "UL>UF", "UR>UL"]));
+  it("7.3: opposite edges swap", () => expect(moves("7.3")).toEqual(["UB>UF", "UF>UB", "UL>UR", "UR>UL"]));
+  it("7.4: neighboring edges swap", () => expect(moves("7.4")).toEqual(["UB>UR", "UF>UL", "UL>UF", "UR>UB"]));
+  it.each(["7.1", "7.2", "7.3", "7.4"])("%s: the demo solves the cube", (id) => {
+    const c = byId(7, id);
+    expect(isSolved(applyAlg(c.setup, demoMoves(c)))).toBe(true);
   });
 });
 

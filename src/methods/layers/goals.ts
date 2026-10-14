@@ -1,5 +1,5 @@
 // What "done" means after each step, for the solver's checks and the tests.
-import { EDGE_SLOTS, centers, type Color, type CubeState } from "../../cube/model";
+import { EDGE_SLOTS, centers, isSolved, type Color, type CubeState } from "../../cube/model";
 import { isSolvedPiece } from "../../cube/pieces";
 
 export const SIDE_COLORS: Color[] = ["G", "R", "B", "O"];
@@ -23,6 +23,7 @@ export const yellowFaceDone = (s: CubeState) =>
 /** Yellow corners, as yellow plus two neighboring side colors. */
 export const YELLOW_CORNERS: Color[][] = SIDE_COLORS.map((c, i) => ["Y", c, SIDE_COLORS[(i + 1) % 4]]);
 export const topCornersDone = (s: CubeState) => yellowFaceDone(s) && YELLOW_CORNERS.every((p) => isSolvedPiece(s, p));
+export const YELLOW_EDGES: Color[][] = SIDE_COLORS.map((c) => ["Y", c]);
 
 /** Goal of each step, by step number. */
 export const STEP_GOALS: Record<number, (s: CubeState) => boolean> = {
@@ -32,4 +33,5 @@ export const STEP_GOALS: Record<number, (s: CubeState) => boolean> = {
   4: yellowCrossDone,
   5: yellowFaceDone,
   6: topCornersDone,
+  7: isSolved,
 };

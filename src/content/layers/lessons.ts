@@ -8,6 +8,7 @@ import { solveSecondLayer } from "../../methods/layers/step3-edges";
 import { solveYellowCross } from "../../methods/layers/step4-cross";
 import { solveYellowFace } from "../../methods/layers/step5-face";
 import { solveTopCorners } from "../../methods/layers/step6-corners";
+import { solveMinerva } from "../../methods/layers/step7-minerva";
 
 export interface LessonCase {
   /** Also the anchor id on the lesson page, e.g. "2.1". */
@@ -94,6 +95,11 @@ const CORNERS = "R' F R' B2 R F' R' B2 R2";
 // swapped across the top so no side has headlights (case 2; two edges swapped too, as a real cube needs).
 const HEADLIGHTS = undo(YELLOW_UP, `${CORNERS} U2`);
 const DIAGONAL = swapEdges(swapCorners(YELLOW_UP, "UFR", "UBL"), "UF", "UB");
+const MINERVA_CW = "F2 U M' U2 M U F2";
+const MINERVA_CCW = "F2 U' M' U2 M U' F2";
+// No side finished: edges swap with the opposite ones (case 3) or with neighbors (case 4).
+const OPPOSITE = swapEdges(swapEdges(YELLOW_UP, "UF", "UB"), "UL", "UR");
+const NEIGHBORS = swapEdges(swapEdges(YELLOW_UP, "UF", "UL"), "UB", "UR");
 const SWAPPED = swapEdges(swapEdges(YELLOW_UP, "FR", "FL"), "UF", "UB");
 
 export const LESSONS: Record<number, Lesson> = {
@@ -241,5 +247,20 @@ export const LESSONS: Record<number, Lesson> = {
     tips: ["l6.tip1", "l6.tip2"],
     mask: stepMask(6),
     view: "top",
+  },
+  7: {
+    step: 7,
+    paragraphs: ["l7.p1", "l7.p2", "l7.p3"],
+    casesLead: "l7.casesLead",
+    cases: [
+      { id: "7.1", title: "l7.1.title", text: "l7.1.text", alg: MINERVA_CW, setup: undo(YELLOW_UP, MINERVA_CW) },
+      { id: "7.2", title: "l7.2.title", text: "l7.2.text", alg: MINERVA_CCW, setup: undo(YELLOW_UP, MINERVA_CCW) },
+      { id: "7.3", title: "l7.3.title", text: "l7.3.text", alg: MINERVA_CW, demo: solverMoves(solveMinerva, OPPOSITE), setup: OPPOSITE },
+      { id: "7.4", title: "l7.4.title", text: "l7.4.text", alg: MINERVA_CW, demo: solverMoves(solveMinerva, NEIGHBORS), setup: NEIGHBORS },
+    ],
+    tips: ["l7.tip1", "l7.tip2"],
+    mask: stepMask(7),
+    view: "top",
+    arrows: true,
   },
 };

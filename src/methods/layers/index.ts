@@ -16,6 +16,6 @@ export const layersMethod: MethodDef = {
     { id: 4, layer: 3, videoId: "toj3ktQOOo8", ready: true },
     { id: 5, layer: 3, videoId: "jAIBruUkx_A", ready: true },
     { id: 6, layer: 3, videoId: "XoZatPVeUUc", ready: true },
-    { id: 7, layer: 3, videoId: "DG_OLDDZ7E4", ready: false },
+    { id: 7, layer: 3, videoId: "DG_OLDDZ7E4", ready: true },
   ],
 };

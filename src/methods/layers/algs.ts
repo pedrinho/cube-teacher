@@ -24,6 +24,12 @@ export const ALGS = {
   // Step 6: top corners to their places, then turn the top to line them up.
   "6.1": "R' F R' B2 R F' R' B2 R2", // headlights (two corners with the same side color) at the back
   "6.2": "R' F R' B2 R F' R' B2 R2", // no headlights: becomes case 1
+
+  // Step 7 (Minerva): top edges, with the finished side at the back.
+  "7.1": "F2 U M' U2 M U F2", // the other three edges go round clockwise (front edge to the left)
+  "7.2": "F2 U' M' U2 M U' F2", // counterclockwise (front edge to the right)
+  "7.3": "F2 U M' U2 M U F2", // opposite edges swap: case 1 from anywhere, becomes case 1
+  "7.4": "F2 U M' U2 M U F2", // neighboring edges swap: case 1 from anywhere, becomes case 1 or 2
 } as const;
 
 export type CaseId = keyof typeof ALGS;

@@ -87,7 +87,13 @@ export function StepLesson({ lesson, focusCase }: { lesson: Lesson; focusCase?: 
             {lesson.cases.map((c) => (
               <li key={c.id} id={`case-${c.id}`} className="case" data-active={active === c.id || undefined}>
                 {lesson.view === "top" ? (
-                  <TopView state={c.setup} visible={lesson.mask} arrows={lesson.arrows} className="case-cube" label={t(c.title)} />
+                  <TopView
+                    state={c.setup}
+                    visible={lesson.mask}
+                    arrows={lesson.arrows}
+                    className="case-cube case-top"
+                    label={t(c.title)}
+                  />
                 ) : (
                   <CubeSvg state={c.setup} visible={lesson.mask} className="case-cube" label={t(c.title)} />
                 )}

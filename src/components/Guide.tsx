@@ -69,7 +69,8 @@ export function Guide({ stages, practiceStep, onDifferent, onAgain }: Props) {
     } else if (pos.seg + 1 < stage.segments.length) {
       go({ ...pos, seg: pos.seg + 1, move: 0 }, "moves");
     } else {
-      go(pos, stage.step === practiceStep ? "end" : "stageDone");
+      const last = pos.stage + 1 >= stages.length;
+      go(pos, stage.step === practiceStep || last ? "end" : "stageDone");
     }
   }, [stages, practiceStep, go]);
 
@@ -206,10 +207,8 @@ export function Guide({ stages, practiceStep, onDifferent, onAgain }: Props) {
   } else {
     text = (
       <>
-        <h2>{practiceStep ? t("practice.wellDone") : t(`guide.end.${stage.step}.title` as "guide.end.3.title")}</h2>
-        <p className="guide-text">
-          {practiceStep ? t("practice.wellDoneText") : t(`guide.end.${stage.step}.text` as "guide.end.3.text")}
-        </p>
+        <h2>{practiceStep ? t("practice.wellDone") : t("guide.solved")}</h2>
+        <p className="guide-text">{practiceStep ? t("practice.wellDoneText") : t("guide.solvedText")}</p>
       </>
     );
     controls = (
