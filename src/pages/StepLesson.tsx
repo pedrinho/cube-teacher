@@ -4,7 +4,9 @@ import { useI18n } from "../i18n";
 import { CubeSvg } from "../components/CubeSvg";
 import { Cube3D, type Cube3DHandle } from "../components/Cube3D";
 import { Moves } from "../components/Moves";
-import type { Lesson, LessonCase } from "../content/layers/lessons";
+import { SpeedControl } from "../components/SpeedControl";
+import { isRotation, parseAlg, type Move } from "../cube/model";
+import { demoMoves, type Lesson, type LessonCase } from "../content/layers/lessons";
 
 const START_DELAY_MS = 700;
 
@@ -14,12 +16,27 @@ export function StepLesson({ lesson, focusCase }: { lesson: Lesson; focusCase?: 
   const demo = useRef<HTMLDivElement>(null);
   const timer = useRef<number | undefined>(undefined);
   const [active, setActive] = useState<string | null>(null);
+  // The demo's moves (without whole-cube turns) and which one is playing.
+  const [strip, setStrip] = useState<{ moves: Move[]; current: number; turning: boolean } | null>(null);
 
   const show = (c: LessonCase) => {
     setActive(c.id);
     cube.current?.show(c.setup);
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => cube.current?.play(`${c.alg} ${c.then ?? ""}`.trim()), START_DELAY_MS);
+    const moves = parseAlg(demoMoves(c));
+    // For every demo move, the index of its chip in the strip (rotations have no chip).
+    const chip = moves.map((_, i) => moves.slice(0, i).filter((m) => !isRotation(m)).length);
+    const shown = moves.filter((m) => !isRotation(m));
+    setStrip({ moves: shown, current: -1, turning: false });
+    timer.current = window.setTimeout(
+      () =>
+        cube.current
+          ?.play(moves, {
+            onStep: (i) => setStrip({ moves: shown, current: chip[i], turning: isRotation(moves[i]) }),
+          })
+          .then(() => setStrip((s) => (s && s.moves === shown ? { ...s, current: shown.length, turning: false } : s))),
+      START_DELAY_MS,
+    );
     const box = demo.current?.getBoundingClientRect();
     if (box && (box.top < 0 || box.bottom > window.innerHeight)) demo.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
@@ -55,7 +72,15 @@ export function StepLesson({ lesson, focusCase }: { lesson: Lesson; focusCase?: 
         <div className="cases">
           <div className="cases-demo" ref={demo}>
             <Cube3D ref={cube} state={lesson.cases[0].setup} visible={lesson.mask} label={t("lesson.cases")} />
-            <p className="muted">{t("lesson.demo")}</p>
+            {strip ? (
+              <div className="demo-strip" aria-live="polite">
+                <Moves alg={strip.moves} current={strip.current} small />
+                {strip.turning && <p className="muted">{t("lesson.turning")}</p>}
+              </div>
+            ) : (
+              <p className="muted">{t("lesson.demo")}</p>
+            )}
+            <SpeedControl />
           </div>
           <ol className="case-list">
             {lesson.cases.map((c) => (
@@ -65,10 +90,10 @@ export function StepLesson({ lesson, focusCase }: { lesson: Lesson; focusCase?: 
                   <h3>{t(c.title)}</h3>
                   <p>{t(c.text)}</p>
                   <Moves alg={c.alg} small />
-                  {c.id === "2.3" && c.then && (
+                  {c.follow && (
                     <>
-                      <p className="case-then">{t("lesson.thenCase1")}</p>
-                      <Moves alg={c.then} small />
+                      <p className="case-then">{t(c.follow.label)}</p>
+                      <Moves alg={c.follow.alg} small />
                     </>
                   )}
                   <button type="button" className="btn case-show" onClick={() => show(c)}>

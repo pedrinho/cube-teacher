@@ -12,6 +12,12 @@ export const en = {
   "color.R": "red",
   "color.O": "orange",
 
+  "speed.label": "Speed",
+  "speed.slow": "Slow",
+  "speed.normal": "Normal",
+  "speed.fast": "Fast",
+  "lesson.turning": "Turning the whole cube…",
+
   "home.title": "Solve the cube, one layer at a time",
   "home.lead":
     "Seven steps, each with Rafael Cinoto's video, pictures of every case and the exact moves. When you get stuck, show the app your cube and follow along.",
@@ -135,9 +141,12 @@ export const en = {
   "guide.stepDone": "Step {n} done!",
   "guide.stepDone.1": "The white cross is ready.",
   "guide.stepDone.2": "The whole first layer is ready. Look at the sides: each one has a row of its own color.",
+  "guide.stepDone.3": "The middle layer is ready. Two layers done: two thirds of the cube!",
   "guide.nextStep": "Next: {name}",
-  "guide.layerDone": "First layer done!",
-  "guide.layerDoneText": "The second layer comes in the next version of the app. Until then, practice the first layer until it feels easy.",
+  "guide.end.2.title": "First layer done!",
+  "guide.end.2.text": "Great work. Keep going with the next steps when you're ready.",
+  "guide.end.3.title": "Two layers done!",
+  "guide.end.3.text": "The third layer comes in the next version of the app. Until then, practice the first two layers until they feel easy.",
   "guide.again": "Solve another cube",
   "guide.soon": "soon",
   "guide.progress": "Steps",
@@ -155,6 +164,32 @@ export const en = {
   "practice.wellDoneText": "Practice a few more times. When it feels easy, try it a little faster.",
   "practice.again": "Practice again",
   "practice.pick": "Pick a step",
+
+  "lesson.thenStep2Case2": "Then case 2 of step 2:",
+  "lesson.thenTurnStep2Case1": "Then turn the cube (left face to the front) and do case 1 of step 2:",
+
+  "l3.p1": "Keep the white layer at the bottom and yellow on top. Now fill in the four edges of the middle layer: the edges that have no yellow.",
+  "l3.p2":
+    "Find an edge on top without yellow. Turn the whole cube so the color on its side faces you, then turn the top until that sticker is right above the center of the same color. It looks like an upside-down T.",
+  "l3.p3":
+    "Now look at the edge's top color. If it matches the center on the right, the edge goes to the right: case 1. If it matches the center on the left, it goes to the left: case 2.",
+  "l3.p4":
+    "Each case has two parts. The first moves put the edge in its place and take a white corner out. Then you put the corner back with a step 2 case, which you already know.",
+  "l3.casesLead": "In cases 1 and 2 the edge is at the front of the top layer, with its side sticker above its center.",
+  "l3.1.title": "Case 1: the edge goes to the right",
+  "l3.1.text":
+    "U R U R' U' puts the edge in and brings a white corner up, right above its place with white facing you. Put it back with case 2 of step 2.",
+  "l3.2.title": "Case 2: the edge goes to the left",
+  "l3.2.text":
+    "The mirror of case 1: U' L' U' L U. The white corner comes up at the front left, so turn the cube to bring it to the front right, then use case 1 of step 2.",
+  "l3.flip.title": "An edge in its place, but flipped",
+  "l3.flip.text":
+    "Hold it at the front right and do case 1, with any yellow edge in front. The yellow edge goes in and the flipped edge comes up to the top. Then it's case 1 or 2.",
+  "l3.none.title": "No good edges on top",
+  "l3.none.text":
+    "If every edge on top has yellow but the middle layer isn't done, an edge is stuck in the wrong place. Hold it at the front right and do case 1 to bring it up.",
+  "l3.tip1": "Always check the upside-down T before you start. If the wrong face is in front, case 1 and case 2 get mixed up.",
+  "l3.tip2": "Watch the white corner: it leaves for a moment and always comes back down to the first layer at the end.",
 
   "solve.title": "Solve my cube",
   "solve.lead": "Show the app your scrambled cube. It will then guide you to solve it with the moves from the lessons.",
@@ -201,6 +236,19 @@ export const en = {
   "seg.2.1": "White faces right: case 1.",
   "seg.2.2": "White faces you: case 2.",
   "seg.2.3": "White faces up: case 3. These moves turn it into case 1.",
+
+  "seg.3.yellowUp": "Hold the cube with yellow on top and the white layer at the bottom.",
+  "seg.3.done": "The second layer is already done. Great!",
+  "seg.3.hold": "Find the {piece} edge on top. Turn the whole cube so {front} faces you.",
+  "seg.3.align": "Turn the top until the {piece} edge is at the front, with its {front} sticker right above the {front} center.",
+  "seg.3.1": "Its top color matches the center on the right ({side}): case 1. These moves put the edge in and bring a white corner out.",
+  "seg.3.2": "Its top color matches the center on the left ({side}): case 2. These moves put the edge in and bring a white corner out.",
+  "seg.3.corner2": "The white corner is above its place, with white facing you. Put it back with case 2 of step 2.",
+  "seg.3.turnCorner": "Turn the whole cube so the left face comes to the front. The corner that came out is now at the front right.",
+  "seg.3.corner1": "The white corner is above its place, with white facing right. Put it back with case 1 of step 2.",
+  "seg.3.holdStuck":
+    "The {piece} edge is in the middle layer, but in the wrong place or flipped. Turn the whole cube so it is at the front right.",
+  "seg.3.stuck": "Do case 1 here: a yellow edge goes in and pushes the {piece} edge out to the top.",
 
   "error.title": "Something doesn't add up",
   "error.unpainted": "Stickers left to paint: {count}.",

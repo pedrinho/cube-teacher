@@ -1137,3 +1137,54 @@ span.lesson-row[aria-disabled="true"] {
     display: none;
   }
 }
+
+/* ---- Speed and the demo's move strip ---- */
+.speed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.speed-label {
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+}
+.segmented {
+  display: inline-flex;
+  padding: 0.2rem;
+  background: var(--panel);
+  border-radius: 999px;
+}
+.segmented button {
+  border: 0;
+  background: transparent;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  font-size: var(--step--1);
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 2.2rem;
+}
+.segmented button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.cases-demo {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+}
+.demo-strip {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  min-height: 3rem;
+}
+.demo-strip .moves {
+  justify-content: center;
+}
+.demo-strip p {
+  font-size: var(--step--1);
+  margin: 0;
+}

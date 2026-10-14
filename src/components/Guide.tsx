@@ -4,9 +4,11 @@ import { applyAlg, invertMove, type CubeState } from "../cube/model";
 import { explainText, stepKey, useI18n } from "../i18n";
 import { Link } from "../router";
 import type { Segment, Stage } from "../methods/types";
+import { LESSONS } from "../content/layers/lessons";
 import { Cube3D, type Cube3DHandle } from "./Cube3D";
 import { HoldBadge } from "./HoldBadge";
 import { Moves } from "./Moves";
+import { SpeedControl } from "./SpeedControl";
 import { StepRail } from "./StepRail";
 
 interface Props {
@@ -62,7 +64,7 @@ export function Guide({ stages, practiceStep, onDifferent, onAgain }: Props) {
       return go({ stage: pos.stage + 1, seg: 0, move: 0 }, stages[pos.stage + 1].step === practiceStep ? "yourTurn" : "moves");
     }
     if (pos.move < seg.moves.length) {
-      cube.current?.play([seg.moves[pos.move]], applyAlg(seg.before, seg.moves.slice(0, pos.move)));
+      cube.current?.play([seg.moves[pos.move]], { from: applyAlg(seg.before, seg.moves.slice(0, pos.move)) });
       go({ ...pos, move: pos.move + 1 }, "moves");
     } else if (pos.seg + 1 < stage.segments.length) {
       go({ ...pos, seg: pos.seg + 1, move: 0 }, "moves");
@@ -81,7 +83,7 @@ export function Guide({ stages, practiceStep, onDifferent, onAgain }: Props) {
     }
     if (view !== "moves") return;
     if (pos.move > 0) {
-      cube.current?.play([invertMove(seg.moves[pos.move - 1])], applyAlg(seg.before, seg.moves.slice(0, pos.move)));
+      cube.current?.play([invertMove(seg.moves[pos.move - 1])], { from: applyAlg(seg.before, seg.moves.slice(0, pos.move)) });
       go({ ...pos, move: pos.move - 1 }, "moves");
     } else if (pos.seg > 0) {
       const prev = stage.segments[pos.seg - 1];
@@ -119,6 +121,10 @@ export function Guide({ stages, practiceStep, onDifferent, onAgain }: Props) {
     !segDone && seg.kind === "rotate" ? t("guide.turnCube") : segDone ? t("guide.continue") : t("guide.next");
   const doneUpTo = view === "stageDone" || view === "end" ? stage.step : stage.step - 1;
   const firstAction = stage.segments.find((s) => s.kind !== "rotate") ?? stage.segments[0];
+  // Cases belong to the lesson of their step ("2.2" is step 2's case 2, even when used in step 3).
+  const caseStep = seg.caseId ? Number(seg.caseId.split(".")[0]) : undefined;
+  const lessonLink =
+    caseStep && LESSONS[caseStep]?.cases.some((c) => c.id === seg.caseId) ? `/learn/${caseStep}/${seg.caseId}` : undefined;
 
   let text: ReactNode;
   let controls: ReactNode;
@@ -129,10 +135,10 @@ export function Guide({ stages, practiceStep, onDifferent, onAgain }: Props) {
         {seg.moves.length > 0 && seg.kind !== "rotate" && <Moves alg={seg.moves} current={pos.move} />}
         <p className="muted guide-part">
           {t("guide.part", { n: pos.seg + 1, total: stage.segments.length })}
-          {seg.caseId && seg.caseId !== "2.out" && (
+          {lessonLink && (
             <>
               {" "}
-              <Link to={`/learn/${stage.step}/${seg.caseId}`} target="_blank" rel="noreferrer">
+              <Link to={lessonLink} target="_blank" rel="noreferrer">
                 {t("guide.seeCase")}
               </Link>
             </>
@@ -200,8 +206,10 @@ export function Guide({ stages, practiceStep, onDifferent, onAgain }: Props) {
   } else {
     text = (
       <>
-        <h2>{practiceStep ? t("practice.wellDone") : t("guide.layerDone")}</h2>
-        <p className="guide-text">{practiceStep ? t("practice.wellDoneText") : t("guide.layerDoneText")}</p>
+        <h2>{practiceStep ? t("practice.wellDone") : t(`guide.end.${stage.step}.title` as "guide.end.3.title")}</h2>
+        <p className="guide-text">
+          {practiceStep ? t("practice.wellDoneText") : t(`guide.end.${stage.step}.text` as "guide.end.3.text")}
+        </p>
       </>
     );
     controls = (
@@ -224,6 +232,7 @@ export function Guide({ stages, practiceStep, onDifferent, onAgain }: Props) {
         <div className="guide-cube">
           <Cube3D ref={cube} state={shown} label={stepName} />
           <HoldBadge state={shown} />
+          <SpeedControl />
         </div>
         <div className="guide-controls">
           <div className="btn-row">{controls}</div>

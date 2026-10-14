@@ -9,7 +9,7 @@ const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const DOCUMENTED = new Set<string>(Object.values(ALGS));
 
 describe("layer solver", () => {
-  it("solves the first layer of 2,000 random cubes, step by step", () => {
+  it("solves 2,000 random cubes step by step, as far as the solver goes", () => {
     const moves: number[][] = Array.from({ length: SOLVER_STEPS }, () => []);
     for (let n = 0; n < 2000; n++) {
       const scrambled = applyAlg(SOLVED, randomScramble(25, random));
@@ -34,10 +34,11 @@ describe("layer solver", () => {
     console.info(stats.join(" | "));
   });
 
-  it("holds the cube white on top for the cross and yellow on top for the corners", () => {
-    const [cross, corners] = solveLayers(applyAlg(SOLVED, "R U F' L2 D B"));
+  it("holds the cube white on top for the cross and yellow on top afterwards", () => {
+    const [cross, ...rest] = solveLayers(applyAlg(SOLVED, "R U F' L2 D B"));
     for (const seg of cross.segments.filter((s) => s.kind !== "rotate")) expect(centers(seg.before).U).toBe("W");
-    for (const seg of corners.segments.filter((s) => s.kind !== "rotate")) expect(centers(seg.before).U).toBe("Y");
+    for (const stage of rest)
+      for (const seg of stage.segments.filter((s) => s.kind !== "rotate")) expect(centers(seg.before).U).toBe("Y");
   });
 
   it("says the cross is done when it already is", () => {
