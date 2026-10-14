@@ -34,7 +34,7 @@ const BODY = (["U", "F", "R"] as const).map((face) => {
 export interface CubeSvgProps {
   state: CubeState;
   /** Stickers that matter; the rest are drawn gray. Defaults to all. */
-  visible?: (stickerIndex: number) => boolean;
+  visible?: (stickerIndex: number, state: CubeState) => boolean;
   label?: string;
   className?: string;
   /** Draws the face letters U, F and R on the visible faces. */
@@ -61,7 +61,7 @@ export function CubeSvg({ state, visible, label, className, faceLetters }: CubeS
       ))}
       {visibleFaces.map((s) => {
         const color = state[s.i];
-        const shown = visible ? visible(s.i) : true;
+        const shown = visible ? visible(s.i, state) : true;
         const fill = !shown ? "var(--st-gray)" : color === "." ? "var(--st-empty)" : `var(--st-${color})`;
         const center: Vec = [s.pos[0] + s.normal[0] * 0.5, s.pos[1] + s.normal[1] * 0.5, s.pos[2] + s.normal[2] * 0.5];
         return (

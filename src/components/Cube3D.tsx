@@ -1,20 +1,26 @@
 // React wrapper for our three.js cube. three.js loads only when a 3D cube is on screen.
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { parseAlg, type CubeState, type Move } from "../cube/model";
-import type { CubeScene, StickerColors } from "../three/cubeScene";
+import type { CubeScene, StickerColors, Visible } from "../three/cubeScene";
 
 export interface Cube3DHandle {
-  /** Animates moves, starting from what is shown now. Resolves when they have played. */
-  play: (moves: string | Move[]) => Promise<void>;
+  /**
+   * Animates moves, starting from what is shown now (or from `from`, snapping to it first if the
+   * cube is somewhere else). Resolves when they have played.
+   */
+  play: (moves: string | Move[], from?: CubeState) => Promise<void>;
   /** Shows a state right away. */
   show: (state: CubeState) => void;
 }
 
 interface Props {
-  /** The state to show. Changing it snaps the cube to the new state. */
+  /**
+   * The state to show. Changing it snaps the cube to the new state, unless that is where the
+   * moves being animated already end (so `play` followed by setting the end state is smooth).
+   */
   state: CubeState;
   /** Stickers that matter; the rest are drawn gray. */
-  visible?: (stickerIndex: number) => boolean;
+  visible?: Visible;
   tempo?: number;
   label: string;
   ref?: Ref<Cube3DHandle>;
@@ -57,8 +63,12 @@ export function Cube3D({ state, visible, tempo = 1, label, ref }: Props) {
   }, []);
 
   useEffect(() => {
-    scene?.setState(state, visible);
-  }, [scene, state, visible]);
+    if (scene && scene.finalState !== state) scene.setState(state, visible);
+  }, [scene, state]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    scene?.setVisible(visible);
+  }, [scene, visible]);
 
   useEffect(() => {
     scene?.setTempo(tempo);
@@ -67,9 +77,10 @@ export function Cube3D({ state, visible, tempo = 1, label, ref }: Props) {
   useImperativeHandle(
     ref,
     () => ({
-      play: (moves) =>
+      play: (moves, from) =>
         new Promise<void>((resolve) => {
           if (!scene) return resolve();
+          if (from !== undefined && scene.finalState !== from) scene.setState(from, visible);
           scene.play(typeof moves === "string" ? parseAlg(moves) : moves, resolve);
         }),
       show: (s) => scene?.setState(s, visible),

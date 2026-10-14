@@ -862,3 +862,278 @@ button.move:hover {
     clip-path: inset(50%);
   }
 }
+
+/* ---- Lessons: cases ---- */
+.prose p,
+.prose li {
+  max-width: 65ch;
+}
+.cases {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 1.5rem;
+  align-items: start;
+  margin-top: 1rem;
+}
+.cases-demo {
+  position: sticky;
+  top: 1rem;
+}
+.cases-demo .viewer {
+  max-width: none;
+}
+.cases-demo p {
+  font-size: var(--step--1);
+  text-align: center;
+  margin: 0 auto;
+}
+.case-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.case {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1rem;
+  background: var(--panel);
+  border-radius: var(--radius-panel);
+  border: 2px solid transparent;
+  scroll-margin: 1rem;
+}
+.case[data-active] {
+  border-color: var(--accent);
+}
+.case-cube {
+  width: 6.5rem;
+  flex: none;
+}
+.case-body {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: start;
+}
+.case-body h3,
+.case-body p {
+  margin: 0;
+}
+.case-then {
+  font-weight: 600;
+}
+.case-show {
+  min-height: 2.5rem;
+  padding: 0.3rem 1rem;
+}
+.tips {
+  padding-left: 1.2rem;
+}
+.tips li {
+  margin-bottom: 0.5rem;
+}
+.lesson-end {
+  margin-top: 2rem;
+}
+span.lesson-row[aria-disabled="true"] {
+  opacity: 0.55;
+}
+
+@media (max-width: 760px) {
+  .cases {
+    grid-template-columns: 1fr;
+  }
+  .cases-demo {
+    position: static;
+  }
+  .cases-demo .viewer {
+    max-width: 22rem;
+    margin: 0 auto;
+  }
+  .case-cube {
+    width: 4.5rem;
+  }
+}
+
+/* ---- Guide ---- */
+.rail {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.rail li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem 0.25rem 0.3rem;
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: var(--step--1);
+  font-weight: 600;
+}
+.rail-num {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  background: var(--paper);
+  font-weight: 800;
+}
+.rail li[data-state="done"] .rail-num {
+  background: var(--ok);
+  color: #fff;
+}
+.rail li[data-state="current"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.rail li[data-state="current"] .rail-num {
+  background: var(--accent);
+  color: #fff;
+}
+.rail li[data-state="soon"] {
+  opacity: 0.45;
+}
+.rail li:not([data-state="current"]) .rail-name {
+  display: none;
+}
+
+/* Cube on the left; instruction and controls on the right. */
+.guide-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    "cube card"
+    "cube controls";
+  grid-template-rows: auto 1fr;
+  column-gap: 2rem;
+  row-gap: 1rem;
+  align-items: start;
+}
+.guide-card {
+  grid-area: card;
+}
+.guide-cube {
+  grid-area: cube;
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+}
+/* Keep the cube and the buttons on screen together on short screens. */
+.guide-cube .viewer {
+  max-width: min(460px, 60vh);
+}
+.guide-controls {
+  grid-area: controls;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+.guide-controls p {
+  margin: 0;
+}
+.guide-card {
+  background: var(--panel);
+  border-radius: var(--radius-panel);
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+}
+.guide-card > * {
+  margin: 0;
+}
+.guide-step {
+  font-weight: 700;
+  color: var(--accent);
+}
+.guide-text {
+  font-size: var(--step-1);
+  font-weight: 500;
+  line-height: 1.4;
+}
+.guide-part {
+  font-size: var(--step--1);
+}
+.guide-keys {
+  font-size: var(--step--1);
+}
+.btn-big {
+  min-height: 3.5rem;
+  padding: 0.75rem 1.75rem;
+  font-size: var(--step-1);
+}
+.link-button {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.hold {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.hold-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.8rem 0.3rem 0.5rem;
+  background: var(--panel);
+  border-radius: 999px;
+  font-weight: 600;
+}
+.hold-label {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+.hold-chip {
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 0.35rem;
+  background: var(--c);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.18);
+}
+.hold-color {
+  text-transform: capitalize;
+}
+
+@media (max-width: 760px) {
+  /* Instruction first, then the cube, with the buttons pinned under the thumb. */
+  .guide-body {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "card"
+      "cube"
+      "controls";
+    grid-template-rows: auto;
+  }
+  .guide-cube .viewer {
+    max-width: min(16rem, 36vh);
+  }
+  .guide-card {
+    padding: 1.1rem;
+  }
+  .guide-controls {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    padding: 0.75rem var(--gutter);
+    margin: 0 calc(-1 * var(--gutter));
+    background: var(--paper);
+    border-top: 1px solid var(--line);
+  }
+  .guide-keys {
+    display: none;
+  }
+}

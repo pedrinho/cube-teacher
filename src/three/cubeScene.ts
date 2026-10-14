@@ -22,6 +22,8 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { STICKERS, applyMove, moveLayer, type CubeState, type Move, type Vec } from "../cube/model";
 
+export type Visible = (stickerIndex: number, state: CubeState) => boolean;
+
 export type StickerColors = Record<"W" | "Y" | "G" | "B" | "R" | "O" | "gray" | "empty" | "body", string>;
 
 const CUBIE = 0.97;
@@ -69,7 +71,7 @@ export class CubeScene {
   private resize: ResizeObserver;
 
   private shown: CubeState;
-  private visible: (i: number) => boolean = () => true;
+  private visible: Visible = () => true;
   private queue: { move: Move; done?: () => void }[] = [];
   private turn: Turn | null = null;
   private turnDone?: () => void;
@@ -152,7 +154,7 @@ export class CubeScene {
   private paint() {
     this.stickers.forEach((mesh, i) => {
       const c = this.shown[i];
-      mesh.material = !this.visible(i) ? this.materials.gray : (this.materials[c] ?? this.materials.empty);
+      mesh.material = !this.visible(i, this.shown) ? this.materials.gray : (this.materials[c] ?? this.materials.empty);
     });
     this.render();
   }
@@ -171,10 +173,16 @@ export class CubeScene {
   }
 
   /** Shows a state right away, dropping any moves still waiting to play. */
-  setState(state: CubeState, visible?: (i: number) => boolean) {
+  setState(state: CubeState, visible?: Visible) {
     this.finishTurn(false);
     this.queue = [];
     this.shown = state;
+    this.visible = visible ?? (() => true);
+    this.paint();
+  }
+
+  /** Changes which stickers are drawn gray, without touching the state. */
+  setVisible(visible?: Visible) {
     this.visible = visible ?? (() => true);
     this.paint();
   }
@@ -202,7 +210,9 @@ export class CubeScene {
     this.root.add(pivot);
     for (const c of cubies) pivot.attach(c);
     const amount = item.move.amount === 3 ? -1 : item.move.amount;
-    const duration = this.reducedMotion ? 0 : (QUARTER_MS * (amount === 2 ? 1.4 : 1)) / this.tempo;
+    // Catch up faster when moves are waiting (e.g. after quick taps on "Next").
+    const hurry = this.queue.length === 0 ? 1 : this.queue.length < 3 ? 0.55 : 0.25;
+    const duration = this.reducedMotion ? 0 : (QUARTER_MS * (amount === 2 ? 1.4 : 1) * hurry) / this.tempo;
     this.turn = {
       move: item.move,
       cubies,

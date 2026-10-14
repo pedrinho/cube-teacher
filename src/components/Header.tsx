@@ -25,6 +25,9 @@ export function Header({ section }: { section: string }) {
           <Link to="/solve" aria-current={section === "solve" ? "page" : undefined}>
             {t("nav.solve")}
           </Link>
+          <Link to="/practice" aria-current={section === "practice" ? "page" : undefined}>
+            {t("nav.practice")}
+          </Link>
         </nav>
         <div className="lang" role="group" aria-label={t("lang.label")}>
           {langs.map((l) => (

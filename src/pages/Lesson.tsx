@@ -5,9 +5,11 @@ import { StepName } from "../components/StepTitle";
 import { VideoEmbed } from "../components/VideoEmbed";
 import { layersMethod } from "../methods/layers";
 import { stepPicture } from "../methods/layers/pictures";
+import { LESSONS } from "../content/layers/lessons";
 import { Notation } from "./Notation";
+import { StepLesson } from "./StepLesson";
 
-export function Lesson({ step: id }: { step: number }) {
+export function Lesson({ step: id, focusCase }: { step: number; focusCase?: string }) {
   const { t } = useI18n();
   const step = layersMethod.steps.find((s) => s.id === id);
   if (!step) return <Link to="/learn">{t("lesson.back")}</Link>;
@@ -33,8 +35,10 @@ export function Lesson({ step: id }: { step: number }) {
 
       {id === 0 ? (
         <Notation />
+      ) : LESSONS[id] ? (
+        <StepLesson lesson={LESSONS[id]} focusCase={focusCase} />
       ) : (
-        !step.ready && <p className="notice">{t("lesson.soon")}</p>
+        <p className="notice">{t("lesson.soon")}</p>
       )}
 
       <section className="lesson-section">
@@ -42,11 +46,18 @@ export function Lesson({ step: id }: { step: number }) {
         <VideoEmbed videoId={step.videoId} title={name} />
       </section>
 
-      {next && (
-        <Link to={`/learn/${next.id}`} className="btn btn-primary next-link">
-          {t("lesson.next", { name: t(stepKey(next.id, "name")) })}
-        </Link>
-      )}
+      <div className="btn-row lesson-end">
+        {LESSONS[id] && (
+          <Link to={`/practice/${id}`} className="btn btn-primary">
+            {t("lesson.practice")}
+          </Link>
+        )}
+        {next && (
+          <Link to={`/learn/${next.id}`} className={LESSONS[id] ? "btn" : "btn btn-primary"}>
+            {t("lesson.next", { name: t(stepKey(next.id, "name")) })}
+          </Link>
+        )}
+      </div>
     </article>
   );
 }
