@@ -14,7 +14,7 @@ export type Color = (typeof COLORS)[number];
 
 export type CubeState = string;
 
-type Vec = readonly [number, number, number];
+export type Vec = readonly [number, number, number];
 
 const NORMAL: Record<Face, Vec> = {
   U: [0, 1, 0],
@@ -109,6 +109,12 @@ const LAYER: Record<BaseMove, [Vec, (p: Vec) => boolean]> = {
   y: [NORMAL.U, () => true],
   z: [NORMAL.F, () => true],
 };
+
+/** The rotation axis of a move and which cubie positions it turns. */
+export function moveLayer(base: BaseMove): { axis: Vec; inLayer: (pos: Vec) => boolean } {
+  const [axis, inLayer] = LAYER[base];
+  return { axis, inLayer };
+}
 
 export type Amount = 1 | 2 | 3; // 3 = counter-clockwise (')
 export interface Move {

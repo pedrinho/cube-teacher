@@ -99,7 +99,6 @@ export const pt: Messages = {
   "solve.edit": "Corrigir cores",
   "solve.backToScramble": "Ver os movimentos de novo",
   "solve.startOver": "Começar de novo",
-  "solve.loading": "Preparando o cubo 3D…",
   "solve.soon": "Próxima versão: a solução passo a passo, começando pela 1ª camada.",
 
   "error.title": "Tem algo errado",

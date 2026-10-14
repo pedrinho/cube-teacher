@@ -97,7 +97,6 @@ export const en = {
   "solve.edit": "Edit colors",
   "solve.backToScramble": "Show the moves again",
   "solve.startOver": "Start over",
-  "solve.loading": "Getting the 3D cube ready…",
   "solve.soon": "Next version: the step-by-step solution, starting with the first layer.",
 
   "error.title": "Something doesn't add up",

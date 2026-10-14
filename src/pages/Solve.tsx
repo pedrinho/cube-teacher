@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
 import { useI18n } from "../i18n";
-import { CubeViewer } from "../components/CubeViewer";
+import { Cube3D } from "../components/Cube3D";
 import { Moves } from "../components/Moves";
 import { NetEditor, blankNet } from "../components/NetEditor";
-import { SOLVED, algToString, applyAlg, randomScramble, type CubeState, type Move } from "../cube/model";
-import { setupAlgFor } from "../cube/setup";
+import { SOLVED, applyAlg, randomScramble, type CubeState, type Move } from "../cube/model";
 import { validate, type ValidationError } from "../cube/validate";
 
 const STORAGE_KEY = "cube-teacher.paint";
 const IMPOSSIBLE = new Set(["flipped-edge", "twisted-corner", "swapped-pieces"]);
 
 type Mode = "paint" | "scramble";
-type Stage = { kind: "input" } | { kind: "review"; state: CubeState; setup: string | null };
+type Stage = { kind: "input" } | { kind: "review"; state: CubeState };
 
 function loadPaint(): CubeState {
   try {
@@ -69,12 +68,11 @@ export function Solve() {
       return;
     }
     setErrors([]);
-    setStage({ kind: "review", state: paint, setup: null });
-    setupAlgFor(paint).then((setup) => setStage({ kind: "review", state: paint, setup }));
+    setStage({ kind: "review", state: paint });
   };
 
   const useScramble = () => {
-    setStage({ kind: "review", state: applyAlg(SOLVED, scramble), setup: algToString(scramble) });
+    setStage({ kind: "review", state: applyAlg(SOLVED, scramble) });
   };
 
   const startOver = () => {
@@ -89,11 +87,7 @@ export function Solve() {
       <>
         <h1>{t("solve.reviewTitle")}</h1>
         <div className="review">
-          {stage.setup === null ? (
-            <p className="muted viewer">{t("solve.loading")}</p>
-          ) : (
-            <CubeViewer setupAlg={stage.setup} label={t("solve.reviewTitle")} />
-          )}
+          <Cube3D state={stage.state} label={t("solve.reviewTitle")} />
           <div>
             <p className="lead">{t("solve.reviewText")}</p>
             <div className="btn-row">
