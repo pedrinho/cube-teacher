@@ -13,7 +13,7 @@ export const layersMethod: MethodDef = {
     { id: 1, layer: 1, videoId: "qt7qiYqMN6k", ready: true },
     { id: 2, layer: 1, videoId: "lnk2OzL0r9Q", ready: true },
     { id: 3, layer: 2, videoId: "ciE5VTYcVxk", ready: true },
-    { id: 4, layer: 3, videoId: "toj3ktQOOo8", ready: false },
+    { id: 4, layer: 3, videoId: "toj3ktQOOo8", ready: true },
     { id: 5, layer: 3, videoId: "jAIBruUkx_A", ready: false },
     { id: 6, layer: 3, videoId: "XoZatPVeUUc", ready: false },
     { id: 7, layer: 3, videoId: "DG_OLDDZ7E4", ready: false },

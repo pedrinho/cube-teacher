@@ -10,6 +10,11 @@ export const ALGS = {
   // a white corner out, which then goes back with a step 2 case.
   "3.1": "U R U R' U'", // edge goes to the right, then step 2 case 2
   "3.2": "U' L' U' L U", // edge goes to the left, then turn the cube and step 2 case 1
+
+  // Step 4: yellow cross. One algorithm; the case says how to hold the cube.
+  "4.1": "F U R U' R' F'", // an L at the back left: finishes the cross
+  "4.2": "F U R U' R' F'", // a line from left to right: becomes an L at the back left
+  "4.3": "F U R U' R' F'", // only the center: becomes a line
 } as const;
 
 export type CaseId = keyof typeof ALGS;

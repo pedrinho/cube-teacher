@@ -5,6 +5,7 @@ import type { MessageKey } from "../../i18n/en";
 import { WHITE_UP, YELLOW_UP, stepMask, type Visible } from "../../methods/layers/pictures";
 import { solveFirstLayer } from "../../methods/layers/step2-corners";
 import { solveSecondLayer } from "../../methods/layers/step3-edges";
+import { solveYellowCross } from "../../methods/layers/step4-cross";
 
 export interface LessonCase {
   /** Also the anchor id on the lesson page, e.g. "2.1". */
@@ -31,6 +32,10 @@ export interface Lesson {
   tips: MessageKey[];
   /** Which pieces the pictures and the demo cube draw in color. */
   mask: Visible;
+  /** Case pictures: the cube from the front corner, or the top layer from above. */
+  view?: "cube" | "top";
+  /** Draw arrows to where top pieces go (top view only). */
+  arrows?: boolean;
 }
 
 const undo = (base: CubeState, moves: string) => applyAlg(base, invertAlg(parseAlg(moves)));
@@ -65,6 +70,9 @@ const STUCK = twist(twist(YELLOW_UP, "DFR", 1), "UBL", 2);
 // Second layer edges stuck in the middle layer: one flipped in its place (with a top edge flipped
 // too, as a real cube needs), or two swapped (with two top edges swapped too).
 const FLIPPED = swapEdges(swapEdges(YELLOW_UP, "FR", "FR"), "UB", "UB");
+// All four top edges flipped: only the yellow center on top.
+const DOT = ["UF", "UR", "UB", "UL"].reduce((s, e) => swapEdges(s, e, e), YELLOW_UP);
+const CROSS = "F U R U' R' F'";
 const SWAPPED = swapEdges(swapEdges(YELLOW_UP, "FR", "FL"), "UF", "UB");
 
 export const LESSONS: Record<number, Lesson> = {
@@ -153,5 +161,25 @@ export const LESSONS: Record<number, Lesson> = {
     ],
     tips: ["l3.tip1", "l3.tip2"],
     mask: stepMask(3),
+  },
+  4: {
+    step: 4,
+    paragraphs: ["l4.p1", "l4.p2", "l4.p3"],
+    casesLead: "l4.casesLead",
+    cases: [
+      { id: "4.1", title: "l4.1.title", text: "l4.1.text", alg: CROSS, setup: undo(YELLOW_UP, CROSS) },
+      {
+        id: "4.2",
+        title: "l4.2.title",
+        text: "l4.2.text",
+        alg: CROSS,
+        follow: { label: "lesson.thenAgain", alg: CROSS },
+        setup: undo(YELLOW_UP, `${CROSS} ${CROSS}`),
+      },
+      { id: "4.3", title: "l4.3.title", text: "l4.3.text", alg: CROSS, demo: solverMoves(solveYellowCross, DOT), setup: DOT },
+    ],
+    tips: ["l4.tip1", "l4.tip2"],
+    mask: stepMask(4),
+    view: "top",
   },
 };

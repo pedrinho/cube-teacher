@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { applyAlg, type Color, type CubeState } from "../../cube/model";
 import { slotOf } from "../../cube/pieces";
 import { validate } from "../../cube/validate";
-import { MIDDLE_EDGES, crossDone, firstLayerDone, secondLayerDone } from "../../methods/layers/goals";
+import { MIDDLE_EDGES, crossDone, firstLayerDone, secondLayerDone, topColorEdges, yellowCrossDone } from "../../methods/layers/goals";
 import { LESSONS, demoMoves } from "./lessons";
 
 const where = (state: CubeState, piece: Color[]) => {
@@ -68,6 +68,17 @@ describe("lesson 3 cases", () => {
   it.each(["3.1", "3.2", "3.flip", "3.none"])("%s: the demo finishes the second layer", (id) => {
     const c = byId(3, id);
     expect(secondLayerDone(applyAlg(c.setup, demoMoves(c)))).toBe(true);
+  });
+});
+
+describe("lesson 4 cases", () => {
+  const up = (id: string) => topColorEdges(byId(4, id).setup).sort();
+  it("4.1 is an L at the back left", () => expect(up("4.1")).toEqual(["UB", "UL"]));
+  it("4.2 is a line from left to right", () => expect(up("4.2")).toEqual(["UL", "UR"]));
+  it("4.3 has only the yellow center", () => expect(up("4.3")).toEqual([]));
+  it.each(["4.1", "4.2", "4.3"])("%s: the demo finishes the yellow cross", (id) => {
+    const c = byId(4, id);
+    expect(yellowCrossDone(applyAlg(c.setup, demoMoves(c)))).toBe(true);
   });
 });
 

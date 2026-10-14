@@ -52,10 +52,15 @@ function kickOut(state: CubeState, piece: Color[]): Recorder {
   return rec;
 }
 
-export function solveSecondLayer(state: CubeState): Recorder {
-  const rec = new Recorder(state);
+/** Turns the cube so yellow is on top, if it isn't already. */
+export function keepYellowUp(rec: Recorder) {
   const c = centers(rec.state);
   if (c.U !== "Y") rec.rotate(rotationTo(rec.state, "Y", c.F === "W" ? c.D : c.F), { key: "seg.3.yellowUp" });
+}
+
+export function solveSecondLayer(state: CubeState): Recorder {
+  const rec = new Recorder(state);
+  keepYellowUp(rec);
 
   if (secondLayerDone(rec.state)) {
     rec.add("info", [], { key: "seg.3.done" });
