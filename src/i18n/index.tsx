@@ -8,7 +8,7 @@ const STORAGE_KEY = "cube-teacher.lang";
 
 type Params = Record<string, string | number>;
 
-interface I18n {
+export interface I18n {
   lang: Lang;
   setLang: (lang: Lang) => void;
   /** Translated text with {name} placeholders filled in. */

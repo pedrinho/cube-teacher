@@ -10,6 +10,7 @@ import { YELLOW_UP } from "../../methods/layers/pictures";
 import { fridrichMethod } from "../../methods/fridrich";
 import { useLearning } from "../../learning";
 import { frGoal, frName } from "./FridrichHome";
+import { caseTitle } from "./caseTitle";
 
 const NEW_MOVES = ["r", "r'", "l", "l'", "u", "d", "f", "M", "M'", "E", "S", "x", "x'", "y", "y'", "z"];
 
@@ -24,11 +25,7 @@ export function FridrichLesson({ step: id, focusCase }: { step: number; focusCas
 
   const shown = (c: FrCase): ShownCase => ({
     id: c.id,
-    title: c.titleKey
-      ? t(c.titleKey)
-      : c.id.startsWith("pll")
-        ? t("fr.case.pll", { name: c.name ?? "" })
-        : `${t(c.id.startsWith("oll") ? "fr.case.oll" : "fr.case.f2l", { n: c.number ?? 0 })}${c.name ? `: ${c.name}` : ""}`,
+    title: caseTitle(t, c),
     text: c.textKey && t(c.textKey),
     alg: c.alg,
     alts: c.alts,

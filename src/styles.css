@@ -1306,3 +1306,125 @@ span.lesson-row[aria-disabled="true"] {
   margin: 0;
   font-size: var(--step--1);
 }
+
+/* ---- Trainer ---- */
+.trainer-sets {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.chip {
+  border: 2px solid var(--ink);
+  background: var(--panel);
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chip[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+.check input {
+  width: 1.2rem;
+  height: 1.2rem;
+  accent-color: var(--accent);
+}
+.trainer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+.trainer-card {
+  background: var(--panel);
+  border-radius: var(--radius-panel);
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+}
+.trainer-card > * {
+  margin: 0;
+}
+.trainer-picture {
+  width: 9rem;
+}
+.timer {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  padding: 1.25rem 1rem;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-panel);
+  background: var(--paper);
+  cursor: pointer;
+}
+.timer[data-running] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.timer-digits {
+  font-size: clamp(2.5rem, 9vw, 4rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.timer-hint {
+  font-weight: 600;
+  font-size: var(--step--1);
+}
+.trainer-reveal .cases {
+  grid-template-columns: 1fr;
+  margin-top: 0;
+}
+.trainer-reveal .cases-demo {
+  position: static;
+}
+.trainer-reveal .cases-demo .viewer {
+  max-width: 18rem;
+  margin: 0 auto;
+}
+.trainer-reveal p {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.stats {
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  width: 100%;
+  max-width: 36rem;
+}
+.stats th,
+.stats td {
+  text-align: left;
+  padding: 0.4rem 0.75rem 0.4rem 0;
+  border-bottom: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+.stats th {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+@media (max-width: 760px) {
+  .trainer {
+    grid-template-columns: 1fr;
+  }
+}
