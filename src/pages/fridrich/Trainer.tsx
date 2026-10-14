@@ -1,6 +1,6 @@
 // Algorithm trainer: pick case sets, get a scramble that sets up one case, solve it against the
 // clock, then see which case it was, its algorithm and a 3D demo. Times are kept per case.
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useI18n } from "../../i18n";
 import type { MessageKey } from "../../i18n/en";
 import { CaseList } from "../../components/CaseList";
@@ -67,8 +67,8 @@ interface Drill {
   state: CubeState;
   /** The top turn that brings it back to the case picture's position. */
   turnBack: Move[];
-  scramble: Move[] | null;
-  phase: "loading" | "ready" | "running" | "done";
+  scramble: Move[];
+  phase: "ready" | "running" | "done";
   startedAt: number;
   ms: number | null;
 }
@@ -81,7 +81,6 @@ export function Trainer() {
   const [stats, setStats] = useState<Stats>(loadStats);
   const [drill, setDrill] = useState<Drill | null>(null);
   const [now, setNow] = useState(0);
-  const token = useRef(0);
 
   const pool = [...new Set(sets.flatMap((s) => (s === "learning" ? learning.ids.filter((id) => ALL_FR_CASES.has(id)) : FIXED[s])))];
 
@@ -98,11 +97,7 @@ export function Trainer() {
     const c = ALL_FR_CASES.get(choices[Math.floor(Math.random() * choices.length)])!;
     const turn = U_TURNS[Math.floor(Math.random() * 4)];
     const state = applyAlg(c.setup, turn);
-    const mine = ++token.current;
-    setDrill({ c, state, turnBack: invertAlg(turn), scramble: null, phase: "loading", startedAt: 0, ms: null });
-    scrambleFor(state).then((scramble) => {
-      if (token.current === mine) setDrill((d) => d && { ...d, scramble, phase: "ready" });
-    });
+    setDrill({ c, state, turnBack: invertAlg(turn), scramble: scrambleFor(c.setupMoves, turn), phase: "ready", startedAt: 0, ms: null });
   }, [pool, drill]);
 
   const start = () => {
@@ -190,15 +185,14 @@ export function Trainer() {
               </button>
             </>
           )}
-          {d && d.phase === "loading" && <p className="muted">{t("tr.making")}</p>}
-          {d && (d.phase === "ready" || d.phase === "running") && d.scramble && (
+          {d && (d.phase === "ready" || d.phase === "running") && (
             <>
               <p>{t("tr.scramble")}</p>
               <Moves alg={d.scramble} small />
               {showPicture && <Picture c={d.c} state={d.state} />}
             </>
           )}
-          {d && d.phase !== "loading" && (
+          {d && (
             <button
               type="button"
               className="timer"

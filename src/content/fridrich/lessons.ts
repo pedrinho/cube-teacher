@@ -1,13 +1,13 @@
 // The Fridrich lessons, in Cinoto's order. Case pictures and demos come from the classifier, which
 // builds, for every algorithm, the cube it solves (so pictures always match the moves).
-import { EDGE_SLOTS, applyAlg, algToString, invertAlg, parseAlg, type CubeState, type Move } from "../../cube/model";
+import { SOLVED, applyAlg, algToString, invertAlg, parseAlg, type CubeState, type Move } from "../../cube/model";
 import { U_TURNS } from "../../cube/orientation";
 import type { MessageKey } from "../../i18n/en";
 import { F2L_CASES, OLL_CASES, PLL_CASES, type AlgCase } from "../../methods/fridrich/algs";
 import { classifyAlg, type AlgSet } from "../../methods/fridrich/classify";
 import { OLL_CORNER_CASES, OLL_EDGES } from "../../methods/fridrich/sets";
 import { topColorEdges } from "../../methods/layers/goals";
-import { YELLOW_UP, stepMask, type Visible } from "../../methods/layers/pictures";
+import { stepMask, type Visible } from "../../methods/layers/pictures";
 
 export interface FrCase {
   /** "f2l.4", "oll.12", "pll.U1", or "oll2.line" for the 2-look edge cases. */
@@ -23,6 +23,8 @@ export interface FrCase {
   alts: string[];
   demo: string;
   setup: CubeState;
+  /** Moves that make `setup` from a solved cube held white on top, green in front. */
+  setupMoves: Move[];
 }
 
 export interface CaseGroup {
@@ -55,6 +57,7 @@ function fromList(set: AlgSet, list: AlgCase[], i: number): FrCase {
     alts: c.algs.slice(1),
     demo: c.algs[0],
     setup: found.setup,
+    setupMoves: found.setupMoves,
   };
 }
 const pll = (name: string) => fromList("pll", PLL_CASES, PLL_CASES.findIndex((c) => c.name === name));
@@ -80,26 +83,29 @@ function edgesDemo(start: CubeState): Move[] {
   return moves;
 }
 
-const undo = (alg: string) => applyAlg(YELLOW_UP, invertAlg(parseAlg(alg)));
-// All four top edges flipped: only the yellow center on top.
-const DOT = EDGE_SLOTS.filter((e) => e.faces[0] === "U").reduce((s, e) => {
-  const out = [...s];
-  [out[e.stickers[0]], out[e.stickers[1]]] = [s[e.stickers[1]], s[e.stickers[0]]];
-  return out.join("");
-}, YELLOW_UP);
+/** Moves (from a solved cube, white on top) that set up the case an algorithm solves on the yellow side. */
+const undoMoves = (alg: string) => [...parseAlg("x2"), ...invertAlg(parseAlg(alg))];
+const edgeCase = (id: string, alg: string, setupAlg: string, demo?: (s: CubeState) => string): FrCase => {
+  const setupMoves = undoMoves(setupAlg);
+  const setup = applyAlg(SOLVED, setupMoves);
+  const key = id.split(".")[1] as "line" | "ell" | "dot";
+  return {
+    id,
+    titleKey: `fr.oll2.${key}` as MessageKey,
+    textKey: `fr.oll2.${key}Text` as MessageKey,
+    alg,
+    alts: [],
+    demo: demo ? demo(setup) : alg,
+    setup,
+    setupMoves,
+  };
+};
 
 const EDGE_CASES: FrCase[] = [
-  { id: "oll2.line", titleKey: "fr.oll2.line", textKey: "fr.oll2.lineText", alg: OLL_EDGES.line, alts: [], demo: OLL_EDGES.line, setup: undo(OLL_EDGES.line) },
-  { id: "oll2.ell", titleKey: "fr.oll2.ell", textKey: "fr.oll2.ellText", alg: OLL_EDGES.ell, alts: [], demo: OLL_EDGES.ell, setup: undo(OLL_EDGES.ell) },
-  {
-    id: "oll2.dot",
-    titleKey: "fr.oll2.dot",
-    textKey: "fr.oll2.dotText",
-    alg: OLL_EDGES.line,
-    alts: [],
-    demo: algToString(edgesDemo(DOT)),
-    setup: DOT,
-  },
+  edgeCase("oll2.line", OLL_EDGES.line, OLL_EDGES.line),
+  edgeCase("oll2.ell", OLL_EDGES.ell, OLL_EDGES.ell),
+  // Only the yellow center: undoing the usual dot fix (line moves, then the wide L moves).
+  edgeCase("oll2.dot", OLL_EDGES.line, "F R U R' U' F' f R U R' U' f'", (s) => algToString(edgesDemo(s))),
 ];
 
 // ---- Lessons ------------------------------------------------------------------------------------------

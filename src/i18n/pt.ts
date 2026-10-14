@@ -391,7 +391,6 @@ export const pt: Messages = {
   "tr.learningEmpty": "Você ainda não marcou nenhum caso. Nas lições, toque em “Estou aprendendo” nos casos que quer praticar.",
   "tr.ready": "{n} casos para praticar.",
   "tr.begin": "Começar a praticar",
-  "tr.making": "Preparando um embaralhamento…",
   "tr.scramble": "Segure o cubo montado com o branco em cima e o verde na frente, faça estes movimentos e depois vire o cubo para o amarelo ficar em cima.",
   "tr.start": "Toque para começar o tempo",
   "tr.stop": "Toque para parar",

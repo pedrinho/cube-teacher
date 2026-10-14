@@ -2,6 +2,7 @@
 // when the top layer is turned (and, for PLL, when the top colors are rotated), so a cube can be
 // matched to the algorithm that solves it, together with the top turn to do first.
 import {
+  SOLVED,
   applyAlg,
   centers,
   invertAlg,
@@ -98,6 +99,8 @@ export interface Classified {
   offset: number;
   /** A cube this algorithm solves, held as the algorithm expects (yellow on top). */
   setup: CubeState;
+  /** Moves that make `setup` from a solved cube held white on top, green in front. */
+  setupMoves: Move[];
 }
 
 /**
@@ -109,10 +112,10 @@ export interface Classified {
 export function classifyAlg(set: AlgSet, alg: string): Classified | null {
   const moves = parseAlg(alg);
   const end = centers(applyAlg(YELLOW_UP, moves));
-  const solvedAtEnd = applyAlg(YELLOW_UP, rotationTo(YELLOW_UP, end.U, end.F));
-  const setup = applyAlg(solvedAtEnd, invertAlg(moves));
+  const setupMoves = [...parseAlg("x2"), ...rotationTo(YELLOW_UP, end.U, end.F), ...invertAlg(moves)];
+  const setup = applyAlg(SOLVED, setupMoves);
   if (!before(set, setup) || !after(set, yellowUp(applyAlg(setup, moves)))) return null;
-  return { ...caseKey(set, setup), setup };
+  return { ...caseKey(set, setup), setup, setupMoves };
 }
 
 export interface IndexedCase {
