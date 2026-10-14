@@ -10,6 +10,7 @@ import { holdAs } from "../cube/orientation";
 import { layersMethod } from "../methods/layers";
 import { stepPicture } from "../methods/layers/pictures";
 import { solveLayers } from "../methods/layers/solver";
+import { LAYERS } from "../methods/registry";
 import { PAINT_STORAGE_KEY } from "./Solve";
 
 function PickStep() {
@@ -78,7 +79,7 @@ function PracticeStep({ step }: { step: number }) {
         {t("practice.title")}: {t(stepKey(step, "name"))}
       </h1>
       {following ? (
-        <Guide stages={stages} practiceStep={step} onDifferent={different} onAgain={again} />
+        <Guide method={LAYERS} stages={stages} practiceStep={step} onDifferent={different} onAgain={again} />
       ) : (
         <section>
           <p>{t("practice.scramble")}</p>

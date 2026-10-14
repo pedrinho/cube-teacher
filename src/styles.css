@@ -1200,3 +1200,75 @@ span.lesson-row[aria-disabled="true"] {
     padding: 0.3rem 0.55rem;
   }
 }
+
+/* ---- Second row of the header: the pages of the current track ---- */
+.subnav {
+  border-top: 1px solid var(--line);
+}
+.subnav-inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0.4rem var(--gutter);
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+}
+.subnav a {
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--ink-soft);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.subnav a[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.nav a[aria-current="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ---- Home: the way to the faster method ---- */
+.faster {
+  margin-top: 3rem;
+  padding: 1.5rem;
+  background: var(--panel);
+  border-radius: var(--radius-panel);
+  border-left: 6px solid var(--accent);
+}
+.faster p {
+  margin-bottom: 1rem;
+}
+
+/* ---- Fridrich ---- */
+.parts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+.parts li {
+  display: flex;
+  gap: 0.8rem;
+  align-items: baseline;
+  max-width: 65ch;
+}
+.parts-num {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 800;
+}
+.videos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: 1rem;
+}

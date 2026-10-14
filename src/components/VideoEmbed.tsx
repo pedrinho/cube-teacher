@@ -1,6 +1,13 @@
 import { useI18n } from "../i18n";
 
-export function VideoEmbed({ videoId, title }: { videoId: string; title: string }) {
+interface Props {
+  videoId: string;
+  title: string;
+  /** Page of the lesson this video belongs to on Cinoto's site. */
+  sourceUrl: string;
+}
+
+export function VideoEmbed({ videoId, title, sourceUrl }: Props) {
   const { tr } = useI18n();
   return (
     <figure className="video-figure">
@@ -16,7 +23,7 @@ export function VideoEmbed({ videoId, title }: { videoId: string; title: string 
       <figcaption className="muted">
         {tr("lesson.videoCredit", {
           link: (
-            <a key="link" href="https://cinoto.com.br/cubomagico/metodo-de-camadas-com-historias/" target="_blank" rel="noreferrer">
+            <a key="link" href={sourceUrl} target="_blank" rel="noreferrer">
               cinoto.com.br
             </a>
           ),

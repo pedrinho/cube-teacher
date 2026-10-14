@@ -26,6 +26,13 @@ export function Home() {
         </h2>
         <StepLadder />
       </section>
+      <section className="faster" aria-labelledby="faster-title">
+        <h2 id="faster-title">{t("home.fasterTitle")}</h2>
+        <p>{t("home.fasterText")}</p>
+        <Link className="btn btn-primary" to="/fridrich">
+          {t("home.fasterButton")}
+        </Link>
+      </section>
       <p className="credit muted">
         {tr("home.credit", {
           link: (

@@ -1,10 +1,10 @@
 // Follow-along solving: one instruction at a time, one move at a time, on a 3D copy of the cube.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { applyAlg, invertMove, type CubeState } from "../cube/model";
-import { explainText, stepKey, useI18n } from "../i18n";
+import { explainText, useI18n } from "../i18n";
 import { Link } from "../router";
 import type { Segment, Stage } from "../methods/types";
-import { LESSONS } from "../content/layers/lessons";
+import type { MethodInfo } from "../methods/registry";
 import { Cube3D, type Cube3DHandle } from "./Cube3D";
 import { HoldBadge } from "./HoldBadge";
 import { Moves } from "./Moves";
@@ -12,6 +12,7 @@ import { SpeedControl } from "./SpeedControl";
 import { StepRail } from "./StepRail";
 
 interface Props {
+  method: MethodInfo;
   stages: Stage[];
   /** In practice mode, the step the kid does on their own. */
   practiceStep?: number;
@@ -27,7 +28,7 @@ interface Pos {
   move: number;
 }
 
-export function Guide({ stages, practiceStep, onDifferent, onAgain }: Props) {
+export function Guide({ method, stages, practiceStep, onDifferent, onAgain }: Props) {
   const { t } = useI18n();
   const cube = useRef<Cube3DHandle>(null);
   const firstView: View = stages[0]?.step === practiceStep ? "yourTurn" : "moves";
@@ -116,16 +117,14 @@ export function Guide({ stages, practiceStep, onDifferent, onAgain }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [next, back]);
 
-  const stepName = t(stepKey(stage.step, "name"));
+  const stageName = (id: number) => t(method.stages.find((s) => s.id === id)!.name);
+  const stepName = stageName(stage.step);
   const segDone = pos.move >= seg.moves.length;
   const nextLabel =
     !segDone && seg.kind === "rotate" ? t("guide.turnCube") : segDone ? t("guide.continue") : t("guide.next");
   const doneUpTo = view === "stageDone" || view === "end" ? stage.step : stage.step - 1;
   const firstAction = stage.segments.find((s) => s.kind !== "rotate") ?? stage.segments[0];
-  // Cases belong to the lesson of their step ("2.2" is step 2's case 2, even when used in step 3).
-  const caseStep = seg.caseId ? Number(seg.caseId.split(".")[0]) : undefined;
-  const lessonLink =
-    caseStep && LESSONS[caseStep]?.cases.some((c) => c.id === seg.caseId) ? `/learn/${caseStep}/${seg.caseId}` : undefined;
+  const lessonLink = seg.caseId ? method.lessonLink(seg.caseId) : undefined;
 
   let text: ReactNode;
   let controls: ReactNode;
@@ -166,7 +165,7 @@ export function Guide({ stages, practiceStep, onDifferent, onAgain }: Props) {
     text = (
       <>
         <h2>{t("guide.stepDone", { n: stage.step })}</h2>
-        <p className="guide-text">{t(`guide.stepDone.${stage.step}` as "guide.stepDone.1")}</p>
+        <p className="guide-text">{t(method.stageDone(stage.step))}</p>
       </>
     );
     controls = (
@@ -176,7 +175,7 @@ export function Guide({ stages, practiceStep, onDifferent, onAgain }: Props) {
         </button>
         <button type="button" className="btn btn-primary btn-big" onClick={next}>
           {pos.stage + 1 < stages.length
-            ? t("guide.nextStep", { name: t(stepKey(stages[pos.stage + 1].step, "name")) })
+            ? t("guide.nextStep", { name: stageName(stages[pos.stage + 1].step) })
             : t("guide.continue")}
         </button>
       </>
@@ -220,7 +219,7 @@ export function Guide({ stages, practiceStep, onDifferent, onAgain }: Props) {
 
   return (
     <div className="guide">
-      <StepRail current={stage.step} doneUpTo={doneUpTo} />
+      <StepRail stages={method.stages} current={stage.step} doneUpTo={doneUpTo} />
       <div className="guide-body">
         <div className="guide-card">
           <p className="guide-step">

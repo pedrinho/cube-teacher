@@ -33,6 +33,22 @@ describe("moves", () => {
   it("parses and prints algs", () => {
     expect(algToString(parseAlg("  R U'  F2 M' x2 ")).toString()).toBe("R U' F2 M' x2");
     expect(() => parseAlg("Q")).toThrow();
+    expect(() => parseAlg("Mw")).toThrow();
+  });
+
+  it("reads the notation quirks of printed guides", () => {
+    expect(algToString(parseAlg("RUR'URU2R‘"))).toBe("R U R' U R U2 R'");
+    expect(algToString(parseAlg("R U2' R2’ y' d Rw u2"))).toBe("R U2 R2 y' d r u2");
+    expect(algToString(parseAlg("(R U R' U')"))).toBe("R U R' U'");
+  });
+
+  it("wide moves are a face plus the slice next to it", () => {
+    expect(applyAlg(SOLVED, "r")).toBe(applyAlg(SOLVED, "R M'"));
+    expect(applyAlg(SOLVED, "l")).toBe(applyAlg(SOLVED, "L M"));
+    expect(applyAlg(SOLVED, "u")).toBe(applyAlg(SOLVED, "U E'"));
+    expect(applyAlg(SOLVED, "d")).toBe(applyAlg(SOLVED, "D E"));
+    expect(applyAlg(SOLVED, "f")).toBe(applyAlg(SOLVED, "F S"));
+    expect(applyAlg(SOLVED, "b")).toBe(applyAlg(SOLVED, "B S'"));
   });
 
   it("R moves the front-right stickers to the top", () => {
@@ -66,7 +82,7 @@ describe("matches cubing.js", () => {
     const kpuzzle = await cube3x3x3.kpuzzle();
     let seed = 1;
     const random = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-    const extra = parseAlg("M E S x y z M' x' y2");
+    const extra = parseAlg("M E S x y z M' x' y2 r l' u d2 f b' Rw");
     for (let n = 0; n < 200; n++) {
       const alg = [...randomScramble(15, random), extra[n % extra.length], ...randomScramble(5, random)];
       const ours = toPatternData(applyAlg(SOLVED, alg));

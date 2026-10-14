@@ -7,7 +7,7 @@ import { NetEditor, blankNet } from "../components/NetEditor";
 import { SOLVED, applyAlg, randomScramble, type CubeState, type Move } from "../cube/model";
 import { validate, type ValidationError } from "../cube/validate";
 import { holdAs } from "../cube/orientation";
-import { solveLayers } from "../methods/layers/solver";
+import type { MethodInfo } from "../methods/registry";
 import type { Stage as SolveStage } from "../methods/types";
 
 export const PAINT_STORAGE_KEY = "cube-teacher.paint";
@@ -51,7 +51,7 @@ function ErrorList({ errors }: { errors: ValidationError[] }) {
   );
 }
 
-export function Solve() {
+export function Solve({ method }: { method: MethodInfo }) {
   const { t } = useI18n();
   const [mode, setMode] = useState<Mode>("paint");
   const [stage, setStage] = useState<Stage>({ kind: "input" });
@@ -105,7 +105,7 @@ export function Solve() {
     return (
       <>
         <h1>{t("solve.title")}</h1>
-        <Guide stages={stage.stages} onDifferent={different} onAgain={startOver} />
+        <Guide method={method} stages={stage.stages} onDifferent={different} onAgain={startOver} />
       </>
     );
   }
@@ -122,7 +122,7 @@ export function Solve() {
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => setStage({ kind: "guide", stages: solveLayers(stage.state) })}
+                onClick={() => setStage({ kind: "guide", stages: method.solve(stage.state) })}
               >
                 {t("solve.start")}
               </button>
