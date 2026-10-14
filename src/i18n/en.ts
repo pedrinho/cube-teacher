@@ -390,7 +390,6 @@ export const en = {
   "tr.learningEmpty": "You haven't marked any cases yet. In the lessons, tap “I'm learning this” on the cases you want to practice.",
   "tr.ready": "{n} cases to practice.",
   "tr.begin": "Start practicing",
-  "tr.making": "Making a scramble…",
   "tr.scramble": "Hold your solved cube with white on top and green in front, do these moves, then turn it over so yellow is on top.",
   "tr.start": "Tap to start the timer",
   "tr.stop": "Tap to stop",
