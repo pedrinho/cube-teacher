@@ -1188,3 +1188,9 @@ span.lesson-row[aria-disabled="true"] {
   font-size: var(--step--1);
   margin: 0;
 }
+
+@media (max-width: 420px) {
+  .segmented button {
+    padding: 0.3rem 0.55rem;
+  }
+}

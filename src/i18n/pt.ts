@@ -15,6 +15,7 @@ export const pt: Messages = {
   "color.O": "laranja",
 
   "speed.label": "Velocidade",
+  "speed.verySlow": "Bem devagar",
   "speed.slow": "Devagar",
   "speed.normal": "Normal",
   "speed.fast": "Rápido",

@@ -1,10 +1,11 @@
 // Viewer preferences that should stick between visits (per browser).
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
-export type Speed = "slow" | "normal" | "fast";
+export type Speed = "verySlow" | "slow" | "normal" | "fast";
 
 /** How long one quarter turn takes, and the pause between moves of a demo. */
 export const SPEEDS: Record<Speed, { turnMs: number; pauseMs: number }> = {
+  verySlow: { turnMs: 1100, pauseMs: 700 },
   slow: { turnMs: 700, pauseMs: 400 },
   normal: { turnMs: 450, pauseMs: 250 },
   fast: { turnMs: 250, pauseMs: 80 },
@@ -22,7 +23,7 @@ const SettingsContext = createContext<Settings | null>(null);
 function initialSpeed(): Speed {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "slow" || saved === "normal" || saved === "fast") return saved;
+    if (saved && saved in SPEEDS) return saved as Speed;
   } catch {
     // Storage can be blocked; use the default.
   }

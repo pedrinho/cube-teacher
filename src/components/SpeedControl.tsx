@@ -1,8 +1,8 @@
-// Slow / Normal / Fast for the 3D cube's animations, remembered between visits.
+// Very slow / Slow / Normal / Fast for the 3D cube's animations, remembered between visits.
 import { useI18n } from "../i18n";
 import { useSettings, type Speed } from "../settings";
 
-const SPEEDS: Speed[] = ["slow", "normal", "fast"];
+const SPEEDS: Speed[] = ["verySlow", "slow", "normal", "fast"];
 
 export function SpeedControl() {
   const { t } = useI18n();

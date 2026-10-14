@@ -13,6 +13,7 @@ export const en = {
   "color.O": "orange",
 
   "speed.label": "Speed",
+  "speed.verySlow": "Very slow",
   "speed.slow": "Slow",
   "speed.normal": "Normal",
   "speed.fast": "Fast",
