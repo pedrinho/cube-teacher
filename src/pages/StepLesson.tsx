@@ -5,6 +5,7 @@ import { CubeSvg } from "../components/CubeSvg";
 import { Cube3D, type Cube3DHandle } from "../components/Cube3D";
 import { Moves } from "../components/Moves";
 import { SpeedControl } from "../components/SpeedControl";
+import { TopView } from "../components/TopView";
 import { isRotation, parseAlg, type Move } from "../cube/model";
 import { demoMoves, type Lesson, type LessonCase } from "../content/layers/lessons";
 
@@ -85,7 +86,17 @@ export function StepLesson({ lesson, focusCase }: { lesson: Lesson; focusCase?: 
           <ol className="case-list">
             {lesson.cases.map((c) => (
               <li key={c.id} id={`case-${c.id}`} className="case" data-active={active === c.id || undefined}>
-                <CubeSvg state={c.setup} visible={lesson.mask} className="case-cube" label={t(c.title)} />
+                {lesson.view === "top" ? (
+                  <TopView
+                    state={c.setup}
+                    visible={lesson.mask}
+                    arrows={lesson.arrows}
+                    className="case-cube case-top"
+                    label={t(c.title)}
+                  />
+                ) : (
+                  <CubeSvg state={c.setup} visible={lesson.mask} className="case-cube" label={t(c.title)} />
+                )}
                 <div className="case-body">
                   <h3>{t(c.title)}</h3>
                   <p>{t(c.text)}</p>

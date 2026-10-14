@@ -5,6 +5,10 @@ import type { MessageKey } from "../../i18n/en";
 import { WHITE_UP, YELLOW_UP, stepMask, type Visible } from "../../methods/layers/pictures";
 import { solveFirstLayer } from "../../methods/layers/step2-corners";
 import { solveSecondLayer } from "../../methods/layers/step3-edges";
+import { solveYellowCross } from "../../methods/layers/step4-cross";
+import { solveYellowFace } from "../../methods/layers/step5-face";
+import { solveTopCorners } from "../../methods/layers/step6-corners";
+import { solveMinerva } from "../../methods/layers/step7-minerva";
 
 export interface LessonCase {
   /** Also the anchor id on the lesson page, e.g. "2.1". */
@@ -31,6 +35,10 @@ export interface Lesson {
   tips: MessageKey[];
   /** Which pieces the pictures and the demo cube draw in color. */
   mask: Visible;
+  /** Case pictures: the cube from the front corner, or the top layer from above. */
+  view?: "cube" | "top";
+  /** Draw arrows to where top pieces go (top view only). */
+  arrows?: boolean;
 }
 
 const undo = (base: CubeState, moves: string) => applyAlg(base, invertAlg(parseAlg(moves)));
@@ -45,6 +53,15 @@ function swapEdges(state: CubeState, a: string, b: string): CubeState {
   const out = [...state];
   if (a === b) [out[sa[0]], out[sa[1]]] = [state[sa[1]], state[sa[0]]];
   else sa.forEach((st, k) => ([out[st], out[sb[k]]] = [state[sb[k]], state[st]]));
+  return out.join("");
+}
+
+/** Swaps two corners' stickers in order (each keeps its top sticker on top). */
+function swapCorners(state: CubeState, a: string, b: string): CubeState {
+  const sa = findSlot(CORNER_SLOTS, a).stickers;
+  const sb = findSlot(CORNER_SLOTS, b).stickers;
+  const out = [...state];
+  sa.forEach((st, k) => ([out[st], out[sb[k]]] = [state[sb[k]], state[st]]));
   return out.join("");
 }
 
@@ -65,6 +82,24 @@ const STUCK = twist(twist(YELLOW_UP, "DFR", 1), "UBL", 2);
 // Second layer edges stuck in the middle layer: one flipped in its place (with a top edge flipped
 // too, as a real cube needs), or two swapped (with two top edges swapped too).
 const FLIPPED = swapEdges(swapEdges(YELLOW_UP, "FR", "FR"), "UB", "UB");
+// All four top edges flipped: only the yellow center on top.
+const DOT = ["UF", "UR", "UB", "UL"].reduce((s, e) => swapEdges(s, e, e), YELLOW_UP);
+const CROSS = "F U R U' R' F'";
+const SUNE = "R U R' U R U2 R'";
+// Two corners with yellow on top, front left corner showing yellow to the front (case 2), and
+// none on top, front left corner showing yellow to the left (case 3).
+const TWO_UP = undo(YELLOW_UP, `${SUNE} ${SUNE} y2 ${SUNE}`);
+const NONE_UP = undo(YELLOW_UP, `${SUNE} ${SUNE}`);
+const CORNERS = "R' F R' B2 R F' R' B2 R2";
+// Headlights at the back, needing a half turn of the top at the end (case 1), and two corners
+// swapped across the top so no side has headlights (case 2; two edges swapped too, as a real cube needs).
+const HEADLIGHTS = undo(YELLOW_UP, `${CORNERS} U2`);
+const DIAGONAL = swapEdges(swapCorners(YELLOW_UP, "UFR", "UBL"), "UF", "UB");
+const MINERVA_CW = "F2 U M' U2 M U F2";
+const MINERVA_CCW = "F2 U' M' U2 M U' F2";
+// No side finished: edges swap with the opposite ones (case 3) or with neighbors (case 4).
+const OPPOSITE = swapEdges(swapEdges(YELLOW_UP, "UF", "UB"), "UL", "UR");
+const NEIGHBORS = swapEdges(swapEdges(YELLOW_UP, "UF", "UL"), "UB", "UR");
 const SWAPPED = swapEdges(swapEdges(YELLOW_UP, "FR", "FL"), "UF", "UB");
 
 export const LESSONS: Record<number, Lesson> = {
@@ -153,5 +188,79 @@ export const LESSONS: Record<number, Lesson> = {
     ],
     tips: ["l3.tip1", "l3.tip2"],
     mask: stepMask(3),
+  },
+  4: {
+    step: 4,
+    paragraphs: ["l4.p1", "l4.p2", "l4.p3"],
+    casesLead: "l4.casesLead",
+    cases: [
+      { id: "4.1", title: "l4.1.title", text: "l4.1.text", alg: CROSS, setup: undo(YELLOW_UP, CROSS) },
+      {
+        id: "4.2",
+        title: "l4.2.title",
+        text: "l4.2.text",
+        alg: CROSS,
+        follow: { label: "lesson.thenAgain", alg: CROSS },
+        setup: undo(YELLOW_UP, `${CROSS} ${CROSS}`),
+      },
+      { id: "4.3", title: "l4.3.title", text: "l4.3.text", alg: CROSS, demo: solverMoves(solveYellowCross, DOT), setup: DOT },
+    ],
+    tips: ["l4.tip1", "l4.tip2"],
+    mask: stepMask(4),
+    view: "top",
+  },
+  5: {
+    step: 5,
+    paragraphs: ["l5.p1", "l5.p2", "l5.p3"],
+    casesLead: "l5.casesLead",
+    cases: [
+      { id: "5.1", title: "l5.1.title", text: "l5.1.text", alg: SUNE, setup: undo(YELLOW_UP, SUNE) },
+      { id: "5.2", title: "l5.2.title", text: "l5.2.text", alg: SUNE, demo: solverMoves(solveYellowFace, TWO_UP), setup: TWO_UP },
+      { id: "5.3", title: "l5.3.title", text: "l5.3.text", alg: SUNE, demo: solverMoves(solveYellowFace, NONE_UP), setup: NONE_UP },
+    ],
+    tips: ["l5.tip1", "l5.tip2"],
+    mask: stepMask(5),
+    view: "top",
+  },
+  6: {
+    step: 6,
+    paragraphs: ["l6.p1", "l6.p2", "l6.p3"],
+    casesLead: "l6.casesLead",
+    cases: [
+      {
+        id: "6.1",
+        title: "l6.1.title",
+        text: "l6.1.text",
+        alg: CORNERS,
+        follow: { label: "lesson.thenAlign", alg: "U2" },
+        setup: HEADLIGHTS,
+      },
+      {
+        id: "6.2",
+        title: "l6.2.title",
+        text: "l6.2.text",
+        alg: CORNERS,
+        demo: solverMoves(solveTopCorners, DIAGONAL),
+        setup: DIAGONAL,
+      },
+    ],
+    tips: ["l6.tip1", "l6.tip2"],
+    mask: stepMask(6),
+    view: "top",
+  },
+  7: {
+    step: 7,
+    paragraphs: ["l7.p1", "l7.p2", "l7.p3"],
+    casesLead: "l7.casesLead",
+    cases: [
+      { id: "7.1", title: "l7.1.title", text: "l7.1.text", alg: MINERVA_CW, setup: undo(YELLOW_UP, MINERVA_CW) },
+      { id: "7.2", title: "l7.2.title", text: "l7.2.text", alg: MINERVA_CCW, setup: undo(YELLOW_UP, MINERVA_CCW) },
+      { id: "7.3", title: "l7.3.title", text: "l7.3.text", alg: MINERVA_CW, demo: solverMoves(solveMinerva, OPPOSITE), setup: OPPOSITE },
+      { id: "7.4", title: "l7.4.title", text: "l7.4.text", alg: MINERVA_CW, demo: solverMoves(solveMinerva, NEIGHBORS), setup: NEIGHBORS },
+    ],
+    tips: ["l7.tip1", "l7.tip2"],
+    mask: stepMask(7),
+    view: "top",
+    arrows: true,
   },
 };

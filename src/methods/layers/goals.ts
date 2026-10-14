@@ -1,5 +1,5 @@
 // What "done" means after each step, for the solver's checks and the tests.
-import type { Color, CubeState } from "../../cube/model";
+import { EDGE_SLOTS, centers, isSolved, type Color, type CubeState } from "../../cube/model";
 import { isSolvedPiece } from "../../cube/pieces";
 
 export const SIDE_COLORS: Color[] = ["G", "R", "B", "O"];
@@ -13,9 +13,25 @@ export const crossDone = (s: CubeState) => WHITE_EDGES.every((p) => isSolvedPiec
 export const firstLayerDone = (s: CubeState) => crossDone(s) && WHITE_CORNERS.every((p) => isSolvedPiece(s, p));
 export const secondLayerDone = (s: CubeState) => firstLayerDone(s) && MIDDLE_EDGES.every((p) => isSolvedPiece(s, p));
 
+const TOP_EDGES = EDGE_SLOTS.filter((e) => e.faces[0] === "U");
+/** Names of the top edge slots whose top sticker has the top center's color. */
+export const topColorEdges = (s: CubeState) =>
+  TOP_EDGES.filter((e) => s[e.stickers[0]] === centers(s).U).map((e) => e.name);
+export const yellowCrossDone = (s: CubeState) => secondLayerDone(s) && topColorEdges(s).length === 4;
+export const yellowFaceDone = (s: CubeState) =>
+  yellowCrossDone(s) && Array.from({ length: 9 }, (_, i) => s[i]).every((c) => c === centers(s).U);
+/** Yellow corners, as yellow plus two neighboring side colors. */
+export const YELLOW_CORNERS: Color[][] = SIDE_COLORS.map((c, i) => ["Y", c, SIDE_COLORS[(i + 1) % 4]]);
+export const topCornersDone = (s: CubeState) => yellowFaceDone(s) && YELLOW_CORNERS.every((p) => isSolvedPiece(s, p));
+export const YELLOW_EDGES: Color[][] = SIDE_COLORS.map((c) => ["Y", c]);
+
 /** Goal of each step, by step number. */
 export const STEP_GOALS: Record<number, (s: CubeState) => boolean> = {
   1: crossDone,
   2: firstLayerDone,
   3: secondLayerDone,
+  4: yellowCrossDone,
+  5: yellowFaceDone,
+  6: topCornersDone,
+  7: isSolved,
 };

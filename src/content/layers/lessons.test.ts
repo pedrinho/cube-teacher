@@ -3,7 +3,20 @@ import { describe, expect, it } from "vitest";
 import { applyAlg, type Color, type CubeState } from "../../cube/model";
 import { slotOf } from "../../cube/pieces";
 import { validate } from "../../cube/validate";
-import { MIDDLE_EDGES, crossDone, firstLayerDone, secondLayerDone } from "../../methods/layers/goals";
+import {
+  MIDDLE_EDGES,
+  crossDone,
+  firstLayerDone,
+  secondLayerDone,
+  topColorEdges,
+  yellowCrossDone,
+  yellowFaceDone,
+  topCornersDone,
+} from "../../methods/layers/goals";
+import { headlights } from "../../methods/layers/step6-corners";
+import { isSolved, EDGE_SLOTS } from "../../cube/model";
+import { homeOf } from "../../cube/pieces";
+import { CORNER_SLOTS } from "../../cube/model";
 import { LESSONS, demoMoves } from "./lessons";
 
 const where = (state: CubeState, piece: Color[]) => {
@@ -68,6 +81,71 @@ describe("lesson 3 cases", () => {
   it.each(["3.1", "3.2", "3.flip", "3.none"])("%s: the demo finishes the second layer", (id) => {
     const c = byId(3, id);
     expect(secondLayerDone(applyAlg(c.setup, demoMoves(c)))).toBe(true);
+  });
+});
+
+describe("lesson 4 cases", () => {
+  const up = (id: string) => topColorEdges(byId(4, id).setup).sort();
+  it("4.1 is an L at the back left", () => expect(up("4.1")).toEqual(["UB", "UL"]));
+  it("4.2 is a line from left to right", () => expect(up("4.2")).toEqual(["UL", "UR"]));
+  it("4.3 has only the yellow center", () => expect(up("4.3")).toEqual([]));
+  it.each(["4.1", "4.2", "4.3"])("%s: the demo finishes the yellow cross", (id) => {
+    const c = byId(4, id);
+    expect(yellowCrossDone(applyAlg(c.setup, demoMoves(c)))).toBe(true);
+  });
+});
+
+describe("lesson 5 cases", () => {
+  const top = CORNER_SLOTS.filter((c) => c.faces[0] === "U");
+  const ufl = top.find((c) => [...c.name].sort().join("") === "FLU")!;
+  const up = (s: CubeState) => top.filter((c) => s[c.stickers[0]] === "Y").length;
+  const yellowOn = (s: CubeState) => ufl.faces[ufl.stickers.findIndex((i) => s[i] === "Y")];
+  it("5.1: one corner yellow on top, at the front left", () => {
+    const s = byId(5, "5.1").setup;
+    expect([up(s), yellowOn(s)]).toEqual([1, "U"]);
+  });
+  it("5.2: two corners yellow on top, front left corner shows yellow to the front", () => {
+    const s = byId(5, "5.2").setup;
+    expect([up(s), yellowOn(s)]).toEqual([2, "F"]);
+  });
+  it("5.3: no corner yellow on top, front left corner shows yellow to the left", () => {
+    const s = byId(5, "5.3").setup;
+    expect([up(s), yellowOn(s)]).toEqual([0, "L"]);
+  });
+  it.each(["5.1", "5.2", "5.3"])("%s: the demo makes the whole top yellow", (id) => {
+    const c = byId(5, id);
+    expect(yellowFaceDone(applyAlg(c.setup, demoMoves(c)))).toBe(true);
+  });
+});
+
+describe("lesson 6 cases", () => {
+  it("6.1 has headlights only at the back", () => expect(headlights(byId(6, "6.1").setup)).toEqual(["B"]));
+  it("6.2 has no headlights", () => expect(headlights(byId(6, "6.2").setup)).toEqual([]));
+  it.each(["6.1", "6.2"])("%s: the demo puts the top corners in place", (id) => {
+    const c = byId(6, id);
+    expect(topCornersDone(applyAlg(c.setup, demoMoves(c)))).toBe(true);
+  });
+});
+
+describe("lesson 7 cases", () => {
+  // Where each top edge has to go, as "from>to" slot names.
+  const moves = (id: string) => {
+    const s = byId(7, id).setup;
+    return EDGE_SLOTS.filter((e) => e.faces[0] === "U")
+      .map((e) => [e.name, homeOf(s, e.stickers.map((i) => s[i]) as Color[]).name])
+      .filter(([a, b]) => a !== b)
+      .map(([a, b]) => `${a}>${b}`)
+      .sort();
+  };
+  it("7.1: back finished, edges go round clockwise (front to left)", () =>
+    expect(moves("7.1")).toEqual(["UF>UL", "UL>UR", "UR>UF"]));
+  it("7.2: back finished, edges go round counterclockwise (front to right)", () =>
+    expect(moves("7.2")).toEqual(["UF>UR", "UL>UF", "UR>UL"]));
+  it("7.3: opposite edges swap", () => expect(moves("7.3")).toEqual(["UB>UF", "UF>UB", "UL>UR", "UR>UL"]));
+  it("7.4: neighboring edges swap", () => expect(moves("7.4")).toEqual(["UB>UR", "UF>UL", "UL>UF", "UR>UB"]));
+  it.each(["7.1", "7.2", "7.3", "7.4"])("%s: the demo solves the cube", (id) => {
+    const c = byId(7, id);
+    expect(isSolved(applyAlg(c.setup, demoMoves(c)))).toBe(true);
   });
 });
 

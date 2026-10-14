@@ -911,6 +911,9 @@ button.move:hover {
   width: 6.5rem;
   flex: none;
 }
+.case-top {
+  width: 7.5rem;
+}
 .case-body {
   display: grid;
   gap: 0.6rem;
@@ -953,6 +956,9 @@ span.lesson-row[aria-disabled="true"] {
   }
   .case-cube {
     width: 4.5rem;
+  }
+  .case-top {
+    width: 5.5rem;
   }
 }
 
