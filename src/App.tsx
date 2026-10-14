@@ -5,7 +5,7 @@ import { Learn } from "./pages/Learn";
 import { Lesson } from "./pages/Lesson";
 import { Solve } from "./pages/Solve";
 import { Practice } from "./pages/Practice";
-import { LAYERS } from "./methods/registry";
+import { FRIDRICH, LAYERS } from "./methods/registry";
 import { FridrichHome } from "./pages/fridrich/FridrichHome";
 import { FridrichLesson } from "./pages/fridrich/FridrichLesson";
 import { useI18n } from "./i18n";
@@ -18,12 +18,12 @@ export function App() {
   if (section === "fridrich") {
     if (param === "learn" && sub !== undefined)
       page = <FridrichLesson key={sub} step={Number(sub)} focusCase={extra} />;
-    else if (param === "solve") page = <p className="notice">{t("fr.solveSoon")}</p>;
+    else if (param === "solve") page = <Solve key="fridrich" method={FRIDRICH} />;
     else if (param === "train") page = <p className="notice">{t("fr.trainSoon")}</p>;
     else page = <FridrichHome />;
   } else if (section === "learn" && param !== undefined) page = <Lesson key={param} step={Number(param)} focusCase={sub} />;
   else if (section === "learn") page = <Learn />;
-  else if (section === "solve") page = <Solve method={LAYERS} />;
+  else if (section === "solve") page = <Solve key="layers" method={LAYERS} />;
   else if (section === "practice") page = <Practice key={param ?? ""} step={param ? Number(param) : undefined} />;
   else page = <Home />;
   return (

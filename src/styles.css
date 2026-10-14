@@ -1293,3 +1293,16 @@ span.lesson-row[aria-disabled="true"] {
   border-color: var(--ok);
   color: var(--ok);
 }
+
+.last-layer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.last-layer p {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--step--1);
+}

@@ -5,7 +5,7 @@ import { LESSONS } from "../content/layers/lessons";
 import { layersMethod } from "./layers";
 import { solveLayers } from "./layers/solver";
 import { fridrichMethod } from "./fridrich";
-import { solveFridrich } from "./fridrich/solver";
+import { solveFridrich, type LastLayer } from "./fridrich/solver";
 import { OLL_CORNER_CASES } from "./fridrich/sets";
 import type { MethodDef, Stage } from "./types";
 
@@ -17,7 +17,16 @@ export interface MethodInfo {
   stageDone: (id: number) => MessageKey;
   /** Lesson page showing a case used by the solver, if there is one. */
   lessonLink: (caseId: string) => string | undefined;
-  solve: (state: CubeState) => Stage[];
+  solve: (state: CubeState, options?: SolveOptions) => Stage[];
+  /** Texts for the solve page. */
+  solveTitle: MessageKey;
+  solveLead: MessageKey;
+  /** Whether the method offers a choice for the last layer (Fridrich: 2-look or full). */
+  lastLayerChoice?: boolean;
+}
+
+export interface SolveOptions {
+  lastLayer?: LastLayer;
 }
 
 export const LAYERS: MethodInfo = {
@@ -30,6 +39,8 @@ export const LAYERS: MethodInfo = {
     return LESSONS[step]?.cases.some((c) => c.id === caseId) ? `/learn/${step}/${caseId}` : undefined;
   },
   solve: (state) => solveLayers(state),
+  solveTitle: "solve.title",
+  solveLead: "solve.lead",
 };
 
 export const FRIDRICH: MethodInfo = {
@@ -45,5 +56,8 @@ export const FRIDRICH: MethodInfo = {
     if (set === "f2l") return `/fridrich/learn/6/${caseId}`;
     return undefined;
   },
-  solve: (state) => solveFridrich(state),
+  solve: (state, options) => solveFridrich(state, options?.lastLayer ?? "twoLook"),
+  solveTitle: "fr.solve.title",
+  solveLead: "fr.solve.lead",
+  lastLayerChoice: true,
 };
