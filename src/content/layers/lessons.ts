@@ -6,6 +6,7 @@ import { WHITE_UP, YELLOW_UP, stepMask, type Visible } from "../../methods/layer
 import { solveFirstLayer } from "../../methods/layers/step2-corners";
 import { solveSecondLayer } from "../../methods/layers/step3-edges";
 import { solveYellowCross } from "../../methods/layers/step4-cross";
+import { solveYellowFace } from "../../methods/layers/step5-face";
 
 export interface LessonCase {
   /** Also the anchor id on the lesson page, e.g. "2.1". */
@@ -73,6 +74,11 @@ const FLIPPED = swapEdges(swapEdges(YELLOW_UP, "FR", "FR"), "UB", "UB");
 // All four top edges flipped: only the yellow center on top.
 const DOT = ["UF", "UR", "UB", "UL"].reduce((s, e) => swapEdges(s, e, e), YELLOW_UP);
 const CROSS = "F U R U' R' F'";
+const SUNE = "R U R' U R U2 R'";
+// Two corners with yellow on top, front left corner showing yellow to the front (case 2), and
+// none on top, front left corner showing yellow to the left (case 3).
+const TWO_UP = undo(YELLOW_UP, `${SUNE} ${SUNE} y2 ${SUNE}`);
+const NONE_UP = undo(YELLOW_UP, `${SUNE} ${SUNE}`);
 const SWAPPED = swapEdges(swapEdges(YELLOW_UP, "FR", "FL"), "UF", "UB");
 
 export const LESSONS: Record<number, Lesson> = {
@@ -180,6 +186,19 @@ export const LESSONS: Record<number, Lesson> = {
     ],
     tips: ["l4.tip1", "l4.tip2"],
     mask: stepMask(4),
+    view: "top",
+  },
+  5: {
+    step: 5,
+    paragraphs: ["l5.p1", "l5.p2", "l5.p3"],
+    casesLead: "l5.casesLead",
+    cases: [
+      { id: "5.1", title: "l5.1.title", text: "l5.1.text", alg: SUNE, setup: undo(YELLOW_UP, SUNE) },
+      { id: "5.2", title: "l5.2.title", text: "l5.2.text", alg: SUNE, demo: solverMoves(solveYellowFace, TWO_UP), setup: TWO_UP },
+      { id: "5.3", title: "l5.3.title", text: "l5.3.text", alg: SUNE, demo: solverMoves(solveYellowFace, NONE_UP), setup: NONE_UP },
+    ],
+    tips: ["l5.tip1", "l5.tip2"],
+    mask: stepMask(5),
     view: "top",
   },
 };

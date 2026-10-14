@@ -18,6 +18,8 @@ const TOP_EDGES = EDGE_SLOTS.filter((e) => e.faces[0] === "U");
 export const topColorEdges = (s: CubeState) =>
   TOP_EDGES.filter((e) => s[e.stickers[0]] === centers(s).U).map((e) => e.name);
 export const yellowCrossDone = (s: CubeState) => secondLayerDone(s) && topColorEdges(s).length === 4;
+export const yellowFaceDone = (s: CubeState) =>
+  yellowCrossDone(s) && Array.from({ length: 9 }, (_, i) => s[i]).every((c) => c === centers(s).U);
 
 /** Goal of each step, by step number. */
 export const STEP_GOALS: Record<number, (s: CubeState) => boolean> = {
@@ -25,4 +27,5 @@ export const STEP_GOALS: Record<number, (s: CubeState) => boolean> = {
   2: firstLayerDone,
   3: secondLayerDone,
   4: yellowCrossDone,
+  5: yellowFaceDone,
 };

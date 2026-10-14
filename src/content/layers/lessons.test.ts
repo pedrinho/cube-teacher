@@ -3,7 +3,16 @@ import { describe, expect, it } from "vitest";
 import { applyAlg, type Color, type CubeState } from "../../cube/model";
 import { slotOf } from "../../cube/pieces";
 import { validate } from "../../cube/validate";
-import { MIDDLE_EDGES, crossDone, firstLayerDone, secondLayerDone, topColorEdges, yellowCrossDone } from "../../methods/layers/goals";
+import {
+  MIDDLE_EDGES,
+  crossDone,
+  firstLayerDone,
+  secondLayerDone,
+  topColorEdges,
+  yellowCrossDone,
+  yellowFaceDone,
+} from "../../methods/layers/goals";
+import { CORNER_SLOTS } from "../../cube/model";
 import { LESSONS, demoMoves } from "./lessons";
 
 const where = (state: CubeState, piece: Color[]) => {
@@ -79,6 +88,29 @@ describe("lesson 4 cases", () => {
   it.each(["4.1", "4.2", "4.3"])("%s: the demo finishes the yellow cross", (id) => {
     const c = byId(4, id);
     expect(yellowCrossDone(applyAlg(c.setup, demoMoves(c)))).toBe(true);
+  });
+});
+
+describe("lesson 5 cases", () => {
+  const top = CORNER_SLOTS.filter((c) => c.faces[0] === "U");
+  const ufl = top.find((c) => [...c.name].sort().join("") === "FLU")!;
+  const up = (s: CubeState) => top.filter((c) => s[c.stickers[0]] === "Y").length;
+  const yellowOn = (s: CubeState) => ufl.faces[ufl.stickers.findIndex((i) => s[i] === "Y")];
+  it("5.1: one corner yellow on top, at the front left", () => {
+    const s = byId(5, "5.1").setup;
+    expect([up(s), yellowOn(s)]).toEqual([1, "U"]);
+  });
+  it("5.2: two corners yellow on top, front left corner shows yellow to the front", () => {
+    const s = byId(5, "5.2").setup;
+    expect([up(s), yellowOn(s)]).toEqual([2, "F"]);
+  });
+  it("5.3: no corner yellow on top, front left corner shows yellow to the left", () => {
+    const s = byId(5, "5.3").setup;
+    expect([up(s), yellowOn(s)]).toEqual([0, "L"]);
+  });
+  it.each(["5.1", "5.2", "5.3"])("%s: the demo makes the whole top yellow", (id) => {
+    const c = byId(5, id);
+    expect(yellowFaceDone(applyAlg(c.setup, demoMoves(c)))).toBe(true);
   });
 });
 

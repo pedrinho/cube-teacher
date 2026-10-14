@@ -15,6 +15,11 @@ export const ALGS = {
   "4.1": "F U R U' R' F'", // an L at the back left: finishes the cross
   "4.2": "F U R U' R' F'", // a line from left to right: becomes an L at the back left
   "4.3": "F U R U' R' F'", // only the center: becomes a line
+
+  // Step 5: yellow face. One algorithm (Sune); the case says how to hold the cube.
+  "5.1": "R U R' U R U2 R'", // one yellow corner on top, held at the front left
+  "5.2": "R U R' U R U2 R'", // two: front left corner's yellow facing front; becomes case 1
+  "5.3": "R U R' U R U2 R'", // none: front left corner's yellow facing left; becomes case 1
 } as const;
 
 export type CaseId = keyof typeof ALGS;
