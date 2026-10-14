@@ -147,6 +147,7 @@ export const pt: Messages = {
   "guide.stepDone.3": "A camada do meio está pronta. Duas camadas prontas: dois terços do cubo!",
   "guide.stepDone.4": "A cruz amarela está pronta.",
   "guide.stepDone.5": "A face de cima está toda amarela.",
+  "guide.stepDone.6": "Os cantos de cima estão no lugar.",
   "guide.nextStep": "Próximo: {name}",
   "guide.end.2.title": "1ª camada pronta!",
   "guide.end.2.text": "Muito bem. Continue com os próximos passos quando quiser.",
@@ -156,6 +157,8 @@ export const pt: Messages = {
   "guide.end.4.text": "Os próximos passos vêm na próxima versão do app. Até lá, pratique até a cruz amarela.",
   "guide.end.5.title": "Face amarela pronta!",
   "guide.end.5.text": "Os últimos passos vêm na próxima versão do app. Até lá, pratique até a face amarela.",
+  "guide.end.6.title": "Cantos de cima prontos!",
+  "guide.end.6.text": "O último passo, a Minerva, vem na próxima versão do app.",
   "guide.again": "Montar outro cubo",
   "guide.soon": "em breve",
   "guide.progress": "Passos",
@@ -226,6 +229,20 @@ export const pt: Messages = {
   "l5.3.text": "Segure o cubo com o canto da frente à esquerda mostrando o amarelo para a esquerda. Faça os movimentos: vira o caso 1.",
   "l5.tip1": "Os movimentos só usam a face da direita e a de cima: direita sobe, cima, direita desce, cima, direita sobe, cima duas vezes, direita desce.",
   "l5.tip2": "Se 3 cantos tiverem amarelo em cima, alguém torceu um canto com a mão. Torça de volta até as cores combinarem com os vizinhos.",
+
+  "lesson.thenAlign": "Depois gire a camada de cima até os cantos combinarem (aqui, U2):",
+
+  "l6.p1": "A face de cima está amarela. Agora cada canto de cima vai para o seu lugar. Olhe os lados, não a parte de cima.",
+  "l6.p2": "Procure dois cantos de cima no mesmo lado mostrando a mesma cor, como os faróis de um carro. Confira os quatro lados.",
+  "l6.p3":
+    "Os movimentos são R' F R' B2 R F' R' B2 R2. B é a face de trás, então B2 é meia volta da face de trás. Quando terminar, gire a camada de cima até os cantos combinarem com os centros.",
+  "l6.casesLead": "As faixas em volta das figuras mostram as cores dos lados dos cantos. Os meios ainda não importam.",
+  "l6.1.title": "Caso 1: faróis em um lado",
+  "l6.1.text": "Segure o cubo com os faróis atrás. Faça os movimentos e depois gire a camada de cima até cada canto combinar com os centros.",
+  "l6.2.title": "Caso 2: sem faróis",
+  "l6.2.text": "Faça os movimentos segurando o cubo de qualquer jeito. Depois um lado vai ter faróis: é o caso 1.",
+  "l6.tip1": "Se os quatro lados já têm faróis, os cantos estão certos. É só girar a camada de cima até combinarem.",
+  "l6.tip2": "Para o B2, olhe por cima do cubo para a face de trás enquanto gira.",
 
   "solve.title": "Montar meu cubo",
   "solve.lead": "Mostre ao app o seu cubo embaralhado. Depois ele guia você até montar, com os movimentos das lições.",
@@ -301,6 +318,12 @@ export const pt: Messages = {
   "seg.5.1": "Um canto com amarelo em cima, na frente à esquerda: caso 1.",
   "seg.5.2": "Dois cantos com amarelo em cima: caso 2. Estes movimentos transformam no caso 1.",
   "seg.5.3": "Nenhum canto com amarelo em cima: caso 3. Estes movimentos transformam no caso 1.",
+
+  "seg.6.done": "Os cantos de cima já estão no lugar!",
+  "seg.6.hold": "Gire o cubo inteiro para os faróis {color} ficarem atrás: os dois cantos de cima que mostram {color} no mesmo lado.",
+  "seg.6.1": "Faróis atrás: caso 1.",
+  "seg.6.2": "Nenhum lado tem faróis: caso 2. Depois um lado vai ter.",
+  "seg.6.align": "Gire a camada de cima até os cantos combinarem com os centros de todos os lados.",
 
   "error.title": "Tem algo errado",
   "error.unpainted": "Adesivos que faltam pintar: {count}.",

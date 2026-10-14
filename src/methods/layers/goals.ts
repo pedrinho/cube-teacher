@@ -20,6 +20,9 @@ export const topColorEdges = (s: CubeState) =>
 export const yellowCrossDone = (s: CubeState) => secondLayerDone(s) && topColorEdges(s).length === 4;
 export const yellowFaceDone = (s: CubeState) =>
   yellowCrossDone(s) && Array.from({ length: 9 }, (_, i) => s[i]).every((c) => c === centers(s).U);
+/** Yellow corners, as yellow plus two neighboring side colors. */
+export const YELLOW_CORNERS: Color[][] = SIDE_COLORS.map((c, i) => ["Y", c, SIDE_COLORS[(i + 1) % 4]]);
+export const topCornersDone = (s: CubeState) => yellowFaceDone(s) && YELLOW_CORNERS.every((p) => isSolvedPiece(s, p));
 
 /** Goal of each step, by step number. */
 export const STEP_GOALS: Record<number, (s: CubeState) => boolean> = {
@@ -28,4 +31,5 @@ export const STEP_GOALS: Record<number, (s: CubeState) => boolean> = {
   3: secondLayerDone,
   4: yellowCrossDone,
   5: yellowFaceDone,
+  6: topCornersDone,
 };

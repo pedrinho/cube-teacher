@@ -20,6 +20,10 @@ export const ALGS = {
   "5.1": "R U R' U R U2 R'", // one yellow corner on top, held at the front left
   "5.2": "R U R' U R U2 R'", // two: front left corner's yellow facing front; becomes case 1
   "5.3": "R U R' U R U2 R'", // none: front left corner's yellow facing left; becomes case 1
+
+  // Step 6: top corners to their places, then turn the top to line them up.
+  "6.1": "R' F R' B2 R F' R' B2 R2", // headlights (two corners with the same side color) at the back
+  "6.2": "R' F R' B2 R F' R' B2 R2", // no headlights: becomes case 1
 } as const;
 
 export type CaseId = keyof typeof ALGS;

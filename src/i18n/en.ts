@@ -145,6 +145,7 @@ export const en = {
   "guide.stepDone.3": "The middle layer is ready. Two layers done: two thirds of the cube!",
   "guide.stepDone.4": "The yellow cross is ready.",
   "guide.stepDone.5": "The whole top is yellow.",
+  "guide.stepDone.6": "The top corners are in place.",
   "guide.nextStep": "Next: {name}",
   "guide.end.2.title": "First layer done!",
   "guide.end.2.text": "Great work. Keep going with the next steps when you're ready.",
@@ -154,6 +155,8 @@ export const en = {
   "guide.end.4.text": "The next steps come in the next version of the app. Until then, practice up to the yellow cross.",
   "guide.end.5.title": "Yellow face done!",
   "guide.end.5.text": "The last steps come in the next version of the app. Until then, practice up to the yellow face.",
+  "guide.end.6.title": "Top corners done!",
+  "guide.end.6.text": "The last step, Minerva, comes in the next version of the app.",
   "guide.again": "Solve another cube",
   "guide.soon": "soon",
   "guide.progress": "Steps",
@@ -225,6 +228,20 @@ export const en = {
   "l5.3.text": "Hold the cube so the front left corner has its yellow sticker facing left. Do the moves: it turns into case 1.",
   "l5.tip1": "The moves only use the right face and the top: right up, top, right down, top, right up, top twice, right down.",
   "l5.tip2": "If 3 corners have yellow on top, a corner was twisted by hand. Twist it back so its colors match its neighbors.",
+
+  "lesson.thenAlign": "Then turn the top until the corners match (here, U2):",
+
+  "l6.p1": "The top is yellow. Now each top corner goes to its own place. Look at the sides, not the top.",
+  "l6.p2": "Look for two top corners on the same side that show the same color, like a car's headlights. Check all four sides.",
+  "l6.p3":
+    "The moves are R' F R' B2 R F' R' B2 R2. B is the back face, so B2 is a half turn of the back. When the moves are done, turn the top until the corners match their centers.",
+  "l6.casesLead": "The strips around the pictures show the corners' side colors. The edges don't matter yet.",
+  "l6.1.title": "Case 1: headlights on one side",
+  "l6.1.text": "Hold the cube with the headlights at the back. Do the moves, then turn the top until every corner matches its centers.",
+  "l6.2.title": "Case 2: no headlights",
+  "l6.2.text": "Do the moves holding the cube any way. Afterwards one side has headlights: that's case 1.",
+  "l6.tip1": "If all four sides already have headlights, the corners are right. Just turn the top until they match.",
+  "l6.tip2": "For B2, look over the top of the cube at the back face while you turn it.",
 
   "solve.title": "Solve my cube",
   "solve.lead": "Show the app your scrambled cube. It will then guide you to solve it with the moves from the lessons.",
@@ -299,6 +316,12 @@ export const en = {
   "seg.5.1": "One corner with yellow on top, at the front left: case 1.",
   "seg.5.2": "Two corners with yellow on top: case 2. These moves turn it into case 1.",
   "seg.5.3": "No corner with yellow on top: case 3. These moves turn it into case 1.",
+
+  "seg.6.done": "The top corners are already in place!",
+  "seg.6.hold": "Turn the whole cube so the {color} headlights are at the back: the two top corners that show {color} on the same side.",
+  "seg.6.1": "Headlights at the back: case 1.",
+  "seg.6.2": "No side has headlights: case 2. Afterwards one side will.",
+  "seg.6.align": "Turn the top until the corners match the centers on every side.",
 
   "error.title": "Something doesn't add up",
   "error.unpainted": "Stickers left to paint: {count}.",

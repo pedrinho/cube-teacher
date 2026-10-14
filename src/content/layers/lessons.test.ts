@@ -11,7 +11,9 @@ import {
   topColorEdges,
   yellowCrossDone,
   yellowFaceDone,
+  topCornersDone,
 } from "../../methods/layers/goals";
+import { headlights } from "../../methods/layers/step6-corners";
 import { CORNER_SLOTS } from "../../cube/model";
 import { LESSONS, demoMoves } from "./lessons";
 
@@ -111,6 +113,15 @@ describe("lesson 5 cases", () => {
   it.each(["5.1", "5.2", "5.3"])("%s: the demo makes the whole top yellow", (id) => {
     const c = byId(5, id);
     expect(yellowFaceDone(applyAlg(c.setup, demoMoves(c)))).toBe(true);
+  });
+});
+
+describe("lesson 6 cases", () => {
+  it("6.1 has headlights only at the back", () => expect(headlights(byId(6, "6.1").setup)).toEqual(["B"]));
+  it("6.2 has no headlights", () => expect(headlights(byId(6, "6.2").setup)).toEqual([]));
+  it.each(["6.1", "6.2"])("%s: the demo puts the top corners in place", (id) => {
+    const c = byId(6, id);
+    expect(topCornersDone(applyAlg(c.setup, demoMoves(c)))).toBe(true);
   });
 });
 

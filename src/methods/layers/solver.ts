@@ -7,6 +7,7 @@ import { solveFirstLayer } from "./step2-corners";
 import { solveSecondLayer } from "./step3-edges";
 import { solveYellowCross } from "./step4-cross";
 import { solveYellowFace } from "./step5-face";
+import { solveTopCorners } from "./step6-corners";
 
 const STEPS: ((state: CubeState) => Recorder)[] = [
   solveCross,
@@ -14,6 +15,7 @@ const STEPS: ((state: CubeState) => Recorder)[] = [
   solveSecondLayer,
   solveYellowCross,
   solveYellowFace,
+  solveTopCorners,
 ];
 
 /** Number of steps the solver can do so far. */

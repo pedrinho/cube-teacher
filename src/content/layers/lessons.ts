@@ -7,6 +7,7 @@ import { solveFirstLayer } from "../../methods/layers/step2-corners";
 import { solveSecondLayer } from "../../methods/layers/step3-edges";
 import { solveYellowCross } from "../../methods/layers/step4-cross";
 import { solveYellowFace } from "../../methods/layers/step5-face";
+import { solveTopCorners } from "../../methods/layers/step6-corners";
 
 export interface LessonCase {
   /** Also the anchor id on the lesson page, e.g. "2.1". */
@@ -54,6 +55,15 @@ function swapEdges(state: CubeState, a: string, b: string): CubeState {
   return out.join("");
 }
 
+/** Swaps two corners' stickers in order (each keeps its top sticker on top). */
+function swapCorners(state: CubeState, a: string, b: string): CubeState {
+  const sa = findSlot(CORNER_SLOTS, a).stickers;
+  const sb = findSlot(CORNER_SLOTS, b).stickers;
+  const out = [...state];
+  sa.forEach((st, k) => ([out[st], out[sb[k]]] = [state[sb[k]], state[st]]));
+  return out.join("");
+}
+
 /** Everything the solver does for this step, as one move string (rotations included). */
 const solverMoves = (solve: (s: CubeState) => { segments: { moves: Parameters<typeof algToString>[0] }[] }, s: CubeState) =>
   algToString(solve(s).segments.flatMap((g) => g.moves));
@@ -79,6 +89,11 @@ const SUNE = "R U R' U R U2 R'";
 // none on top, front left corner showing yellow to the left (case 3).
 const TWO_UP = undo(YELLOW_UP, `${SUNE} ${SUNE} y2 ${SUNE}`);
 const NONE_UP = undo(YELLOW_UP, `${SUNE} ${SUNE}`);
+const CORNERS = "R' F R' B2 R F' R' B2 R2";
+// Headlights at the back, needing a half turn of the top at the end (case 1), and two corners
+// swapped across the top so no side has headlights (case 2; two edges swapped too, as a real cube needs).
+const HEADLIGHTS = undo(YELLOW_UP, `${CORNERS} U2`);
+const DIAGONAL = swapEdges(swapCorners(YELLOW_UP, "UFR", "UBL"), "UF", "UB");
 const SWAPPED = swapEdges(swapEdges(YELLOW_UP, "FR", "FL"), "UF", "UB");
 
 export const LESSONS: Record<number, Lesson> = {
@@ -199,6 +214,32 @@ export const LESSONS: Record<number, Lesson> = {
     ],
     tips: ["l5.tip1", "l5.tip2"],
     mask: stepMask(5),
+    view: "top",
+  },
+  6: {
+    step: 6,
+    paragraphs: ["l6.p1", "l6.p2", "l6.p3"],
+    casesLead: "l6.casesLead",
+    cases: [
+      {
+        id: "6.1",
+        title: "l6.1.title",
+        text: "l6.1.text",
+        alg: CORNERS,
+        follow: { label: "lesson.thenAlign", alg: "U2" },
+        setup: HEADLIGHTS,
+      },
+      {
+        id: "6.2",
+        title: "l6.2.title",
+        text: "l6.2.text",
+        alg: CORNERS,
+        demo: solverMoves(solveTopCorners, DIAGONAL),
+        setup: DIAGONAL,
+      },
+    ],
+    tips: ["l6.tip1", "l6.tip2"],
+    mask: stepMask(6),
     view: "top",
   },
 };
