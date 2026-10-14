@@ -6,12 +6,16 @@ export const SIDE_COLORS: Color[] = ["G", "R", "B", "O"];
 export const WHITE_EDGES: Color[][] = SIDE_COLORS.map((c) => ["W", c]);
 /** White corners, as white plus two neighboring side colors. */
 export const WHITE_CORNERS: Color[][] = SIDE_COLORS.map((c, i) => ["W", c, SIDE_COLORS[(i + 1) % 4]]);
+/** Middle layer edges: two neighboring side colors, no white or yellow. */
+export const MIDDLE_EDGES: Color[][] = SIDE_COLORS.map((c, i) => [c, SIDE_COLORS[(i + 1) % 4]]);
 
 export const crossDone = (s: CubeState) => WHITE_EDGES.every((p) => isSolvedPiece(s, p));
 export const firstLayerDone = (s: CubeState) => crossDone(s) && WHITE_CORNERS.every((p) => isSolvedPiece(s, p));
+export const secondLayerDone = (s: CubeState) => firstLayerDone(s) && MIDDLE_EDGES.every((p) => isSolvedPiece(s, p));
 
 /** Goal of each step, by step number. */
 export const STEP_GOALS: Record<number, (s: CubeState) => boolean> = {
   1: crossDone,
   2: firstLayerDone,
+  3: secondLayerDone,
 };

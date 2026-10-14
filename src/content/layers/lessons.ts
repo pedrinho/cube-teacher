@@ -1,9 +1,10 @@
 // Lesson content for each step: the explanation, the cases with their moves, and the cube
 // each case starts from (built by undoing the moves from a solved cube, then checked in tests).
-import { CORNER_SLOTS, applyAlg, algToString, invertAlg, parseAlg, type CubeState } from "../../cube/model";
+import { CORNER_SLOTS, EDGE_SLOTS, applyAlg, algToString, invertAlg, parseAlg, type CubeState } from "../../cube/model";
 import type { MessageKey } from "../../i18n/en";
 import { WHITE_UP, YELLOW_UP, stepMask, type Visible } from "../../methods/layers/pictures";
 import { solveFirstLayer } from "../../methods/layers/step2-corners";
+import { solveSecondLayer } from "../../methods/layers/step3-edges";
 
 export interface LessonCase {
   /** Also the anchor id on the lesson page, e.g. "2.1". */
@@ -12,11 +13,15 @@ export interface LessonCase {
   text: MessageKey;
   /** The moves for this case. */
   alg: string;
-  /** Moves that follow in the demo, e.g. case 3 turns into case 1, which is then solved. */
-  then?: string;
+  /** Moves that come right after, shown under a label (e.g. "Then case 1:"). */
+  follow?: { label: MessageKey; alg: string };
+  /** Everything the demo cube plays; defaults to the moves and the follow-up. */
+  demo?: string;
   /** The cube before the moves. */
   setup: CubeState;
 }
+
+export const demoMoves = (c: LessonCase) => c.demo ?? `${c.alg} ${c.follow?.alg ?? ""}`.trim();
 
 export interface Lesson {
   step: number;
@@ -30,9 +35,26 @@ export interface Lesson {
 
 const undo = (base: CubeState, moves: string) => applyAlg(base, invertAlg(parseAlg(moves)));
 
+const findSlot = <T extends { name: string }>(slots: T[], faces: string) =>
+  slots.find((s) => [...s.name].sort().join("") === [...faces].sort().join(""))!;
+
+/** Swaps two edges' stickers in order, or flips one edge when both are the same slot. */
+function swapEdges(state: CubeState, a: string, b: string): CubeState {
+  const sa = findSlot(EDGE_SLOTS, a).stickers;
+  const sb = findSlot(EDGE_SLOTS, b).stickers;
+  const out = [...state];
+  if (a === b) [out[sa[0]], out[sa[1]]] = [state[sa[1]], state[sa[0]]];
+  else sa.forEach((st, k) => ([out[st], out[sb[k]]] = [state[sb[k]], state[st]]));
+  return out.join("");
+}
+
+/** Everything the solver does for this step, as one move string (rotations included). */
+const solverMoves = (solve: (s: CubeState) => { segments: { moves: Parameters<typeof algToString>[0] }[] }, s: CubeState) =>
+  algToString(solve(s).segments.flatMap((g) => g.moves));
+
 /** Turns a corner's stickers in place (clockwise when `turns` is 1). */
 function twist(state: CubeState, faces: string, turns: number): CubeState {
-  const slot = CORNER_SLOTS.find((s) => [...s.name].sort().join("") === [...faces].sort().join(""))!;
+  const slot = findSlot(CORNER_SLOTS, faces);
   const out = [...state];
   slot.stickers.forEach((st, k) => (out[slot.stickers[(k + turns) % 3]] = state[st]));
   return out.join("");
@@ -40,9 +62,10 @@ function twist(state: CubeState, faces: string, turns: number): CubeState {
 
 // A white corner in its place but turned, with a top corner turned the other way to make up for it.
 const STUCK = twist(twist(YELLOW_UP, "DFR", 1), "UBL", 2);
-// What the solver does after taking the corner out.
-const stuckSegments = solveFirstLayer(STUCK).segments;
-const stuckMoves = stuckSegments.slice(stuckSegments.findIndex((s) => s.caseId === "2.out") + 1).flatMap((s) => s.moves);
+// Second layer edges stuck in the middle layer: one flipped in its place (with a top edge flipped
+// too, as a real cube needs), or two swapped (with two top edges swapped too).
+const FLIPPED = swapEdges(swapEdges(YELLOW_UP, "FR", "FR"), "UB", "UB");
+const SWAPPED = swapEdges(swapEdges(YELLOW_UP, "FR", "FL"), "UF", "UB");
 
 export const LESSONS: Record<number, Lesson> = {
   1: {
@@ -72,12 +95,63 @@ export const LESSONS: Record<number, Lesson> = {
         title: "l2.3.title",
         text: "l2.3.text",
         alg: "R U2 R' U'",
-        then: "R U R'",
+        follow: { label: "lesson.thenCase1", alg: "R U R'" },
         setup: undo(YELLOW_UP, "R U2 R' U' R U R'"),
       },
-      { id: "2.out", title: "l2.out.title", text: "l2.out.text", alg: "R U R'", then: algToString(stuckMoves), setup: STUCK },
+      {
+        id: "2.out",
+        title: "l2.out.title",
+        text: "l2.out.text",
+        alg: "R U R'",
+        demo: solverMoves(solveFirstLayer, STUCK),
+        setup: STUCK,
+      },
     ],
     tips: ["l2.tip1", "l2.tip2"],
     mask: stepMask(2),
+  },
+  3: {
+    step: 3,
+    paragraphs: ["l3.p1", "l3.p2", "l3.p3", "l3.p4"],
+    casesLead: "l3.casesLead",
+    cases: [
+      {
+        id: "3.1",
+        title: "l3.1.title",
+        text: "l3.1.text",
+        alg: "U R U R' U'",
+        follow: { label: "lesson.thenStep2Case2", alg: "F' U' F" },
+        setup: undo(YELLOW_UP, "U R U R' U' F' U' F"),
+      },
+      {
+        id: "3.2",
+        title: "l3.2.title",
+        text: "l3.2.text",
+        alg: "U' L' U' L U",
+        follow: { label: "lesson.thenTurnStep2Case1", alg: "R U R'" },
+        demo: "U' L' U' L U y' R U R'",
+        setup: undo(YELLOW_UP, "U' L' U' L U F U F'"),
+      },
+      {
+        id: "3.flip",
+        title: "l3.flip.title",
+        text: "l3.flip.text",
+        alg: "U R U R' U'",
+        follow: { label: "lesson.thenStep2Case2", alg: "F' U' F" },
+        demo: solverMoves(solveSecondLayer, FLIPPED),
+        setup: FLIPPED,
+      },
+      {
+        id: "3.none",
+        title: "l3.none.title",
+        text: "l3.none.text",
+        alg: "U R U R' U'",
+        follow: { label: "lesson.thenStep2Case2", alg: "F' U' F" },
+        demo: solverMoves(solveSecondLayer, SWAPPED),
+        setup: SWAPPED,
+      },
+    ],
+    tips: ["l3.tip1", "l3.tip2"],
+    mask: stepMask(3),
   },
 };

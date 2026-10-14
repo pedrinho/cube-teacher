@@ -29,7 +29,10 @@ export type StickerColors = Record<"W" | "Y" | "G" | "B" | "R" | "O" | "gray" | 
 const CUBIE = 0.97;
 const STICKER = 0.84;
 const STICKER_RADIUS = 0.13;
-const QUARTER_MS = 280;
+/** When the person taps ahead of the animation, waiting moves play faster. */
+const HURRY = 0.35;
+/** When more taps than this are waiting, the older ones are applied at once. */
+const MAX_BEHIND = 2;
 
 function roundedSquare(size: number, radius: number): ShapeGeometry {
   const h = size / 2;
@@ -49,8 +52,19 @@ function roundedSquare(size: number, radius: number): ShapeGeometry {
 const posKey = (p: readonly number[]) => p.join(",");
 const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
 
+/** One move waiting to play. Moves from the same `play` call share a group. */
+interface Queued {
+  move: Move;
+  group: number;
+  /** Position of the move within its group. */
+  index: number;
+  onStep?: (index: number) => void;
+  done?: () => void;
+}
+
 interface Turn {
   move: Move;
+  group: number;
   cubies: Group[];
   pivot: Group;
   axis: Vector3;
@@ -72,10 +86,13 @@ export class CubeScene {
 
   private shown: CubeState;
   private visible: Visible = () => true;
-  private queue: { move: Move; done?: () => void }[] = [];
+  private queue: Queued[] = [];
   private turn: Turn | null = null;
   private turnDone?: () => void;
-  private tempo = 1;
+  private lastGroup = -1;
+  private nextGroup = 0;
+  private turnMs = 450;
+  private pauseMs = 250;
   private reducedMotion: boolean;
 
   constructor(
@@ -176,6 +193,7 @@ export class CubeScene {
   setState(state: CubeState, visible?: Visible) {
     this.finishTurn(false);
     this.queue = [];
+    this.lastGroup = -1;
     this.shown = state;
     this.visible = visible ?? (() => true);
     this.paint();
@@ -187,40 +205,76 @@ export class CubeScene {
     this.paint();
   }
 
-  setTempo(tempo: number) {
-    this.tempo = tempo;
+  /** How long a quarter turn takes, and the pause between moves played together. */
+  setTiming(turnMs: number, pauseMs: number) {
+    this.turnMs = turnMs;
+    this.pauseMs = pauseMs;
   }
 
-  /** Animates moves one after another, starting from what is shown now. */
-  play(moves: Move[], done?: () => void) {
-    moves.forEach((move, k) => this.queue.push({ move, done: k === moves.length - 1 ? done : undefined }));
-    if (moves.length === 0) done?.();
+  /**
+   * Animates moves one after another, starting from what is shown now. Moves of one call pause
+   * briefly between them; `onStep` is told which one is playing.
+   */
+  play(moves: Move[], options: { done?: () => void; onStep?: (index: number) => void } = {}) {
+    const group = this.nextGroup++;
+    moves.forEach((move, index) =>
+      this.queue.push({
+        move,
+        group,
+        index,
+        onStep: options.onStep,
+        done: index === moves.length - 1 ? options.done : undefined,
+      }),
+    );
+    if (moves.length === 0) options.done?.();
     if (!this.turn) this.next();
+    else if (this.groupsWaiting(this.turn.group) > MAX_BEHIND) {
+      // Too far behind: finish the current turn now and skip ahead.
+      this.completeTurn();
+      this.next();
+    }
+  }
+
+  private groupsWaiting(after?: number) {
+    return new Set(this.queue.filter((q) => q.group !== after).map((q) => q.group)).size;
   }
 
   private next() {
+    // Far behind (many quick taps): jump over the older moves without animating them.
+    while (this.groupsWaiting() > MAX_BEHIND + 1) {
+      const skipped = this.queue.shift()!;
+      this.shown = applyMove(this.shown, skipped.move);
+      skipped.onStep?.(skipped.index);
+      skipped.done?.();
+    }
     const item = this.queue.shift();
     if (!item) {
       this.renderer.setAnimationLoop(null);
+      this.lastGroup = -1;
       return;
     }
+    item.onStep?.(item.index);
     const { axis, inLayer } = moveLayer(item.move.base);
     const cubies = [...this.cubies.values()].filter((c) => inLayer(c.userData.home as Vec));
+    this.paint();
     const pivot = new Group();
     this.root.add(pivot);
     for (const c of cubies) pivot.attach(c);
     const amount = item.move.amount === 3 ? -1 : item.move.amount;
-    // Catch up faster when moves are waiting (e.g. after quick taps on "Next").
-    const hurry = this.queue.length === 0 ? 1 : this.queue.length < 3 ? 0.55 : 0.25;
-    const duration = this.reducedMotion ? 0 : (QUARTER_MS * (amount === 2 ? 1.4 : 1) * hurry) / this.tempo;
+    // Catch up when later taps are already waiting; otherwise pause between moves of a demo.
+    const behind = this.groupsWaiting(item.group) > 0;
+    const duration = this.reducedMotion ? 0 : this.turnMs * (amount === 2 ? 1.4 : 1) * (behind ? HURRY : 1);
+    const pause = this.reducedMotion || behind || item.group !== this.lastGroup ? 0 : this.pauseMs;
+    this.lastGroup = item.group;
     this.turn = {
       move: item.move,
+      group: item.group,
       cubies,
       pivot,
       axis: new Vector3(...axis),
       // Clockwise seen from the tip of the axis is a negative rotation.
       angle: (-Math.PI / 2) * amount,
-      start: performance.now(),
+      start: performance.now() + pause,
       duration,
     };
     this.turnDone = item.done;
@@ -230,17 +284,21 @@ export class CubeScene {
   private tick() {
     const turn = this.turn;
     if (!turn) return;
-    const t = turn.duration === 0 ? 1 : Math.min(1, (performance.now() - turn.start) / turn.duration);
+    const t = turn.duration === 0 ? 1 : Math.max(0, Math.min(1, (performance.now() - turn.start) / turn.duration));
     turn.pivot.quaternion.copy(new Quaternion().setFromAxisAngle(turn.axis, turn.angle * ease(t)));
     if (t >= 1) {
-      this.finishTurn(true);
-      const done = this.turnDone;
-      this.turnDone = undefined;
-      done?.();
+      this.completeTurn();
       this.next();
     } else {
       this.render();
     }
+  }
+
+  private completeTurn() {
+    this.finishTurn(true);
+    const done = this.turnDone;
+    this.turnDone = undefined;
+    done?.();
   }
 
   /** Puts the turning layer back in place; applies the move to the colors if it completed. */

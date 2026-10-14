@@ -14,6 +14,13 @@ export const pt: Messages = {
   "color.R": "vermelho",
   "color.O": "laranja",
 
+  "speed.label": "Velocidade",
+  "speed.verySlow": "Bem devagar",
+  "speed.slow": "Devagar",
+  "speed.normal": "Normal",
+  "speed.fast": "Rápido",
+  "lesson.turning": "Girando o cubo inteiro…",
+
   "home.title": "Monte o cubo, uma camada de cada vez",
   "home.lead":
     "Sete passos, cada um com o vídeo do Rafael Cinoto, figuras de todos os casos e os movimentos certinhos. Se travar, mostre seu cubo para o app e siga junto.",
@@ -137,9 +144,12 @@ export const pt: Messages = {
   "guide.stepDone": "Passo {n} pronto!",
   "guide.stepDone.1": "A cruz branca está pronta.",
   "guide.stepDone.2": "A 1ª camada inteira está pronta. Olhe os lados: cada um tem uma fileira da sua cor.",
+  "guide.stepDone.3": "A camada do meio está pronta. Duas camadas prontas: dois terços do cubo!",
   "guide.nextStep": "Próximo: {name}",
-  "guide.layerDone": "1ª camada pronta!",
-  "guide.layerDoneText": "A 2ª camada vem na próxima versão do app. Até lá, pratique a 1ª camada até ficar fácil.",
+  "guide.end.2.title": "1ª camada pronta!",
+  "guide.end.2.text": "Muito bem. Continue com os próximos passos quando quiser.",
+  "guide.end.3.title": "Duas camadas prontas!",
+  "guide.end.3.text": "A 3ª camada vem na próxima versão do app. Até lá, pratique as duas primeiras camadas até ficar fácil.",
   "guide.again": "Montar outro cubo",
   "guide.soon": "em breve",
   "guide.progress": "Passos",
@@ -156,6 +166,32 @@ export const pt: Messages = {
   "practice.wellDoneText": "Pratique mais algumas vezes. Quando ficar fácil, tente um pouco mais rápido.",
   "practice.again": "Praticar de novo",
   "practice.pick": "Escolha um passo",
+
+  "lesson.thenStep2Case2": "Depois o caso 2 do 2º passo:",
+  "lesson.thenTurnStep2Case1": "Depois gire o cubo (face da esquerda para a frente) e faça o caso 1 do 2º passo:",
+
+  "l3.p1": "Mantenha a camada branca embaixo e o amarelo em cima. Agora complete os quatro meios da camada do meio: os meios que não têm amarelo.",
+  "l3.p2":
+    "Encontre um meio em cima sem amarelo. Gire o cubo inteiro para a cor do lado dele ficar virada para você, depois gire a camada de cima até esse adesivo ficar logo acima do centro da mesma cor. Parece um T de cabeça para baixo.",
+  "l3.p3":
+    "Agora veja a cor de cima do meio. Se combina com o centro da direita, o meio vai para a direita: caso 1. Se combina com o centro da esquerda, vai para a esquerda: caso 2.",
+  "l3.p4":
+    "Cada caso tem duas partes. Os primeiros movimentos colocam o meio no lugar e tiram um canto branco. Depois você coloca o canto de volta com um caso do 2º passo, que você já conhece.",
+  "l3.casesLead": "Nos casos 1 e 2 o meio está na frente da camada de cima, com o adesivo do lado acima do seu centro.",
+  "l3.1.title": "Caso 1: o meio vai para a direita",
+  "l3.1.text":
+    "U R U R' U' coloca o meio e sobe um canto branco, logo acima do lugar dele, com o branco virado para você. Coloque de volta com o caso 2 do 2º passo.",
+  "l3.2.title": "Caso 2: o meio vai para a esquerda",
+  "l3.2.text":
+    "O espelho do caso 1: U' L' U' L U. O canto branco sobe na frente à esquerda, então gire o cubo para ele ficar na frente à direita e use o caso 1 do 2º passo.",
+  "l3.flip.title": "Um meio no lugar, mas invertido",
+  "l3.flip.text":
+    "Segure ele na frente à direita e faça o caso 1, com qualquer meio amarelo na frente. O meio amarelo entra e o invertido sobe. Aí vira caso 1 ou 2.",
+  "l3.none.title": "Nenhum meio bom em cima",
+  "l3.none.text":
+    "Se todos os meios de cima têm amarelo mas a camada do meio não está pronta, algum meio está preso no lugar errado. Segure ele na frente à direita e faça o caso 1 para ele subir.",
+  "l3.tip1": "Sempre confira o T de cabeça para baixo antes de começar. Se a face errada estiver na frente, o caso 1 e o caso 2 se misturam.",
+  "l3.tip2": "Repare no canto branco: ele sai por um momento e sempre volta para a 1ª camada no final.",
 
   "solve.title": "Montar meu cubo",
   "solve.lead": "Mostre ao app o seu cubo embaralhado. Depois ele guia você até montar, com os movimentos das lições.",
@@ -203,6 +239,19 @@ export const pt: Messages = {
   "seg.2.1": "Branco virado para a direita: caso 1.",
   "seg.2.2": "Branco virado para você: caso 2.",
   "seg.2.3": "Branco virado para cima: caso 3. Estes movimentos transformam no caso 1.",
+
+  "seg.3.yellowUp": "Segure o cubo com o amarelo em cima e a camada branca embaixo.",
+  "seg.3.done": "A 2ª camada já está pronta. Muito bem!",
+  "seg.3.hold": "Encontre o meio {piece} em cima. Gire o cubo inteiro para o {front} ficar virado para você.",
+  "seg.3.align": "Gire a camada de cima até o meio {piece} ficar na frente, com o adesivo {front} logo acima do centro {front}.",
+  "seg.3.1": "A cor de cima dele combina com o centro da direita ({side}): caso 1. Estes movimentos colocam o meio e tiram um canto branco.",
+  "seg.3.2": "A cor de cima dele combina com o centro da esquerda ({side}): caso 2. Estes movimentos colocam o meio e tiram um canto branco.",
+  "seg.3.corner2": "O canto branco está acima do lugar dele, com o branco virado para você. Coloque de volta com o caso 2 do 2º passo.",
+  "seg.3.turnCorner": "Gire o cubo inteiro para a face da esquerda vir para a frente. O canto que saiu agora está na frente à direita.",
+  "seg.3.corner1": "O canto branco está acima do lugar dele, com o branco virado para a direita. Coloque de volta com o caso 1 do 2º passo.",
+  "seg.3.holdStuck":
+    "O meio {piece} está na camada do meio, mas no lugar errado ou invertido. Gire o cubo inteiro para ele ficar na frente à direita.",
+  "seg.3.stuck": "Faça o caso 1 aqui: um meio amarelo entra e empurra o meio {piece} para cima.",
 
   "error.title": "Tem algo errado",
   "error.unpainted": "Adesivos que faltam pintar: {count}.",

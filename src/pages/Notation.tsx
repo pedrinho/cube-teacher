@@ -4,6 +4,7 @@ import { useI18n } from "../i18n";
 import { CubeSvg } from "../components/CubeSvg";
 import { Cube3D, type Cube3DHandle } from "../components/Cube3D";
 import { MoveLabel, Moves } from "../components/Moves";
+import { SpeedControl } from "../components/SpeedControl";
 import { SOLVED, applyAlg, parseMove } from "../cube/model";
 import { PIECE_OF } from "../cube/pieces";
 import { stepPicture } from "../methods/layers/pictures";
@@ -86,6 +87,7 @@ export function Notation() {
                 {t("notation.trickPlay")}
               </button>
             </div>
+            <SpeedControl />
             <p className="muted">{t("notation.hold")}</p>
           </div>
         </div>

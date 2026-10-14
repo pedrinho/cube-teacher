@@ -4,8 +4,9 @@ import type { Stage } from "../types";
 import type { Recorder } from "./recorder";
 import { solveCross } from "./step1-cross";
 import { solveFirstLayer } from "./step2-corners";
+import { solveSecondLayer } from "./step3-edges";
 
-const STEPS: ((state: CubeState) => Recorder)[] = [solveCross, solveFirstLayer];
+const STEPS: ((state: CubeState) => Recorder)[] = [solveCross, solveFirstLayer, solveSecondLayer];
 
 /** Number of steps the solver can do so far. */
 export const SOLVER_STEPS = STEPS.length;
