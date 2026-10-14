@@ -75,9 +75,9 @@ export const stepKey = (id: number, field: "name" | "goal") => `step.${id}.${fie
 /** Text for a solver instruction: {piece} becomes the piece's colors ("white-blue"). */
 export function explainText(
   t: I18n["t"],
-  explain: { key: MessageKey; piece?: string[]; colors?: Record<string, string> },
+  explain: { key: MessageKey; piece?: string[]; colors?: Record<string, string>; values?: Record<string, string | number> },
 ): string {
-  const params: Record<string, string> = {};
+  const params: Record<string, string | number> = { ...explain.values };
   if (explain.piece) params.piece = explain.piece.map((c) => t(`color.${c}` as MessageKey)).join("-");
   for (const [name, color] of Object.entries(explain.colors ?? {})) params[name] = t(`color.${color}` as MessageKey);
   return t(explain.key, params);

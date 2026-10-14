@@ -1,37 +1,12 @@
 // Step 1 (Cruz): white cross on top, one edge at a time. The cube is turned so the edge's other
 // color faces you, then the shortest moves put it at the top front without breaking the
 // edges already placed.
-import { EDGE_SLOTS, applyAlg, centers, movePerm, type Amount, type BaseMove, type Color, type CubeState, type Move } from "../../cube/model";
+import { applyAlg, centers, type Color, type CubeState, type Move } from "../../cube/model";
+import { EDGE_TABLE, FACE_MOVES as MOVES, edgeCode as codeOf, edgeGoal as goalOf } from "../../cube/edgeMoves";
 import { rotationTo } from "../../cube/orientation";
-import { homeOf, isSolvedPiece, slotOf } from "../../cube/pieces";
+import { isSolvedPiece } from "../../cube/pieces";
 import { WHITE_EDGES, crossDone } from "./goals";
 import { Recorder } from "./recorder";
-
-// When two solutions are equally short, prefer the faces kids use most.
-const MOVES: Move[] = (["F", "R", "U", "L", "B", "D"] as BaseMove[]).flatMap((base) =>
-  ([1, 3, 2] as Amount[]).map((amount) => ({ base, amount })),
-);
-
-// An edge's position and orientation, encoded as slot * 2 + (index of its white sticker in the slot).
-const STICKER_CODE = new Map<number, number>();
-EDGE_SLOTS.forEach((slot, i) => slot.stickers.forEach((st, k) => STICKER_CODE.set(st, i * 2 + k)));
-
-const EDGE_TABLE: number[][] = MOVES.map((m) => {
-  const dest: number[] = [];
-  movePerm(m).forEach((oldIndex, newIndex) => (dest[oldIndex] = newIndex));
-  return Array.from({ length: 24 }, (_, code) => STICKER_CODE.get(dest[EDGE_SLOTS[code >> 1].stickers[code & 1]])!);
-});
-
-function codeOf(state: CubeState, piece: Color[]): number {
-  const slot = slotOf(state, piece);
-  return EDGE_SLOTS.indexOf(slot) * 2 + slot.stickers.findIndex((i) => state[i] === "W");
-}
-
-function goalOf(state: CubeState, piece: Color[]): number {
-  const home = homeOf(state, piece);
-  const c = centers(state);
-  return EDGE_SLOTS.indexOf(home) * 2 + home.faces.findIndex((f) => c[f] === "W");
-}
 
 /** Shortest face turns that bring every tracked edge to its goal. */
 function search(start: number[], goal: number[]): Move[] {

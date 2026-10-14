@@ -5,6 +5,7 @@ import { LESSONS } from "../content/layers/lessons";
 import { layersMethod } from "./layers";
 import { solveLayers } from "./layers/solver";
 import { fridrichMethod } from "./fridrich";
+import { solveFridrich } from "./fridrich/solver";
 import type { MethodDef, Stage } from "./types";
 
 export interface MethodInfo {
@@ -35,7 +36,5 @@ export const FRIDRICH: MethodInfo = {
   stages: [1, 2, 3, 4].map((id) => ({ id, name: `fr.stage.${id}` as MessageKey })),
   stageDone: (id) => `fr.stageDone.${id}` as MessageKey,
   lessonLink: () => undefined,
-  solve: () => {
-    throw new Error("The Fridrich solver is not ready yet");
-  },
+  solve: (state) => solveFridrich(state),
 };

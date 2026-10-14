@@ -27,6 +27,8 @@ export interface Explain {
   piece?: Color[];
   /** Named colors used in the text, e.g. { front: "B" }. */
   colors?: Record<string, Color>;
+  /** Other values used in the text, e.g. { n: 7 }. */
+  values?: Record<string, string | number>;
 }
 
 export type SegmentKind =
