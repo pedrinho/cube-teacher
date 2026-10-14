@@ -1272,3 +1272,24 @@ span.lesson-row[aria-disabled="true"] {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
   gap: 1rem;
 }
+
+.case-alts summary {
+  cursor: pointer;
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+  font-weight: 600;
+}
+.case-alts[open] summary {
+  margin-bottom: 0.5rem;
+}
+.case-alts .moves {
+  margin-bottom: 0.4rem;
+}
+.case-actions {
+  gap: 0.5rem;
+}
+.case-learning[aria-pressed="true"] {
+  background: var(--ok-soft);
+  border-color: var(--ok);
+  color: var(--ok);
+}

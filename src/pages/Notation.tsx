@@ -1,11 +1,9 @@
 // Lesson 0: the pieces and how moves are written (Cinoto's "noções gerais").
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useI18n } from "../i18n";
 import { CubeSvg } from "../components/CubeSvg";
-import { Cube3D, type Cube3DHandle } from "../components/Cube3D";
-import { MoveLabel, Moves } from "../components/Moves";
-import { SpeedControl } from "../components/SpeedControl";
-import { SOLVED, applyAlg, parseMove } from "../cube/model";
+import { MovePad, type MovePadHandle } from "../components/MovePad";
+import { SOLVED, applyAlg } from "../cube/model";
 import { PIECE_OF } from "../cube/pieces";
 import { stepPicture } from "../methods/layers/pictures";
 
@@ -23,20 +21,7 @@ const kinds = [
 
 export function Notation() {
   const { t } = useI18n();
-  const viewer = useRef<Cube3DHandle>(null);
-  const [history, setHistory] = useState<string[]>([]);
-
-  const turn = (move: string) => {
-    viewer.current?.play(move);
-    setHistory((h) => [...h, move]);
-  };
-  const reset = () => {
-    viewer.current?.show(START);
-    setHistory([]);
-  };
-  const trick = () => {
-    viewer.current?.play(TRICK);
-  };
+  const pad = useRef<MovePadHandle>(null);
 
   return (
     <>
@@ -64,33 +49,15 @@ export function Notation() {
       <section className="lesson-section">
         <h2>{t("notation.moves")}</h2>
         <p>{t("notation.movesText")}</p>
-        <div className="playground">
-          <Cube3D ref={viewer} state={START} label={t("notation.moves")} />
-          <div className="playground-side">
-            <p className="muted">{t("notation.try")}</p>
-            <div className="move-pad">
-              {MOVES.map((m) => (
-                <button key={m} type="button" className="move" onClick={() => turn(m)} aria-label={m}>
-                  <MoveLabel move={parseMove(m)} />
-                </button>
-              ))}
-            </div>
-            {history.length > 0 && <Moves alg={history.join(" ")} small />}
-            <div className="btn-row">
-              <button type="button" className="btn" onClick={reset}>
-                {t("notation.reset")}
-              </button>
-            </div>
-            <div className="notice trick">
-              <p>{t("notation.trick")}</p>
-              <button type="button" className="btn btn-primary" onClick={trick}>
-                {t("notation.trickPlay")}
-              </button>
-            </div>
-            <SpeedControl />
-            <p className="muted">{t("notation.hold")}</p>
+        <MovePad ref={pad} moves={MOVES} start={START} label={t("notation.moves")}>
+          <div className="notice trick">
+            <p>{t("notation.trick")}</p>
+            <button type="button" className="btn btn-primary" onClick={() => pad.current?.play(TRICK)}>
+              {t("notation.trickPlay")}
+            </button>
           </div>
-        </div>
+          <p className="muted">{t("notation.hold")}</p>
+        </MovePad>
       </section>
     </>
   );

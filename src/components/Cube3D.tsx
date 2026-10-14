@@ -25,6 +25,8 @@ interface Props {
   state: CubeState;
   /** Stickers that matter; the rest are drawn gray. */
   visible?: Visible;
+  /** Look at the cube from below (to see a cross on the bottom). */
+  fromBelow?: boolean;
   label: string;
   ref?: Ref<Cube3DHandle>;
 }
@@ -45,7 +47,7 @@ function readColors(): StickerColors {
   };
 }
 
-export function Cube3D({ state, visible, label, ref }: Props) {
+export function Cube3D({ state, visible, fromBelow, label, ref }: Props) {
   const { speed } = useSettings();
   const container = useRef<HTMLDivElement>(null);
   const [scene, setScene] = useState<CubeScene | null>(null);
@@ -55,7 +57,7 @@ export function Cube3D({ state, visible, label, ref }: Props) {
     let created: CubeScene | null = null;
     import("../three/cubeScene").then(({ CubeScene }) => {
       if (cancelled || !container.current) return;
-      created = new CubeScene(container.current, readColors(), state);
+      created = new CubeScene(container.current, readColors(), state, { fromBelow });
       setScene(created);
     });
     return () => {

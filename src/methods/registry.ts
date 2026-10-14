@@ -6,6 +6,7 @@ import { layersMethod } from "./layers";
 import { solveLayers } from "./layers/solver";
 import { fridrichMethod } from "./fridrich";
 import { solveFridrich } from "./fridrich/solver";
+import { OLL_CORNER_CASES } from "./fridrich/sets";
 import type { MethodDef, Stage } from "./types";
 
 export interface MethodInfo {
@@ -35,6 +36,14 @@ export const FRIDRICH: MethodInfo = {
   def: fridrichMethod,
   stages: [1, 2, 3, 4].map((id) => ({ id, name: `fr.stage.${id}` as MessageKey })),
   stageDone: (id) => `fr.stageDone.${id}` as MessageKey,
-  lessonLink: () => undefined,
+  lessonLink: (caseId) => {
+    // Basic OLL (edges and the seven corner cases) is lesson 3, PLL lesson 4, all OLL 5, F2L 6.
+    const [set, n] = caseId.split(".");
+    if (set === "oll2") return `/fridrich/learn/3/${caseId}`;
+    if (set === "pll") return `/fridrich/learn/4/${caseId}`;
+    if (set === "oll") return `/fridrich/learn/${OLL_CORNER_CASES.includes(Number(n) - 1) ? 3 : 5}/${caseId}`;
+    if (set === "f2l") return `/fridrich/learn/6/${caseId}`;
+    return undefined;
+  },
   solve: (state) => solveFridrich(state),
 };
