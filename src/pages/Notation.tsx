@@ -2,15 +2,15 @@
 import { useRef, useState } from "react";
 import { useI18n } from "../i18n";
 import { CubeSvg } from "../components/CubeSvg";
-import { CubeViewer, type CubeViewerHandle } from "../components/CubeViewer";
+import { Cube3D, type Cube3DHandle } from "../components/Cube3D";
 import { MoveLabel, Moves } from "../components/Moves";
-import { parseMove } from "../cube/model";
+import { SOLVED, applyAlg, parseMove } from "../cube/model";
 import { PIECE_OF } from "../cube/pieces";
 import { stepPicture } from "../methods/layers/pictures";
 
 // The moves used in the method, in the order of Cinoto's notation table, plus D and B for scrambles.
 const MOVES = ["F", "F'", "F2", "R", "R'", "R2", "B2", "U", "U'", "U2", "L", "L'", "M", "M'", "D", "D'", "B", "B'"];
-const START = "x2"; // yellow on top, blue in front, as in the videos
+const START = applyAlg(SOLVED, "x2"); // yellow on top, blue in front, as in the videos
 const TRICK = "R U R' U' ".repeat(6).trim();
 
 const solved = stepPicture(0).state;
@@ -22,19 +22,19 @@ const kinds = [
 
 export function Notation() {
   const { t } = useI18n();
-  const viewer = useRef<CubeViewerHandle>(null);
+  const viewer = useRef<Cube3DHandle>(null);
   const [history, setHistory] = useState<string[]>([]);
 
   const turn = (move: string) => {
-    viewer.current?.addMove(move);
+    viewer.current?.play(move);
     setHistory((h) => [...h, move]);
   };
   const reset = () => {
-    viewer.current?.reset(START);
+    viewer.current?.show(START);
     setHistory([]);
   };
   const trick = () => {
-    viewer.current?.play(`${START} ${history.join(" ")}`, TRICK);
+    viewer.current?.play(TRICK);
   };
 
   return (
@@ -64,7 +64,7 @@ export function Notation() {
         <h2>{t("notation.moves")}</h2>
         <p>{t("notation.movesText")}</p>
         <div className="playground">
-          <CubeViewer ref={viewer} setupAlg={START} label={t("notation.moves")} />
+          <Cube3D ref={viewer} state={START} label={t("notation.moves")} />
           <div className="playground-side">
             <p className="muted">{t("notation.try")}</p>
             <div className="move-pad">
