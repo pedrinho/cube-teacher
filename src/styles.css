@@ -903,9 +903,26 @@ button.move:hover {
   border-radius: var(--radius-panel);
   border: 2px solid transparent;
   scroll-margin: 1rem;
+  cursor: pointer;
+}
+.case:hover {
+  border-color: var(--accent-soft);
 }
 .case[data-active] {
   border-color: var(--accent);
+}
+.case-pick {
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0.5rem;
+  background: none;
+  line-height: 0;
+  cursor: pointer;
+}
+.demo-actions {
+  justify-content: center;
+  gap: 0.5rem;
 }
 .case-cube {
   width: 6.5rem;
