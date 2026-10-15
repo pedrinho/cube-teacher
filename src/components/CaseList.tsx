@@ -1,14 +1,16 @@
 // Cases of a lesson: a picture, the moves and a "Show me" button for each, next to a 3D demo cube.
 // Tapping a case puts its starting position on the cube; "Solve it" plays the moves at the chosen
 // speed, with the playing move highlighted, and the cube stays solved until "Start again".
-// "Next move" and "Back" go through the moves one at a time instead.
+// "Next move" and "Back" go through the moves one at a time instead. Whole-cube turns are in the
+// strip too, with a sentence saying which way to turn the cube.
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useI18n } from "../i18n";
-import { applyAlg, invertMove, isRotation, parseAlg, type CubeState, type Move } from "../cube/model";
+import type { MessageKey } from "../i18n/en";
+import { applyAlg, invertMove, isRotation, moveToString, parseAlg, type CubeState, type Move } from "../cube/model";
 import type { Visible } from "../three/cubeScene";
 import { CubeSvg } from "./CubeSvg";
 import { Cube3D, type Cube3DHandle } from "./Cube3D";
-import { Moves } from "./Moves";
+import { MoveLabel, Moves } from "./Moves";
 import { SpeedControl } from "./SpeedControl";
 import { TopView } from "./TopView";
 
@@ -40,19 +42,13 @@ interface Props {
 interface Picked {
   id: string;
   /** Everything the demo plays, whole-cube turns included. */
-  all: Move[];
-  /** The strip's moves (without whole-cube turns). */
   moves: Move[];
-  /** How many of `all` are done. */
+  /** How many moves are done. */
   step: number;
-  /** The highlighted chip in the strip. */
+  /** The highlighted move: the next one when going step by step, the one playing during "Solve it". */
   current: number;
-  turning: boolean;
   phase: "start" | "stepping" | "playing" | "solved";
 }
-
-/** The chip in the strip of the demo move at `index` (rotations have no chip). */
-const chipAt = (all: Move[], index: number) => all.slice(0, index).filter((m) => !isRotation(m)).length;
 
 /** Before a demo started from a case card, so the eye can find the cube first. */
 const START_DELAY_MS = 700;
@@ -60,7 +56,7 @@ const START_DELAY_MS = 700;
 const SOLVE_DELAY_MS = 300;
 
 export function CaseList({ cases, mask, view = "cube", arrows, focusCase, learning }: Props) {
-  const { t } = useI18n();
+  const { t, tr } = useI18n();
   const cube = useRef<Cube3DHandle>(null);
   const demo = useRef<HTMLDivElement>(null);
   const timer = useRef<number | undefined>(undefined);
@@ -71,8 +67,7 @@ export function CaseList({ cases, mask, view = "cube", arrows, focusCase, learni
   const pick = (c: ShownCase): Picked => {
     window.clearTimeout(timer.current);
     cube.current?.show(c.setup);
-    const all = parseAlg(c.demo);
-    const shown: Picked = { id: c.id, all, moves: all.filter((m) => !isRotation(m)), step: 0, current: -1, turning: false, phase: "start" };
+    const shown: Picked = { id: c.id, moves: parseAlg(c.demo), step: 0, current: -1, phase: "start" };
     setPicked(shown);
     const box = demo.current?.getBoundingClientRect();
     if (box && (box.top < 0 || box.bottom > window.innerHeight)) demo.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -80,20 +75,19 @@ export function CaseList({ cases, mask, view = "cube", arrows, focusCase, learni
   };
 
   /** Changes the picked case, unless another case (or the same one picked again) took its place. */
-  const update = (p: Picked, next: Partial<Picked>) => setPicked((q) => (q && q.all === p.all ? { ...q, ...next } : q));
+  const update = (p: Picked, next: Partial<Picked>) => setPicked((q) => (q && q.moves === p.moves ? { ...q, ...next } : q));
 
   /** Plays the moves not done yet. */
   const playRest = (c: ShownCase, p: Picked, delay: number) => {
-    const rest = p.all.slice(p.step);
     setPicked({ ...p, phase: "playing" });
     timer.current = window.setTimeout(
       () =>
         cube.current
-          ?.play(rest, {
-            from: applyAlg(c.setup, p.all.slice(0, p.step)),
-            onStep: (i) => update(p, { current: chipAt(p.all, p.step + i), turning: isRotation(rest[i]) }),
+          ?.play(p.moves.slice(p.step), {
+            from: applyAlg(c.setup, p.moves.slice(0, p.step)),
+            onStep: (i) => update(p, { current: p.step + i }),
           })
-          .then(() => update(p, { step: p.all.length, current: p.moves.length, turning: false, phase: "solved" })),
+          .then(() => update(p, { step: p.moves.length, current: p.moves.length, phase: "solved" })),
       delay,
     );
   };
@@ -104,18 +98,18 @@ export function CaseList({ cases, mask, view = "cube", arrows, focusCase, learni
   /** Plays one move forward (+1) or takes the last one back (-1); the strip marks the next move. */
   const stepBy = (c: ShownCase, p: Picked, dir: 1 | -1) => {
     const step = p.step + dir;
-    const move = dir === 1 ? p.all[p.step] : invertMove(p.all[step]);
+    const move = dir === 1 ? p.moves[p.step] : invertMove(p.moves[step]);
     setPicked({
       ...p,
       step,
-      current: step === 0 ? -1 : chipAt(p.all, step),
-      turning: isRotation(move),
-      phase: step === 0 ? "start" : step === p.all.length ? "solved" : "stepping",
+      current: step === 0 ? -1 : step,
+      phase: step === 0 ? "start" : step === p.moves.length ? "solved" : "stepping",
     });
-    cube.current
-      ?.play([move], { from: applyAlg(c.setup, p.all.slice(0, p.step)) })
-      .then(() => setPicked((q) => (q && q.all === p.all && q.step === step ? { ...q, turning: false } : q)));
+    cube.current?.play([move], { from: applyAlg(c.setup, p.moves.slice(0, p.step)) });
   };
+
+  // The whole-cube turn that "Next move" would do, or that "Solve it" is playing, in words.
+  const turn = picked && picked.moves[picked.phase === "playing" ? picked.current : picked.step];
 
   // Tapping anywhere on a card picks it, except on its buttons and links.
   const onCardClick = (c: ShownCase) => (e: MouseEvent) => {
@@ -147,7 +141,17 @@ export function CaseList({ cases, mask, view = "cube", arrows, focusCase, learni
           <>
             <div className="demo-strip" aria-live="polite">
               <Moves alg={picked.moves} current={picked.current} small />
-              {picked.turning && <p className="muted">{t("lesson.turning")}</p>}
+              {turn && isRotation(turn) && (
+                <p className="demo-turn">
+                  {tr(`rotation.${moveToString(turn)}` as MessageKey, {
+                    move: (
+                      <strong key="move">
+                        <MoveLabel move={turn} />
+                      </strong>
+                    ),
+                  })}
+                </p>
+              )}
             </div>
             <div className="btn-row demo-actions">
               <button type="button" className="btn case-show" disabled={picked.phase === "start"} onClick={() => pick(pickedCase)}>
@@ -156,7 +160,7 @@ export function CaseList({ cases, mask, view = "cube", arrows, focusCase, learni
               <button
                 type="button"
                 className="btn btn-primary case-show"
-                disabled={picked.phase === "playing" || picked.step === picked.all.length}
+                disabled={picked.phase === "playing" || picked.step === picked.moves.length}
                 onClick={() => playRest(pickedCase, picked, SOLVE_DELAY_MS)}
               >
                 {t("lesson.solve")}
@@ -174,10 +178,10 @@ export function CaseList({ cases, mask, view = "cube", arrows, focusCase, learni
               <button
                 type="button"
                 className="btn case-show"
-                disabled={picked.phase === "playing" || picked.step === picked.all.length}
+                disabled={picked.phase === "playing" || picked.step === picked.moves.length}
                 onClick={() => stepBy(pickedCase, picked, 1)}
               >
-                {picked.step < picked.all.length && isRotation(picked.all[picked.step]) ? t("guide.turnCube") : t("guide.next")}
+                {picked.step < picked.moves.length && isRotation(picked.moves[picked.step]) ? t("guide.turnCube") : t("guide.next")}
               </button>
             </div>
           </>

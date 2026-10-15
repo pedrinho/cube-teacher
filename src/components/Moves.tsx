@@ -1,5 +1,6 @@
 // Moves drawn as keycaps. The prime mark gets the accent color so R and R' never look alike.
-import { parseAlg, moveToString, type Move } from "../cube/model";
+// Whole-cube turns (x, y, z) get a dashed outline: no layer turns, the cube is held differently.
+import { isRotation, parseAlg, moveToString, type Move } from "../cube/model";
 
 export function MoveLabel({ move }: { move: Move }) {
   return (
@@ -28,7 +29,13 @@ export function Moves({ alg, current, small, label }: MovesProps) {
       {moves.map((m, i) => {
         const state: MoveState = current === undefined ? "todo" : i < current ? "done" : i === current ? "current" : "todo";
         return (
-          <li key={i} className="move" data-state={state} aria-current={state === "current" ? "step" : undefined}>
+          <li
+            key={i}
+            className="move"
+            data-state={state}
+            data-rotation={isRotation(m) || undefined}
+            aria-current={state === "current" ? "step" : undefined}
+          >
             <MoveLabel move={m} />
           </li>
         );
