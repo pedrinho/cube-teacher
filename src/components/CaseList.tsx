@@ -1,9 +1,10 @@
 // Cases of a lesson: a picture, the moves and a "Show me" button for each, next to a 3D demo cube.
 // Tapping a case puts its starting position on the cube; "Solve it" plays the moves at the chosen
 // speed, with the playing move highlighted, and the cube stays solved until "Start again".
+// "Next move" and "Back" go through the moves one at a time instead.
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { useI18n } from "../i18n";
-import { isRotation, parseAlg, type CubeState, type Move } from "../cube/model";
+import { applyAlg, invertMove, isRotation, parseAlg, type CubeState, type Move } from "../cube/model";
 import type { Visible } from "../three/cubeScene";
 import { CubeSvg } from "./CubeSvg";
 import { Cube3D, type Cube3DHandle } from "./Cube3D";
@@ -35,14 +36,23 @@ interface Props {
   learning?: { isOn: (id: string) => boolean; toggle: (id: string) => void };
 }
 
-/** The case on the demo cube: its moves (without whole-cube turns) and how far it has played. */
+/** The case on the demo cube and how far its moves have played. */
 interface Picked {
   id: string;
+  /** Everything the demo plays, whole-cube turns included. */
+  all: Move[];
+  /** The strip's moves (without whole-cube turns). */
   moves: Move[];
+  /** How many of `all` are done. */
+  step: number;
+  /** The highlighted chip in the strip. */
   current: number;
   turning: boolean;
-  phase: "start" | "playing" | "solved";
+  phase: "start" | "stepping" | "playing" | "solved";
 }
+
+/** The chip in the strip of the demo move at `index` (rotations have no chip). */
+const chipAt = (all: Move[], index: number) => all.slice(0, index).filter((m) => !isRotation(m)).length;
 
 /** Before a demo started from a case card, so the eye can find the cube first. */
 const START_DELAY_MS = 700;
@@ -57,35 +67,54 @@ export function CaseList({ cases, mask, view = "cube", arrows, focusCase, learni
   const [picked, setPicked] = useState<Picked | null>(null);
   const pickedCase = cases.find((c) => c.id === picked?.id);
 
-  /** Shows a case's starting position on the cube; returns the strip's moves. */
-  const pick = (c: ShownCase, phase: Picked["phase"] = "start") => {
+  /** Shows a case's starting position on the cube. */
+  const pick = (c: ShownCase): Picked => {
     window.clearTimeout(timer.current);
     cube.current?.show(c.setup);
-    const moves = parseAlg(c.demo).filter((m) => !isRotation(m));
-    setPicked({ id: c.id, moves, current: -1, turning: false, phase });
+    const all = parseAlg(c.demo);
+    const shown: Picked = { id: c.id, all, moves: all.filter((m) => !isRotation(m)), step: 0, current: -1, turning: false, phase: "start" };
+    setPicked(shown);
     const box = demo.current?.getBoundingClientRect();
     if (box && (box.top < 0 || box.bottom > window.innerHeight)) demo.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    return moves;
+    return shown;
   };
 
-  /** Shows a case's starting position, then plays its moves. */
-  const solve = (c: ShownCase, delay: number) => {
-    const shown = pick(c, "playing");
-    const moves = parseAlg(c.demo);
-    // For every demo move, the index of its chip in the strip (rotations have no chip).
-    const chip = moves.map((_, i) => moves.slice(0, i).filter((m) => !isRotation(m)).length);
-    // Only this run, while it is still the one on the cube, moves the strip along.
-    const update = (next: Partial<Picked>) => setPicked((p) => (p && p.moves === shown ? { ...p, ...next } : p));
+  /** Changes the picked case, unless another case (or the same one picked again) took its place. */
+  const update = (p: Picked, next: Partial<Picked>) => setPicked((q) => (q && q.all === p.all ? { ...q, ...next } : q));
+
+  /** Plays the moves not done yet. */
+  const playRest = (c: ShownCase, p: Picked, delay: number) => {
+    const rest = p.all.slice(p.step);
+    setPicked({ ...p, phase: "playing" });
     timer.current = window.setTimeout(
       () =>
         cube.current
-          ?.play(moves, {
-            from: c.setup,
-            onStep: (i) => update({ current: chip[i], turning: isRotation(moves[i]) }),
+          ?.play(rest, {
+            from: applyAlg(c.setup, p.all.slice(0, p.step)),
+            onStep: (i) => update(p, { current: chipAt(p.all, p.step + i), turning: isRotation(rest[i]) }),
           })
-          .then(() => update({ current: shown.length, turning: false, phase: "solved" })),
+          .then(() => update(p, { step: p.all.length, current: p.moves.length, turning: false, phase: "solved" })),
       delay,
     );
+  };
+
+  /** Shows a case's starting position, then plays its moves. */
+  const solve = (c: ShownCase, delay: number) => playRest(c, pick(c), delay);
+
+  /** Plays one move forward (+1) or takes the last one back (-1); the strip marks the next move. */
+  const stepBy = (c: ShownCase, p: Picked, dir: 1 | -1) => {
+    const step = p.step + dir;
+    const move = dir === 1 ? p.all[p.step] : invertMove(p.all[step]);
+    setPicked({
+      ...p,
+      step,
+      current: step === 0 ? -1 : chipAt(p.all, step),
+      turning: isRotation(move),
+      phase: step === 0 ? "start" : step === p.all.length ? "solved" : "stepping",
+    });
+    cube.current
+      ?.play([move], { from: applyAlg(c.setup, p.all.slice(0, p.step)) })
+      .then(() => setPicked((q) => (q && q.all === p.all && q.step === step ? { ...q, turning: false } : q)));
   };
 
   // Tapping anywhere on a card picks it, except on its buttons and links.
@@ -127,10 +156,28 @@ export function CaseList({ cases, mask, view = "cube", arrows, focusCase, learni
               <button
                 type="button"
                 className="btn btn-primary case-show"
-                disabled={picked.phase !== "start"}
-                onClick={() => solve(pickedCase, SOLVE_DELAY_MS)}
+                disabled={picked.phase === "playing" || picked.step === picked.all.length}
+                onClick={() => playRest(pickedCase, picked, SOLVE_DELAY_MS)}
               >
                 {t("lesson.solve")}
+              </button>
+            </div>
+            <div className="btn-row demo-actions" role="group" aria-label={t("lesson.stepByStep")}>
+              <button
+                type="button"
+                className="btn case-show"
+                disabled={picked.phase === "playing" || picked.step === 0}
+                onClick={() => stepBy(pickedCase, picked, -1)}
+              >
+                {t("guide.back")}
+              </button>
+              <button
+                type="button"
+                className="btn case-show"
+                disabled={picked.phase === "playing" || picked.step === picked.all.length}
+                onClick={() => stepBy(pickedCase, picked, 1)}
+              >
+                {picked.step < picked.all.length && isRotation(picked.all[picked.step]) ? t("guide.turnCube") : t("guide.next")}
               </button>
             </div>
           </>
