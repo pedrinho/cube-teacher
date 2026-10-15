@@ -24,7 +24,15 @@ export const pt: Messages = {
   "speed.slow": "Devagar",
   "speed.normal": "Normal",
   "speed.fast": "Rápido",
-  "lesson.turning": "Girando o cubo inteiro…",
+  "rotation.x": "{move} quer dizer: gire o cubo inteiro para a face de baixo vir para a frente.",
+  "rotation.x'": "{move} quer dizer: gire o cubo inteiro para a face de cima vir para a frente.",
+  "rotation.x2": "{move} quer dizer: vire o cubo inteiro de cabeça para baixo, com a parte de trás vindo para a frente.",
+  "rotation.y": "{move} quer dizer: gire o cubo inteiro para o lado direito vir para a frente.",
+  "rotation.y'": "{move} quer dizer: gire o cubo inteiro para o lado esquerdo vir para a frente.",
+  "rotation.y2": "{move} quer dizer: gire o cubo inteiro para a parte de trás vir para a frente.",
+  "rotation.z": "{move} quer dizer: gire o cubo inteiro para o lado esquerdo ir para cima.",
+  "rotation.z'": "{move} quer dizer: gire o cubo inteiro para o lado direito ir para cima.",
+  "rotation.z2": "{move} quer dizer: vire o cubo inteiro de cabeça para baixo, com o lado esquerdo indo para a direita.",
 
   "home.title": "Monte o cubo, uma camada de cada vez",
   "home.lead":

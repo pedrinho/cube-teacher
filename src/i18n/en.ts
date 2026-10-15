@@ -22,7 +22,15 @@ export const en = {
   "speed.slow": "Slow",
   "speed.normal": "Normal",
   "speed.fast": "Fast",
-  "lesson.turning": "Turning the whole cube…",
+  "rotation.x": "{move} means: turn the whole cube so the bottom comes to the front.",
+  "rotation.x'": "{move} means: turn the whole cube so the top comes to the front.",
+  "rotation.x2": "{move} means: turn the whole cube upside down, so the back comes to the front.",
+  "rotation.y": "{move} means: turn the whole cube so the right side comes to the front.",
+  "rotation.y'": "{move} means: turn the whole cube so the left side comes to the front.",
+  "rotation.y2": "{move} means: turn the whole cube so the back comes to the front.",
+  "rotation.z": "{move} means: turn the whole cube so the left side goes to the top.",
+  "rotation.z'": "{move} means: turn the whole cube so the right side goes to the top.",
+  "rotation.z2": "{move} means: turn the whole cube upside down, so the left side goes to the right.",
 
   "home.title": "Solve the cube, one layer at a time",
   "home.lead":
