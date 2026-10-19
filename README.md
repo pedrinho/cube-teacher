@@ -30,23 +30,48 @@ For kids who already solve the cube, following
 - **Guided solve**: optimal cross, the four F2L pairs, OLL and PLL by name, with a basic
   (2-look) or full last layer.
 
+## Cube Hero
+
+**Play it:** https://pedrinho.github.io/cube-teacher/hero/
+
+A Guitar Hero–style game: the solve of a scrambled cube (random, or painted from a real one)
+comes down a highway as notes, and you play it on the keyboard. Each lane is a face; the home row
+turns it clockwise (`S D F` for L U F, `J K L` for D B R), the key above turns it the other way
+(`W E R`, `U I O`), and the space bar turns the whole cube. Hits are judged Perfect or Good by
+timing; a missed note still turns the cube, so every song ends solved. The songs are the layer
+method and Fridrich solves from Cube Teacher, so playing them is practice for the real thing.
+
 ## Development
+
+One repository, three npm workspaces:
+
+- `packages/cube-kit`: what both apps share. The cube model, validation, the layer and Fridrich
+  solvers, the three.js cube, the paint editor and move keycaps, and the texts they use (en/pt).
+  It is TypeScript source, imported directly (`cube-kit/cube/model`, `cube-kit/react/NetEditor`…).
+- `apps/teacher`: Cube Teacher.
+- `apps/hero`: Cube Hero.
 
 ```sh
 npm install
-npm run dev      # start the app
-npm test         # run the tests (includes solving thousands of random cubes)
-npm run build    # static build in dist/
+npm run dev        # Cube Teacher
+npm run dev:hero   # Cube Hero
+npm test           # all tests (includes solving thousands of random cubes)
+npm run build      # static builds in apps/*/dist
+npm run site       # both builds in site/, as published
 ```
 
-Every push to `main` runs the tests, builds the app and publishes it to GitHub Pages
+Every push to `main` runs the tests, builds both apps and publishes them to GitHub Pages
 (`.github/workflows/deploy.yml`).
 
 ## How it's built
 
-- `src/cube`: the cube model (stickers, moves, rotations), validation of entered cubes.
-- `src/methods/layers`: the layer method solver, one file per step. Each step only uses the
-  moves documented for it, and picks the case by trying them, so it always matches the lessons.
-- `src/methods/fridrich`: Cinoto's F2L/OLL/PLL algorithms, a case classifier, and the CFOP solver.
-- `src/content/layers`: lesson content; every case picture is checked against its text in tests.
-- `src/three`: the 3D cube (three.js); `src/components`, `src/pages`: the React app.
+- `packages/cube-kit/src/cube`: the cube model (stickers, moves, rotations), validation of entered cubes.
+- `packages/cube-kit/src/methods/layers`: the layer method solver, one file per step. Each step only
+  uses the moves documented for it, and picks the case by trying them, so it always matches the lessons.
+- `packages/cube-kit/src/methods/fridrich`: Cinoto's F2L/OLL/PLL algorithms, a case classifier, and
+  the CFOP solver.
+- `packages/cube-kit/src/three`: the 3D cube (three.js); `src/react`: components both apps use.
+- `apps/teacher/src/content/layers`: lesson content; every case picture is checked against its text in tests.
+- `apps/teacher/src/components`, `apps/teacher/src/pages`: the Cube Teacher app.
+- `apps/hero/src/game`: the song chart (solver steps laid out on beats), lanes and keys, hit judging,
+  scoring, the highway renderer and the synthesized music; `apps/hero/src/screens`: the game's screens.

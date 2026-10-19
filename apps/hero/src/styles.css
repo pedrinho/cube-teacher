@@ -1,0 +1,718 @@
+@import "@fontsource-variable/lexend";
+
+/* A stage in Cube Teacher's navy ink; the highway is black cube plastic. Sticker colors only ever
+   mean faces; violet means "the other way" (') and whole-cube turns, as in Cube Teacher. */
+:root {
+  --paper: #1b1f3b;
+  --panel: #262b52;
+  --panel-raised: #30366a;
+  --ink: #f3f4fb;
+  --ink-soft: #a9aed0;
+  --line: #3a4072;
+  --lane-line: #23263b;
+  --accent: #b9a2ff;
+  --accent-ink: #1b1f3b;
+  --accent-soft: #3a3270;
+  --violet: #7a4fe6;
+  --violet-soft: #cbb8ff;
+  --key: #f3f4fb;
+  --key-edge: #9aa0bf;
+  --key-ink: #1c2242;
+  --miss: #555a75;
+  --danger: #ff8f86;
+  --danger-soft: #3f2240;
+  --ok: #7ee2a8;
+
+  --font: "Lexend Variable", "Lexend", system-ui, sans-serif;
+  --step--1: 0.8rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.563rem;
+  --step-3: 1.953rem;
+  --step-4: 2.441rem;
+  --radius-panel: 1rem;
+  --gutter: 16px;
+  --max: 1180px;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 112.5%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.15;
+  margin: 0 0 0.5em;
+}
+h1 {
+  font-size: var(--step-4);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+h2 {
+  font-size: var(--step-1);
+  font-weight: 700;
+}
+
+p {
+  margin: 0 0 1em;
+}
+
+.lead {
+  font-size: var(--step-1);
+  color: var(--ink-soft);
+  max-width: 34em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ---- Buttons ---- */
+.btn {
+  font: inherit;
+  font-weight: 700;
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  border: 2px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+}
+.btn:hover {
+  border-color: var(--accent);
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.btn-primary {
+  background: var(--violet);
+  border-color: var(--violet);
+  color: #fff;
+  box-shadow: 0 4px 0 #4a2d9c;
+}
+.btn-primary:hover {
+  border-color: var(--violet-soft);
+}
+.btn-primary:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #4a2d9c;
+}
+.btn-big {
+  font-size: var(--step-1);
+  padding: 0.75rem 2rem;
+}
+.btn-quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink-soft);
+}
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.notice {
+  border-radius: var(--radius-panel);
+  padding: 1rem 1.25rem;
+  background: var(--accent-soft);
+}
+.notice-error {
+  background: var(--danger-soft);
+  color: var(--danger);
+  margin-top: 1.5rem;
+}
+.notice-error h3 {
+  margin-bottom: 0.25rem;
+}
+.notice-error ul {
+  margin: 0 0 0.5rem;
+  padding-left: 1.2rem;
+}
+.notice-error p,
+.notice-error li {
+  color: var(--ink);
+}
+
+/* ---- Top bar ---- */
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem var(--gutter);
+  max-width: var(--max);
+  margin: 0 auto;
+}
+.brand {
+  font: inherit;
+  font-weight: 800;
+  font-size: var(--step-1);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.brand:disabled {
+  cursor: default;
+}
+/* On the setup screen the keycap title already says it. */
+.bar[data-home] .brand {
+  visibility: hidden;
+}
+.bar-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.sound {
+  font-size: var(--step--1);
+}
+.lang {
+  display: inline-flex;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.lang button {
+  font: inherit;
+  font-weight: 600;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+}
+.lang button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.page {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0.5rem var(--gutter) 3rem;
+}
+
+/* ---- Setup ---- */
+.setup {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 3rem;
+  align-items: start;
+  padding-top: 1rem;
+}
+
+/* The title, on keycaps colored like stickers: the two things the game is made of. */
+.title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+}
+.title-key {
+  display: inline-grid;
+  place-items: center;
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 0.7rem;
+  background: var(--c);
+  color: var(--key-ink);
+  font-size: var(--step-3);
+  font-weight: 800;
+  box-shadow:
+    inset 0 0 0 3px var(--cube-body),
+    0 5px 0 var(--cube-body);
+}
+.title-key[data-color="G"],
+.title-key[data-color="B"],
+.title-key[data-color="R"] {
+  color: #fff;
+}
+.title-key:nth-child(5) {
+  margin-left: 1.1rem;
+}
+
+.choice {
+  border: 0;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+.choice legend {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+.choice-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 0.5rem;
+}
+.choice-options button {
+  font: inherit;
+  display: grid;
+  gap: 0.1rem;
+  text-align: left;
+  padding: 0.55rem 1rem;
+  border-radius: 0.8rem;
+  border: 2px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+}
+.choice-options button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 3px 0 var(--accent);
+}
+.choice-title {
+  font-weight: 700;
+}
+.choice-text {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+.setup-actions {
+  margin-top: 1.5rem;
+}
+.setup .lead {
+  font-size: var(--step-0);
+  margin-bottom: 1.5rem;
+}
+.best {
+  margin-top: 1rem;
+  color: var(--ink-soft);
+}
+
+.setup-how {
+  background: var(--panel);
+  border-radius: var(--radius-panel);
+  padding: 1.5rem;
+}
+.how {
+  margin: 1.25rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--ink-soft);
+}
+.how li + li {
+  margin-top: 0.4rem;
+}
+
+/* The keyboard, as the fingers find it: prime keys a row up and a little to the left. */
+.keymap {
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+}
+.keymap-hands {
+  display: flex;
+  gap: 1.5rem;
+}
+.keymap-half {
+  display: grid;
+  gap: 0.4rem;
+}
+.keymap-row {
+  display: flex;
+  gap: 0.4rem;
+  padding-left: 0.9rem;
+}
+.keymap-top {
+  padding-left: 0;
+}
+.keycap {
+  display: inline-grid;
+  justify-items: center;
+  align-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.55rem;
+  background: var(--key);
+  color: var(--key-ink);
+  box-shadow: 0 4px 0 var(--key-edge);
+  line-height: 1.05;
+}
+.keycap-key {
+  font-weight: 800;
+  font-size: var(--step-1);
+}
+.keycap-move {
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: #4a5272;
+}
+.keycap-prime {
+  background: var(--violet-soft);
+  box-shadow: 0 4px 0 #8f78d8;
+}
+.keycap .prime {
+  color: var(--violet);
+  font-weight: 800;
+}
+.keycap-space {
+  width: 14rem;
+  height: 2.6rem;
+  grid-auto-flow: column;
+  gap: 0.75rem;
+}
+.keycap-space .keycap-key {
+  font-size: var(--step-0);
+}
+
+/* ---- Paint and review ---- */
+.screen {
+  padding-top: 1rem;
+}
+.paint-actions {
+  margin-top: 1.5rem;
+}
+.review {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: center;
+}
+.face-grid {
+  margin-top: 0.5rem;
+}
+
+/* ---- Song ---- */
+.page[data-screen="play"] {
+  max-width: none;
+  padding-bottom: 1rem;
+}
+/* The song fills the window under the top bar, so the keys never scroll away. */
+.play {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  height: calc(100dvh - 5rem);
+  min-height: 28rem;
+}
+.play-top {
+  display: grid;
+  grid-template-columns: minmax(12rem, auto) 1fr auto;
+  gap: 1.25rem;
+  align-items: center;
+}
+.play-step {
+  display: grid;
+}
+.play-step-n {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+.play-step-name {
+  font-size: var(--step-1);
+  font-weight: 800;
+}
+.progress {
+  display: flex;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  height: 0.6rem;
+}
+.progress li {
+  position: relative;
+  border-radius: 999px;
+  background: var(--panel-raised);
+  overflow: hidden;
+  min-width: 0.6rem;
+}
+.progress li[data-state="done"] {
+  background: var(--accent);
+}
+.progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.play-body {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr) minmax(16rem, 22rem);
+  gap: 1.25rem;
+  min-height: 0;
+}
+.play-score {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+.stat {
+  display: grid;
+  margin: 0;
+}
+.stat-label {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+.stat-value {
+  font-size: var(--step-3);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.stat-small {
+  font-size: var(--step-2);
+}
+.multiplier {
+  margin: 0;
+  font-size: var(--step-4);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink-soft);
+}
+.multiplier[data-level="2"] {
+  color: var(--ink);
+}
+.multiplier[data-level="3"] {
+  color: var(--violet-soft);
+}
+.multiplier[data-level="4"] {
+  color: var(--accent);
+  text-shadow: 0 0 18px var(--violet);
+}
+.watching {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+.highway-wrap {
+  position: relative;
+  min-height: 0;
+}
+.highway {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.countdown {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 7rem;
+  font-weight: 800;
+  text-shadow: 0 6px 0 var(--cube-body);
+  pointer-events: none;
+}
+.pause-menu {
+  position: absolute;
+  inset: 20% 15% auto;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+  padding: 1.75rem;
+  border-radius: var(--radius-panel);
+  background: var(--panel);
+  box-shadow: 0 10px 0 var(--cube-body);
+}
+
+.play-cube {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+}
+.play-cube .viewer {
+  max-width: none;
+}
+.lyrics {
+  display: grid;
+  gap: 0.6rem;
+}
+.lyrics p {
+  margin: 0;
+}
+.lyric-label {
+  display: block;
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+.lyric-now {
+  font-size: var(--step-0);
+  font-weight: 600;
+}
+.lyric-next {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+
+/* ---- Results ---- */
+.results {
+  position: relative;
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  padding-top: 2rem;
+}
+.results h1 {
+  font-size: 4rem;
+}
+.stars {
+  font-size: 3.2rem;
+  letter-spacing: 0.15em;
+  margin: 0 0 1rem;
+  color: var(--panel-raised);
+}
+.stars span[data-on] {
+  color: var(--st-Y);
+  text-shadow: 0 4px 0 var(--cube-body);
+}
+.results-score {
+  display: grid;
+  justify-items: center;
+}
+.results-points {
+  font-size: var(--step-4);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.new-best {
+  margin-top: 0.25rem;
+  padding: 0.15rem 0.8rem;
+  border-radius: 999px;
+  background: var(--violet);
+  font-weight: 700;
+}
+.results-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 1rem 0 2rem;
+}
+.results-grid div {
+  min-width: 7rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.8rem;
+  background: var(--panel);
+}
+.results-grid dt {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
+.results-grid dd {
+  margin: 0;
+  font-size: var(--step-2);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.results-actions {
+  justify-content: center;
+}
+
+/* Stickers raining down once, when the cube is solved. */
+.confetti {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.confetti span {
+  position: absolute;
+  top: -2rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 0.25rem;
+  background: var(--c);
+  box-shadow: inset 0 0 0 2px var(--cube-body);
+  animation-name: fall;
+  animation-timing-function: cubic-bezier(0.3, 0.1, 0.6, 1);
+  animation-fill-mode: forwards;
+}
+@keyframes fall {
+  to {
+    transform: translateY(110vh) rotate(var(--spin));
+  }
+}
+
+/* ---- Small screens ---- */
+@media (max-width: 900px) {
+  .setup,
+  .review {
+    grid-template-columns: 1fr;
+  }
+  .play-top {
+    grid-template-columns: 1fr auto;
+  }
+  .progress {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .play {
+    height: auto;
+  }
+  .play-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 75dvh auto;
+  }
+  .play-score {
+    grid-auto-flow: column;
+    justify-content: start;
+    align-items: end;
+    padding-top: 0;
+  }
+  .play-cube {
+    grid-template-columns: 10rem 1fr;
+  }
+}
+@media (max-width: 520px) {
+  html {
+    font-size: 100%;
+  }
+  .title-key {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: var(--step-2);
+  }
+  .title-key:nth-child(5) {
+    margin-left: 0.5rem;
+  }
+  .keymap-hands {
+    gap: 0.75rem;
+  }
+  .keycap {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+  .keycap-space {
+    width: 10rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti {
+    display: none;
+  }
+  * {
+    transition: none !important;
+  }
+}
