@@ -1,6 +1,5 @@
 // Pick a song (the method), a speed and where the cube comes from, then play or watch.
 import { useI18n, type MessageKey } from "../i18n";
-import { KEYS, LANES, keyLabel } from "../game/lanes";
 import { BPM, SPEEDS, loadBest, type CubeSource, type Setup as SetupChoice } from "../settings";
 import type { Method } from "../game/chart";
 
@@ -47,42 +46,25 @@ function Choice<T extends string>({
   );
 }
 
-/** The twelve keys and the space bar, as on the keyboard, each with the move it plays. */
+const ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+
+/** How a letter is used: a face, a middle layer, a whole-cube turn, or not at all. */
+const kindOf = (letter: string) =>
+  "UDLRFB".includes(letter) ? "face" : "MES".includes(letter) ? "slice" : "XYZ".includes(letter) ? "turn" : undefined;
+
+/** A keyboard with the game's letters lit, drawn like the notes they play. */
 function KeyMap() {
-  const { t } = useI18n();
-  const half = (lanes: readonly (typeof LANES)[number][]) => (
-    <div className="keymap-half">
-      <div className="keymap-row keymap-top">
-        {lanes.map((lane) => (
-          <span key={lane} className="keycap keycap-prime">
-            <span className="keycap-key">{keyLabel(KEYS[lane].prime)}</span>
-            <span className="keycap-move">
-              {lane}
-              <span className="prime">'</span>
-            </span>
-          </span>
-        ))}
-      </div>
-      <div className="keymap-row">
-        {lanes.map((lane) => (
-          <span key={lane} className="keycap">
-            <span className="keycap-key">{keyLabel(KEYS[lane].turn)}</span>
-            <span className="keycap-move">{lane}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
   return (
-    <div className="keymap" aria-hidden="true">
-      <div className="keymap-hands">
-        {half(LANES.slice(0, 3))}
-        {half(LANES.slice(3))}
-      </div>
-      <span className="keycap keycap-space">
-        <span className="keycap-key">{t("key.space")}</span>
-        <span className="keycap-move">x y z</span>
-      </span>
+    <div className="kb" aria-hidden="true">
+      {ROWS.map((row) => (
+        <div key={row} className="kb-row">
+          {[...row].map((letter) => (
+            <span key={letter} className="kb-key" data-kind={kindOf(letter)}>
+              {letter}
+            </span>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }

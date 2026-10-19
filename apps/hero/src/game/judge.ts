@@ -2,16 +2,16 @@
 // its timing window is open; once the window has passed it is missed. Either way the move still
 // happens on the cube, so the cube always follows the song and ends solved.
 import type { Note } from "./chart";
-import { keyMatches, type KeyAction } from "./lanes";
+import { keyFor } from "./lanes";
 import { GOOD_MS, judge, type Judgment } from "./score";
 
 export type PlayEvent =
   | { type: "hit"; note: number; judgment: Exclude<Judgment, "miss">; offsetMs: number }
   | { type: "miss"; note: number }
   /** A key that doesn't match the note in reach. */
-  | { type: "wrong"; note: number; action: KeyAction }
+  | { type: "wrong"; note: number; code: string }
   /** A key with no note in reach. */
-  | { type: "stray"; action: KeyAction };
+  | { type: "stray"; code: string };
 
 export class Judge {
   /** How each note went, by index; notes before `next` are done. */
@@ -35,14 +35,14 @@ export class Judge {
     return events;
   }
 
-  /** A key pressed at `beat`: settles late notes first, then judges the press. */
-  press(action: KeyAction, beat: number, msPerBeat: number): PlayEvent[] {
+  /** A key (KeyboardEvent.code) pressed at `beat`: settles late notes first, then judges the press. */
+  press(code: string, beat: number, msPerBeat: number): PlayEvent[] {
     const events = this.update(beat, msPerBeat);
     const note = this.notes[this.next];
     const offsetMs = note ? (beat - note.beat) * msPerBeat : Infinity;
     const judgment = judge(offsetMs);
-    if (!note || !judgment) events.push({ type: "stray", action });
-    else if (!keyMatches(action, note.move)) events.push({ type: "wrong", note: this.next, action });
+    if (!note || !judgment) events.push({ type: "stray", code });
+    else if (keyFor(note.move) !== code) events.push({ type: "wrong", note: this.next, code });
     else {
       this.results[this.next] = judgment;
       events.push({ type: "hit", note: this.next, judgment, offsetMs });
@@ -51,7 +51,7 @@ export class Judge {
     return events;
   }
 
-  /** Starts over from a note (when the song is restarted). */
+  /** Starts the song over. */
   reset() {
     this.results.length = 0;
     this.next = 0;

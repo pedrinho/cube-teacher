@@ -319,65 +319,53 @@ p {
   margin-top: 0.4rem;
 }
 
-/* The keyboard, as the fingers find it: prime keys a row up and a little to the left. */
-.keymap {
+/* A keyboard with the game's letters lit, each drawn like its notes: faces solid, middle layers
+   outlined (hollow notes), whole-cube turns violet (the bars). */
+.kb {
   display: grid;
-  justify-items: center;
-  gap: 0.6rem;
+  gap: 0.3rem;
+  justify-content: center;
 }
-.keymap-hands {
+.kb-row {
   display: flex;
-  gap: 1.5rem;
+  gap: 0.3rem;
 }
-.keymap-half {
+.kb-row:nth-child(2) {
+  padding-left: 1.1rem;
+}
+.kb-row:nth-child(3) {
+  padding-left: 2.2rem;
+}
+.kb-key {
   display: grid;
-  gap: 0.4rem;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 0.45rem;
+  background: var(--panel-raised);
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+  opacity: 0.45;
 }
-.keymap-row {
-  display: flex;
-  gap: 0.4rem;
-  padding-left: 0.9rem;
+.kb-key[data-kind] {
+  opacity: 1;
+  font-size: var(--step-1);
+  font-weight: 800;
 }
-.keymap-top {
-  padding-left: 0;
-}
-.keycap {
-  display: inline-grid;
-  justify-items: center;
-  align-content: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0.55rem;
+.kb-key[data-kind="face"] {
   background: var(--key);
   color: var(--key-ink);
-  box-shadow: 0 4px 0 var(--key-edge);
-  line-height: 1.05;
+  box-shadow: 0 3px 0 var(--key-edge);
 }
-.keycap-key {
-  font-weight: 800;
-  font-size: var(--step-1);
+.kb-key[data-kind="slice"] {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 3px var(--key);
 }
-.keycap-move {
-  font-size: var(--step--1);
-  font-weight: 600;
-  color: #4a5272;
-}
-.keycap-prime {
-  background: var(--violet-soft);
-  box-shadow: 0 4px 0 #8f78d8;
-}
-.keycap .prime {
-  color: var(--violet);
-  font-weight: 800;
-}
-.keycap-space {
-  width: 14rem;
-  height: 2.6rem;
-  grid-auto-flow: column;
-  gap: 0.75rem;
-}
-.keycap-space .keycap-key {
-  font-size: var(--step-0);
+.kb-key[data-kind="turn"] {
+  background: var(--violet);
+  color: #fff;
+  box-shadow: 0 3px 0 #4a2d9c;
 }
 
 /* ---- Paint and review ---- */
@@ -457,6 +445,7 @@ p {
 .play-body {
   display: grid;
   grid-template-columns: 11rem minmax(0, 1fr) minmax(16rem, 22rem);
+  grid-template-rows: minmax(0, 1fr);
   gap: 1.25rem;
   min-height: 0;
 }
@@ -536,13 +525,19 @@ p {
   box-shadow: 0 10px 0 var(--cube-body);
 }
 
+/* The cube takes the room the instructions leave, so nothing pushes the highway off screen. */
 .play-cube {
   display: grid;
-  align-content: start;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 1rem;
+  min-height: 0;
 }
 .play-cube .viewer {
-  max-width: none;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 24rem;
+  justify-self: center;
 }
 .lyrics {
   display: grid;
@@ -696,15 +691,9 @@ p {
   .title-key:nth-child(5) {
     margin-left: 0.5rem;
   }
-  .keymap-hands {
-    gap: 0.75rem;
-  }
-  .keycap {
-    width: 2.4rem;
-    height: 2.4rem;
-  }
-  .keycap-space {
-    width: 10rem;
+  .kb-key {
+    width: 1.7rem;
+    height: 1.7rem;
   }
 }
 

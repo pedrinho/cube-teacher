@@ -1,8 +1,8 @@
 // Draws the highway on a canvas: a strip of black cube plastic in perspective, with sticker gems
-// sliding down to a row of receptors and the keys that play them.
+// sliding down to a row of receptors. The letter on a gem is the key that plays it.
 import { centers, moveToString, type Color } from "cube-kit/cube/model";
 import { LEAD_IN, type Chart, type Note } from "./chart";
-import { KEYS, LANES, keyFor, keyLabel, type Lane } from "./lanes";
+import { LANES, laneOfKey, type Lane } from "./lanes";
 import type { Judgment } from "./score";
 
 /** Beats of song visible ahead of the strike line. */
@@ -14,7 +14,7 @@ const BELOW = -0.1;
 const POP_MS = 550;
 const FLASH_MS = 220;
 
-export type Palette = Record<Color | "gray" | "body" | "accent" | "accentSoft" | "ink" | "text" | "textSoft" | "stage" | "line", string>;
+export type Palette = Record<Color | "gray" | "body" | "accent" | "ink" | "text" | "textSoft" | "stage" | "line", string>;
 
 export interface Pop {
   lane: Lane | "all";
@@ -37,8 +37,6 @@ export interface HighwayFrame {
   sectionNames: readonly string[];
   /** Words for the judgments, translated. */
   words: Record<Pop["judgment"], string>;
-  /** The space bar's name, translated. */
-  spaceLabel: string;
 }
 
 const DARK_TEXT = new Set<string>(["W", "Y", "O"]);
@@ -72,7 +70,7 @@ export class Highway {
     return this.h * 0.04;
   }
   private get strikeY() {
-    return this.h - Math.min(150, this.h * 0.27);
+    return this.h - Math.min(70, this.h * 0.13);
   }
   private get halfWidth() {
     return Math.min(this.w * 0.48, 330);
@@ -119,7 +117,7 @@ export class Highway {
       visible.push(i);
     }
     for (const i of visible) this.tail(f.chart.notes[i], f.beat, f.results[i]);
-    for (const i of [...visible].reverse()) this.gem(f.chart.notes[i], f.beat, f.results[i], f.spaceLabel);
+    for (const i of [...visible].reverse()) this.gem(f.chart.notes[i], f.beat, f.results[i]);
 
     this.receptors(f, faceColor);
     this.pops(f);
@@ -221,7 +219,7 @@ export class Highway {
     ctx.globalAlpha = 1;
   }
 
-  private gem(note: Note, beat: number, result: Judgment | undefined, spaceLabel: string) {
+  private gem(note: Note, beat: number, result: Judgment | undefined) {
     if (result && result !== "miss") return; // Hit notes are gone.
     const { ctx } = this;
     const z = this.depth(note.beat - beat);
@@ -238,10 +236,7 @@ export class Highway {
       ctx.lineWidth = Math.max(1, 3 * s);
       ctx.strokeStyle = this.colors.body;
       ctx.stroke();
-      if (laneW > 26) {
-        this.label(moveToString(note.move), this.w / 2 - half * 0.3, y, h * 0.62, "#ffffff");
-        this.keycap(spaceLabel, this.w / 2 + half * 0.3, y, h * 0.62, h * 0.62 * 3.2);
-      }
+      if (laneW > 26) this.label(moveToString(note.move), this.w / 2, y, h * 0.7, "#ffffff");
       ctx.globalAlpha = 1;
       return;
     }
@@ -281,7 +276,6 @@ export class Highway {
       const face: string = centers(note.before)[note.lane];
       const ink = note.shape === "slice" || result === "miss" || !DARK_TEXT.has(face) ? "#ffffff" : this.colors.ink;
       this.label(moveToString(note.move), x, y - h * 0.02, h * 0.5, ink);
-      if (size > 40 && result !== "miss") this.keycap(keyLabel(keyFor(note.move)), x + size * 0.42, y + h * 0.42, size * 0.3);
     }
     ctx.globalAlpha = 1;
   }
@@ -295,31 +289,14 @@ export class Highway {
     ctx.fillText(text, x, y);
   }
 
-  /** A small light keycap with a letter. */
-  private keycap(text: string, x: number, y: number, size: number, width = size, pressed = false, glow?: string) {
-    const { ctx } = this;
-    const depth = Math.max(2, size * 0.14);
-    const top = pressed ? y - size / 2 + depth * 0.7 : y - size / 2;
-    roundRect(ctx, x - width / 2, y - size / 2 + depth, width, size, size * 0.22);
-    ctx.fillStyle = "#9aa0bf";
-    ctx.fill();
-    roundRect(ctx, x - width / 2, top, width, size, size * 0.22);
-    ctx.fillStyle = glow ?? "#f3f4fb";
-    ctx.fill();
-    ctx.fillStyle = this.colors.ink;
-    ctx.font = `700 ${Math.round(size * 0.56)}px "Lexend Variable", Lexend, system-ui, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(text, x, top + size / 2 + 1);
-  }
-
-  /** The strike line: a receptor per lane in its face's color, with the keys under it. */
+  /** The strike line: a receptor per lane in its face's color, lit while its key is down. */
   private receptors(f: HighwayFrame, faceColor: Record<string, Color>) {
     const { ctx } = this;
     const { y, half } = this.at(0);
     const laneW = (2 * half) / LANES.length;
     const size = laneW * 0.8;
     const h = size * 0.72;
+    const heldLanes = new Set([...f.held].map(laneOfKey));
 
     const flashing = (lane: Lane | "all") =>
       f.pops.some((p) => (p.lane === lane || p.lane === "all") && p.judgment !== "miss" && p.judgment !== "wrong" && f.now - p.at < FLASH_MS);
@@ -327,10 +304,7 @@ export class Highway {
     LANES.forEach((lane, i) => {
       const x = this.laneX(i, half);
       const color = this.colors[faceColor[lane]];
-      const keys = KEYS[lane];
-      const held = f.held.has(keys.turn) || f.held.has(keys.prime);
-      const lit = held || flashing(lane);
-
+      const lit = heldLanes.has(lane) || flashing(lane);
       roundRect(ctx, x - size / 2, y - h / 2, size, h, size * 0.2);
       ctx.fillStyle = lit ? color : "rgba(255, 255, 255, 0.04)";
       ctx.fill();
@@ -338,23 +312,15 @@ export class Highway {
       ctx.strokeStyle = color;
       ctx.stroke();
       this.label(lane, x, y, h * 0.46, lit ? (DARK_TEXT.has(faceColor[lane]) ? this.colors.ink : "#ffffff") : color);
-
-      // Keys: the prime key sits above the home-row key, like on the keyboard.
-      const capPrime = Math.min(size * 0.5, 30);
-      const capTurn = Math.min(size * 0.72, 44);
-      const primeY = y + h / 2 + 10 + capPrime / 2;
-      const turnY = primeY + capPrime / 2 + 8 + capTurn / 2;
-      this.keycap(keyLabel(keys.prime) + "'", x, primeY, capPrime, capPrime * 1.35, f.held.has(keys.prime), f.held.has(keys.prime) ? this.colors.accentSoft : undefined);
-      this.keycap(keyLabel(keys.turn), x, turnY, capTurn, capTurn, f.held.has(keys.turn), f.held.has(keys.turn) ? color : undefined);
     });
 
-    // Whole-cube turns: the space bar, under everything.
-    if (flashing("all")) {
+    // Whole-cube turns light the line across every lane.
+    if (heldLanes.has("all") || flashing("all")) {
       ctx.strokeStyle = this.colors.accent;
       ctx.lineWidth = 6;
       ctx.beginPath();
-      ctx.moveTo(this.w / 2 - half, y);
-      ctx.lineTo(this.w / 2 + half, y);
+      ctx.moveTo(this.w / 2 - half, y + h / 2 + 8);
+      ctx.lineTo(this.w / 2 + half, y + h / 2 + 8);
       ctx.stroke();
     }
   }

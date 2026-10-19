@@ -35,10 +35,11 @@ For kids who already solve the cube, following
 **Play it:** https://pedrinho.github.io/cube-teacher/hero/
 
 A Guitar Hero–style game: the solve of a scrambled cube (random, or painted from a real one)
-comes down a highway as notes, and you play it on the keyboard. Each lane is a face; the home row
-turns it clockwise (`S D F` for L U F, `J K L` for D B R), the key above turns it the other way
-(`W E R`, `U I O`), and the space bar turns the whole cube. Hits are judged Perfect or Good by
-timing; a missed note still turns the cube, so every song ends solved. The songs are the layer
+comes down a highway as notes, and you play it on the keyboard. Each note is played with its own
+letter: `R`, `R'` and `R2` with the R key, `y` with the Y key, the middle layer `M` with the M key
+(wide moves like `r` use their face's letter). Each lane is a face, and notes are painted in that
+face's color. Hits are judged Perfect or Good by timing; a missed note still turns the cube, so
+every song ends solved. The songs are the layer
 method and Fridrich solves from Cube Teacher, so playing them is practice for the real thing.
 
 ## Development

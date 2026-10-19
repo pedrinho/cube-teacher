@@ -8,7 +8,7 @@ import { sectionAt, type Chart } from "../game/chart";
 import { BeatClock } from "../game/clock";
 import { Highway, type Palette, type Pop } from "../game/highway";
 import { Judge, type PlayEvent } from "../game/judge";
-import { KEYS, ROTATION_KEY, actionOf, laneOf, type KeyAction } from "../game/lanes";
+import { GAME_KEYS, keyFor, laneOfKey } from "../game/lanes";
 import { multiplier, newScore, record, wrongKey, type Score } from "../game/score";
 import type { Sound } from "../game/audio";
 
@@ -42,22 +42,12 @@ function readPalette(): Palette {
     gray: v("--miss"),
     body: v("--cube-body"),
     accent: v("--violet"),
-    accentSoft: v("--violet-soft"),
     ink: v("--key-ink"),
     text: v("--ink"),
     textSoft: v("--ink-soft"),
     stage: v("--paper"),
     line: v("--lane-line"),
   };
-}
-
-/** The key the computer presses for a note. */
-function autoKey(chart: Chart, index: number): { action: KeyAction; code: string } {
-  const move = chart.notes[index].move;
-  const lane = laneOf(move);
-  if (lane === "all") return { action: { lane: "all" }, code: ROTATION_KEY };
-  const prime = move.amount === 3;
-  return { action: { lane, prime }, code: prime ? KEYS[lane].prime : KEYS[lane].turn };
 }
 
 export function Play({ chart, bpm, auto, sound, onDone, onQuit }: Props) {
@@ -85,8 +75,8 @@ export function Play({ chart, bpm, auto, sound, onDone, onQuit }: Props) {
   const msPerBeat = 60000 / bpm;
   const sectionNames = chart.sections.map((s) => t(s.title));
   const words = { perfect: t("judge.perfect"), good: t("judge.good"), miss: t("judge.miss"), wrong: t("judge.wrong") };
-  const labels = useRef({ sectionNames, words, space: t("key.space") });
-  labels.current = { sectionNames, words, space: t("key.space") };
+  const labels = useRef({ sectionNames, words });
+  labels.current = { sectionNames, words };
 
   const setPhase = (p: Phase) => {
     game.current.phase = p;
@@ -102,7 +92,7 @@ export function Play({ chart, bpm, auto, sound, onDone, onQuit }: Props) {
       if (e.type === "wrong") {
         sound.wrong();
         g.score = wrongKey(g.score);
-        g.pops.push({ lane: e.action.lane, judgment: "wrong", at: now });
+        g.pops.push({ lane: laneOfKey(e.code) ?? "all", judgment: "wrong", at: now });
         continue;
       }
       const note = chart.notes[e.note];
@@ -180,10 +170,11 @@ export function Play({ chart, bpm, auto, sound, onDone, onQuit }: Props) {
         const beat = g.clock.beat;
         if (auto) {
           while (!g.judge.done && chart.notes[g.judge.next].beat <= beat) {
-            const { action, code } = autoKey(chart, g.judge.next);
+            const note = chart.notes[g.judge.next];
+            const code = keyFor(note.move);
             g.held.add(code);
             setTimeout(() => g.held.delete(code), AUTO_HOLD);
-            handle(g.judge.press(action, chart.notes[g.judge.next].beat, msPerBeat));
+            handle(g.judge.press(code, note.beat, msPerBeat));
           }
         }
         handle(g.judge.update(beat, msPerBeat));
@@ -214,24 +205,23 @@ export function Play({ chart, bpm, auto, sound, onDone, onQuit }: Props) {
         now,
         sectionNames: labels.current.sectionNames,
         words: labels.current.words,
-        spaceLabel: labels.current.space,
       });
     };
     frame = requestAnimationFrame(loop);
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.code === "Escape") {
+      if (e.code === "Escape" || e.code === "Space") {
         e.preventDefault();
+        if (e.repeat) return;
         if (g.phase === "playing") pause();
         else if (g.phase === "paused") resume();
         return;
       }
-      const action = actionOf(e.code);
-      if (!action || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (!GAME_KEYS.has(e.code) || e.metaKey || e.ctrlKey || e.altKey) return;
       e.preventDefault();
       if (e.repeat || auto) return;
       g.held.add(e.code);
-      if (g.phase === "playing") handle(g.judge.press(action, g.clock.beat, msPerBeat));
+      if (g.phase === "playing") handle(g.judge.press(e.code, g.clock.beat, msPerBeat));
     };
     const onKeyUp = (e: KeyboardEvent) => {
       if (!auto) g.held.delete(e.code);
