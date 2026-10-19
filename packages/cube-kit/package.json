@@ -1,0 +1,36 @@
+{
+  "name": "cube-kit",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "The cube model, validation, the layer and Fridrich solvers, a three.js cube and shared React pieces.",
+  "exports": {
+    "./cube/*": "./src/cube/*.ts",
+    "./methods/layers": "./src/methods/layers/index.ts",
+    "./methods/fridrich": "./src/methods/fridrich/index.ts",
+    "./methods/*": "./src/methods/*.ts",
+    "./three/*": "./src/three/*.ts",
+    "./react/*": "./src/react/*.tsx",
+    "./i18n": "./src/i18n/index.tsx",
+    "./i18n/*": "./src/i18n/*.ts",
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "19.3.0",
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/three": "0.170.0",
+    "cubing": "0.65.1",
+    "react": "19.3.0",
+    "three": "0.170.0",
+    "typescript": "7.0.2",
+    "vitest": "5.0.4"
+  }
+}
