@@ -23,6 +23,11 @@ export const kitPt: KitMessages = {
   "fr.stage.3": "OLL",
   "fr.stage.4": "PLL",
 
+  "py.stage.1": "Pontas",
+  "py.stage.2": "Centros",
+  "py.stage.3": "Base amarela",
+  "py.stage.4": "Topo",
+
   "step.0.name": "Noções gerais",
   "step.1.name": "Cruz",
   "step.2.name": "1ª camada",
@@ -128,6 +133,17 @@ export const kitPt: KitMessages = {
   "fr.seg.pll": "PLL {name}.",
   "fr.seg.pllSkip": "As peças de cima já estão no lugar: não precisa de PLL!",
   "fr.seg.auf": "Gire a camada de cima até tudo combinar.",
+
+  "py.seg.tips": "Gire cada ponta até ela combinar com o centro do lado. As notas pequenas giram só uma ponta.",
+  "py.seg.tipsDone": "As pontas já combinam com os centros.",
+  "py.seg.centers": "Gire os cantos da esquerda, da direita e de trás até cada centro ficar com o amarelo embaixo.",
+  "py.seg.centersDone": "Os centros já estão com o amarelo embaixo.",
+  "py.seg.edgeAlign": "Gire o topo até o meio {piece} ficar pronto para descer.",
+  "py.seg.edge": "Coloque o meio {piece} na base amarela.",
+  "py.seg.baseDone": "A base amarela já está pronta!",
+  "py.seg.top": "Resolva os três últimos meios. O caminho mais curto tem {n} movimentos.",
+  "py.seg.topAlign": "Gire o topo até todos os lados combinarem.",
+  "py.seg.done": "O pyraminx já está resolvido!",
 
   "error.title": "Tem algo errado",
   "error.unpainted": "Adesivos que faltam pintar: {count}.",

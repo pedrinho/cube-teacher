@@ -1,6 +1,7 @@
-// Choices that stick between visits (per browser): song, speed, cube, sound and best scores.
+// Choices that stick between visits (per browser): song, speed, cube, keys, sound and best scores.
 // Storage can be blocked (private windows), so every read and write falls back quietly.
 import type { Method } from "./game/chart";
+import { DEFAULT_KEYS, isKeyMap, type KeyMap } from "./game/lanes";
 
 export type Speed = "easy" | "medium" | "hard" | "expert";
 export const SPEEDS: Speed[] = ["easy", "medium", "hard", "expert"];
@@ -16,6 +17,7 @@ export interface Setup {
 }
 
 const SETUP_KEY = "cube-hero.setup";
+const KEYS_KEY = "cube-hero.keys";
 const MUTED_KEY = "cube-hero.muted";
 const BESTS_KEY = "cube-hero.bests";
 export const PAINT_KEY = "cube-hero.paint";
@@ -46,7 +48,7 @@ const isSetup = (v: unknown): v is Setup => {
   return (
     typeof v === "object" &&
     v !== null &&
-    (s.method === "layers" || s.method === "fridrich") &&
+    (s.method === "layers" || s.method === "fridrich" || s.method === "pyraminx") &&
     SPEEDS.includes(s.speed) &&
     (s.cube === "random" || s.cube === "paint")
   );
@@ -54,6 +56,9 @@ const isSetup = (v: unknown): v is Setup => {
 
 export const loadSetup = (): Setup => read(SETUP_KEY, { method: "layers", speed: "easy", cube: "random" }, isSetup);
 export const saveSetup = (setup: Setup) => write(SETUP_KEY, setup);
+
+export const loadKeys = (): KeyMap => read(KEYS_KEY, DEFAULT_KEYS, isKeyMap);
+export const saveKeys = (keys: KeyMap) => write(KEYS_KEY, keys);
 
 export const loadMuted = () => read(MUTED_KEY, false, (v): v is boolean => typeof v === "boolean");
 export const saveMuted = (muted: boolean) => write(MUTED_KEY, muted);

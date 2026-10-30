@@ -42,12 +42,19 @@ face's color. Hits are judged Perfect or Good by timing; a missed note still tur
 every song ends solved. The songs are the layer
 method and Fridrich solves from Cube Teacher, so playing them is practice for the real thing.
 
+Before each song a ready screen shows the scrambled puzzle in 3D and the turns that scramble a real
+one the same way (it can play them on the 3D one too), so you can follow along in your hands.
+
+There is a Pyraminx song too: a random pyramid is solved with the beginner's method (tips, centers,
+yellow base, top) on four lanes, one per corner, played with `U`, `L`, `R` and `B`. Small notes
+turn only a tip (`u` is still the U key).
+
 ## Development
 
 One repository, three npm workspaces:
 
 - `packages/cube-kit`: what both apps share. The cube model, validation, the layer and Fridrich
-  solvers, the three.js cube, the paint editor and move keycaps, and the texts they use (en/pt).
+  solvers, the Pyraminx model and solver, the three.js cube and pyraminx, the paint editor and move keycaps, and the texts they use (en/pt).
   It is TypeScript source, imported directly (`cube-kit/cube/model`, `cube-kit/react/NetEditor`…).
 - `apps/teacher`: Cube Teacher.
 - `apps/hero`: Cube Hero.
@@ -71,8 +78,10 @@ Every push to `main` runs the tests, builds both apps and publishes them to GitH
   uses the moves documented for it, and picks the case by trying them, so it always matches the lessons.
 - `packages/cube-kit/src/methods/fridrich`: Cinoto's F2L/OLL/PLL algorithms, a case classifier, and
   the CFOP solver.
-- `packages/cube-kit/src/three`: the 3D cube (three.js); `src/react`: components both apps use.
+- `packages/cube-kit/src/pyraminx`: the Pyraminx model (stickers and turns from its geometry, like the
+  cube's) and its beginner's-method solver.
+- `packages/cube-kit/src/three`: the 3D cube and pyraminx (three.js); `src/react`: components both apps use.
 - `apps/teacher/src/content/layers`: lesson content; every case picture is checked against its text in tests.
 - `apps/teacher/src/components`, `apps/teacher/src/pages`: the Cube Teacher app.
-- `apps/hero/src/game`: the song chart (solver steps laid out on beats), lanes and keys, hit judging,
+- `apps/hero/src/game`: the song chart (solver steps laid out on beats), the puzzles, lanes and keys, hit judging,
   scoring, the highway renderer and the synthesized music; `apps/hero/src/screens`: the game's screens.

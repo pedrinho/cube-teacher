@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { SOLVED, applyAlg, isSolved, randomScramble } from "cube-kit/cube/model";
 import { solveLayers } from "cube-kit/methods/layers/solver";
 import { solveFridrich } from "cube-kit/methods/fridrich/solver";
+import { PYRA_SOLVED, applyPyraAlg, randomPyraScramble } from "cube-kit/pyraminx/model";
+import { solvePyraminx } from "cube-kit/pyraminx/solver";
+import { PYRAMINX_LANES } from "./lanes";
 import { HALF, LEAD_IN, QUARTER, ROTATION, buildChart, lastNoteAt, sectionAt, stateAfter, type Method } from "./chart";
 
 let seed = 11;
@@ -48,6 +51,26 @@ describe("chart", () => {
       expect(chart.sections.reduce((k, s) => k + s.noteCount, 0)).toBe(chart.notes.length);
     }
   }, 120_000);
+
+  it("lays out 300 pyraminx solves in its four lanes, tips first", () => {
+    for (let n = 0; n < 300; n++) {
+      const start = applyPyraAlg(PYRA_SOLVED, randomPyraScramble(14, random));
+      const chart = buildChart("pyraminx", start, solvePyraminx(start));
+      expect(chart.puzzle.id).toBe("pyraminx");
+
+      let state = chart.start;
+      for (const note of chart.notes) {
+        expect(note.before).toBe(state);
+        state = note.after;
+        expect(PYRAMINX_LANES).toContain(note.lane);
+        expect(note.length).toBe(QUARTER);
+        expect(note.shape).toBe(note.section === 0 ? "tip" : "face");
+      }
+      expect(state).toBe(PYRA_SOLVED);
+      expect(chart.end).toBe(PYRA_SOLVED);
+      expect(chart.sections.map((s) => s.title)).toEqual([1, 2, 3, 4].map((k) => `py.stage.${k}`));
+    }
+  });
 
   it("gives half turns and whole-cube turns more time", () => {
     const start = applyAlg(SOLVED, "R2 U");

@@ -1,11 +1,29 @@
-// Pick a song (the method), a speed and where the cube comes from, then play or watch.
+// Pick a song (the method, or the pyraminx), a speed and where the cube comes from, then play or
+// watch. The keys can be changed here too.
+import { useEffect, useState } from "react";
 import { useI18n, type MessageKey } from "../i18n";
 import { BPM, SPEEDS, loadBest, type CubeSource, type Setup as SetupChoice } from "../settings";
-import type { Method } from "../game/chart";
+import { puzzleOf, type Method } from "../game/chart";
+import {
+  DEFAULT_KEYS,
+  LETTERS,
+  PYRAMINX_LANES,
+  gameKey,
+  isBindableKey,
+  keyLabel,
+  kindOf,
+  letterOfKey,
+  moveOfLetter,
+  rebind,
+  type KeyMap,
+  type Letter,
+} from "../game/lanes";
 
 interface Props {
   setup: SetupChoice;
+  keys: KeyMap;
   onChange: (setup: SetupChoice) => void;
+  onKeysChange: (keys: KeyMap) => void;
   onPlay: (watch: boolean) => void;
 }
 
@@ -46,32 +64,140 @@ function Choice<T extends string>({
   );
 }
 
-const ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+const ROWS = ["1234567890", "QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
-/** How a letter is used: a face, a middle layer, a whole-cube turn, or not at all. */
-const kindOf = (letter: string) =>
-  "UDLRFB".includes(letter) ? "face" : "MES".includes(letter) ? "slice" : "XYZ".includes(letter) ? "turn" : undefined;
+/** The code of a key drawn on the keyboard. */
+const codeOf = (cap: string) => (/\d/.test(cap) ? `Digit${cap}` : `Key${cap}`);
 
-/** A keyboard with the game's letters lit, drawn like the notes they play. */
-function KeyMap() {
+/**
+ * A keyboard with the song's keys lit, each drawn like the notes it plays. A key that plays
+ * another letter shows that letter, with its own in the corner.
+ */
+function Keyboard({ keys, letters }: { keys: KeyMap; letters: readonly Letter[] }) {
   return (
     <div className="kb" aria-hidden="true">
       {ROWS.map((row) => (
         <div key={row} className="kb-row">
-          {[...row].map((letter) => (
-            <span key={letter} className="kb-key" data-kind={kindOf(letter)}>
-              {letter}
-            </span>
-          ))}
+          {[...row].map((cap) => {
+            const bound = letterOfKey(codeOf(cap), keys);
+            const letter = bound && letters.includes(bound) ? bound : undefined;
+            return (
+              <span key={cap} className="kb-key" data-kind={letter && kindOf(letter)}>
+                {letter ?? cap}
+                {letter && letter !== cap && <small className="kb-legend">{cap}</small>}
+              </span>
+            );
+          })}
         </div>
       ))}
     </div>
   );
 }
 
-export function Setup({ setup, onChange, onPlay }: Props) {
+type KeyGroup = { title: MessageKey; letters: Letter[] };
+
+const KEY_GROUPS: KeyGroup[] = [
+  { title: "keys.faces", letters: ["U", "D", "L", "R", "F", "B"] },
+  { title: "keys.slices", letters: ["M", "E", "S"] },
+  { title: "keys.turns", letters: ["X", "Y", "Z"] },
+];
+
+/**
+ * The pyraminx's letters are the cube's U L R B, so changing them changes both. They are listed
+ * in the order of its lanes.
+ */
+const PYRAMINX_KEY_GROUPS: KeyGroup[] = [{ title: "keys.corners", letters: [...PYRAMINX_LANES] }];
+
+/** Change a letter's key: click it, then press the new key. Esc cancels. */
+function KeyEditor({ keys, groups, onChange }: { keys: KeyMap; groups: KeyGroup[]; onChange: (keys: KeyMap) => void }) {
+  const { t } = useI18n();
+  const [waiting, setWaiting] = useState<Letter | null>(null);
+  const [status, setStatus] = useState("");
+  const standard = LETTERS.every((l) => keys[l] === DEFAULT_KEYS[l]);
+
+  useEffect(() => {
+    if (!waiting) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.code === "Escape") {
+        e.preventDefault();
+        setWaiting(null);
+        setStatus("");
+        return;
+      }
+      const code = gameKey(e.code);
+      if (!isBindableKey(code)) return;
+      e.preventDefault();
+      const other = letterOfKey(code, keys);
+      const move = moveOfLetter(waiting);
+      const key = keyLabel(code);
+      setStatus(
+        other && other !== waiting
+          ? t("keys.swapped", { move, key, other: moveOfLetter(other), otherKey: keyLabel(keys[waiting]) })
+          : t("keys.done", { move, key }),
+      );
+      onChange(rebind(keys, waiting, code));
+      setWaiting(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [waiting, keys, onChange, t]);
+
+  const pick = (letter: Letter) => {
+    setWaiting(waiting === letter ? null : letter);
+    setStatus("");
+  };
+
+  return (
+    <section className="keys" aria-labelledby="keys-title">
+      <h3 id="keys-title">{t("keys.title")}</h3>
+      {groups.map((g) => (
+        <div key={g.title} className="keys-group">
+          <span className="keys-group-title">{t(g.title)}</span>
+          <div className="keys-row">
+            {g.letters.map((l) => (
+              <button
+                key={l}
+                type="button"
+                className="keybind"
+                aria-pressed={waiting === l}
+                aria-label={t("keys.change", { move: moveOfLetter(l), key: keyLabel(keys[l]) })}
+                onClick={() => pick(l)}
+              >
+                <span className="keybind-move">{moveOfLetter(l)}</span>
+                <span className="kb-key" data-kind={kindOf(l)}>
+                  {waiting === l ? "…" : keyLabel(keys[l])}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+      <p className="keys-status" aria-live="polite">
+        {waiting ? t("keys.waiting", { move: moveOfLetter(waiting) }) : status || t("keys.hint")}
+      </p>
+      {!standard && (
+        <button
+          type="button"
+          className="btn btn-quiet keys-reset"
+          onClick={() => {
+            onChange(DEFAULT_KEYS);
+            setWaiting(null);
+            setStatus("");
+          }}
+        >
+          {t("keys.reset")}
+        </button>
+      )}
+    </section>
+  );
+}
+
+export function Setup({ setup, keys, onChange, onKeysChange, onPlay }: Props) {
   const { t } = useI18n();
   const best = loadBest(setup.method, setup.speed);
+  const keyNames = Object.fromEntries(LETTERS.map((l) => [l, keyLabel(keys[l])]));
+  const pyraminx = setup.method === "pyraminx";
 
   return (
     <div className="setup">
@@ -92,6 +218,7 @@ export function Setup({ setup, onChange, onPlay }: Props) {
           options={[
             { value: "layers", title: t("setup.layers"), text: t("setup.layersText") },
             { value: "fridrich", title: t("setup.fridrich"), text: t("setup.fridrichText") },
+            { value: "pyraminx", title: t("setup.pyraminx"), text: t("setup.pyraminxText") },
           ]}
         />
         <Choice
@@ -104,15 +231,18 @@ export function Setup({ setup, onChange, onPlay }: Props) {
             text: t("speed.bpm", { n: BPM[s] }),
           }))}
         />
-        <Choice<CubeSource>
-          label={t("setup.cube")}
-          value={setup.cube}
-          onChange={(cube) => onChange({ ...setup, cube })}
-          options={[
-            { value: "random", title: t("setup.random") },
-            { value: "paint", title: t("setup.paint") },
-          ]}
-        />
+        {/* A pyraminx is always scrambled at random. */}
+        {!pyraminx && (
+          <Choice<CubeSource>
+            label={t("setup.cube")}
+            value={setup.cube}
+            onChange={(cube) => onChange({ ...setup, cube })}
+            options={[
+              { value: "random", title: t("setup.random") },
+              { value: "paint", title: t("setup.paint") },
+            ]}
+          />
+        )}
 
         <div className="btn-row setup-actions">
           <button type="button" className="btn btn-primary btn-big" onClick={() => onPlay(false)}>
@@ -127,13 +257,14 @@ export function Setup({ setup, onChange, onPlay }: Props) {
 
       <aside className="setup-how">
         <h2>{t("setup.howTitle")}</h2>
-        <KeyMap />
+        <Keyboard keys={keys} letters={puzzleOf(setup.method).letters} />
         <ul className="how">
-          <li>{t("setup.how1")}</li>
-          <li>{t("setup.how2")}</li>
-          <li>{t("setup.how3")}</li>
+          <li>{t("setup.how1", keyNames)}</li>
+          <li>{t(pyraminx ? "setup.pyHow2" : "setup.how2", keyNames)}</li>
+          <li>{t(pyraminx ? "setup.pyHow3" : "setup.how3", keyNames)}</li>
           <li>{t("setup.how4")}</li>
         </ul>
+        <KeyEditor keys={keys} groups={pyraminx ? PYRAMINX_KEY_GROUPS : KEY_GROUPS} onChange={onKeysChange} />
       </aside>
     </div>
   );

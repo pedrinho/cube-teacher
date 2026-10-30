@@ -23,6 +23,11 @@ export const kitEn = {
   "fr.stage.3": "OLL",
   "fr.stage.4": "PLL",
 
+  "py.stage.1": "Tips",
+  "py.stage.2": "Centers",
+  "py.stage.3": "Yellow base",
+  "py.stage.4": "Top",
+
   "step.0.name": "How to read moves",
   "step.1.name": "White cross",
   "step.2.name": "First layer",
@@ -127,6 +132,17 @@ export const kitEn = {
   "fr.seg.pll": "PLL {name}.",
   "fr.seg.pllSkip": "The top pieces are already in place: no PLL needed!",
   "fr.seg.auf": "Turn the top until everything matches.",
+
+  "py.seg.tips": "Turn each tip until it matches the center next to it. The small notes turn only a tip.",
+  "py.seg.tipsDone": "The tips already match their centers.",
+  "py.seg.centers": "Turn the left, right and back corners until each center has yellow at the bottom.",
+  "py.seg.centersDone": "The centers already have yellow at the bottom.",
+  "py.seg.edgeAlign": "Turn the top until the {piece} edge is ready to go down.",
+  "py.seg.edge": "Put the {piece} edge in the yellow base.",
+  "py.seg.baseDone": "The yellow base is already done!",
+  "py.seg.top": "Solve the last three edges. The shortest way takes {n} moves.",
+  "py.seg.topAlign": "Turn the top until every side matches.",
+  "py.seg.done": "The pyraminx is already solved!",
 
   "error.title": "Something doesn't add up",
   "error.unpainted": "Stickers left to paint: {count}.",

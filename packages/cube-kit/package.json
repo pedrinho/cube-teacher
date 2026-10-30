@@ -9,6 +9,7 @@
     "./methods/layers": "./src/methods/layers/index.ts",
     "./methods/fridrich": "./src/methods/fridrich/index.ts",
     "./methods/*": "./src/methods/*.ts",
+    "./pyraminx/*": "./src/pyraminx/*.ts",
     "./three/*": "./src/three/*.ts",
     "./react/*": "./src/react/*.tsx",
     "./i18n": "./src/i18n/index.tsx",

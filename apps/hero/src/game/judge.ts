@@ -2,7 +2,7 @@
 // its timing window is open; once the window has passed it is missed. Either way the move still
 // happens on the cube, so the cube always follows the song and ends solved.
 import type { Note } from "./chart";
-import { keyFor } from "./lanes";
+import { keyFor, type KeyMap } from "./lanes";
 import { GOOD_MS, judge, type Judgment } from "./score";
 
 export type PlayEvent =
@@ -18,7 +18,10 @@ export class Judge {
   readonly results: Judgment[] = [];
   next = 0;
 
-  constructor(private readonly notes: readonly Note[]) {}
+  constructor(
+    private readonly notes: readonly Note[],
+    private readonly keys: KeyMap,
+  ) {}
 
   get done() {
     return this.next >= this.notes.length;
@@ -42,7 +45,7 @@ export class Judge {
     const offsetMs = note ? (beat - note.beat) * msPerBeat : Infinity;
     const judgment = judge(offsetMs);
     if (!note || !judgment) events.push({ type: "stray", code });
-    else if (keyFor(note.move) !== code) events.push({ type: "wrong", note: this.next, code });
+    else if (keyFor(note.move, this.keys) !== code) events.push({ type: "wrong", note: this.next, code });
     else {
       this.results[this.next] = judgment;
       events.push({ type: "hit", note: this.next, judgment, offsetMs });

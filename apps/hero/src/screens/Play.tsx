@@ -8,13 +8,14 @@ import { sectionAt, type Chart } from "../game/chart";
 import { BeatClock } from "../game/clock";
 import { Highway, type Palette, type Pop } from "../game/highway";
 import { Judge, type PlayEvent } from "../game/judge";
-import { GAME_KEYS, keyFor, laneOfKey } from "../game/lanes";
+import { gameKey, keyFor, laneOfKey, type KeyMap } from "../game/lanes";
 import { multiplier, newScore, record, wrongKey, type Score } from "../game/score";
 import type { Sound } from "../game/audio";
 
 interface Props {
   chart: Chart;
   bpm: number;
+  keys: KeyMap;
   /** The computer plays every note perfectly. */
   auto: boolean;
   sound: Sound;
@@ -50,7 +51,7 @@ function readPalette(): Palette {
   };
 }
 
-export function Play({ chart, bpm, auto, sound, onDone, onQuit }: Props) {
+export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
   const { t } = useI18n();
   const canvas = useRef<HTMLCanvasElement>(null);
   const cube = useRef<Cube3DHandle>(null);
@@ -63,7 +64,7 @@ export function Play({ chart, bpm, auto, sound, onDone, onQuit }: Props) {
   // Everything the frame loop and key handlers share, without re-rendering every frame.
   const game = useRef({
     clock: new BeatClock(() => performance.now() / 1000, bpm),
-    judge: new Judge(chart.notes),
+    judge: new Judge(chart.notes, keys),
     score: newScore(),
     pops: [] as Pop[],
     held: new Set<string>(),
@@ -92,7 +93,7 @@ export function Play({ chart, bpm, auto, sound, onDone, onQuit }: Props) {
       if (e.type === "wrong") {
         sound.wrong();
         g.score = wrongKey(g.score);
-        g.pops.push({ lane: laneOfKey(e.code) ?? "all", judgment: "wrong", at: now });
+        g.pops.push({ lane: laneOfKey(e.code, keys, chart.puzzle) ?? "all", judgment: "wrong", at: now });
         continue;
       }
       const note = chart.notes[e.note];
@@ -143,7 +144,9 @@ export function Play({ chart, bpm, auto, sound, onDone, onQuit }: Props) {
   useEffect(() => {
     const g = game.current;
     const el = canvas.current!;
-    const highway = new Highway(el, readPalette());
+    const highway = new Highway(el, readPalette(), keys, chart.puzzle);
+    // Only the letters this puzzle plays: on the pyraminx, U L R B.
+    const gameKeys = new Set(chart.puzzle.letters.map((l) => keys[l]));
     const resize = new ResizeObserver(() => highway.resize());
     resize.observe(el);
     highway.resize();
@@ -171,7 +174,7 @@ export function Play({ chart, bpm, auto, sound, onDone, onQuit }: Props) {
         if (auto) {
           while (!g.judge.done && chart.notes[g.judge.next].beat <= beat) {
             const note = chart.notes[g.judge.next];
-            const code = keyFor(note.move);
+            const code = keyFor(note.move, keys);
             g.held.add(code);
             setTimeout(() => g.held.delete(code), AUTO_HOLD);
             handle(g.judge.press(code, note.beat, msPerBeat));
@@ -217,14 +220,15 @@ export function Play({ chart, bpm, auto, sound, onDone, onQuit }: Props) {
         else if (g.phase === "paused") resume();
         return;
       }
-      if (!GAME_KEYS.has(e.code) || e.metaKey || e.ctrlKey || e.altKey) return;
+      const code = gameKey(e.code);
+      if (!gameKeys.has(code) || e.metaKey || e.ctrlKey || e.altKey) return;
       e.preventDefault();
       if (e.repeat || auto) return;
-      g.held.add(e.code);
-      if (g.phase === "playing") handle(g.judge.press(e.code, g.clock.beat, msPerBeat));
+      g.held.add(code);
+      if (g.phase === "playing") handle(g.judge.press(code, g.clock.beat, msPerBeat));
     };
     const onKeyUp = (e: KeyboardEvent) => {
-      if (!auto) g.held.delete(e.code);
+      if (!auto) g.held.delete(gameKey(e.code));
     };
     const onHide = () => {
       if (document.hidden) pause();
@@ -321,7 +325,14 @@ export function Play({ chart, bpm, auto, sound, onDone, onQuit }: Props) {
         </div>
 
         <div className="play-cube">
-          <Cube3D ref={cube} state={chart.start} label={t("app.name")} timing={{ turnMs: Math.min(200, msPerBeat * 0.45), pauseMs: 0 }} />
+          <Cube3D
+            ref={cube}
+            state={chart.start}
+            puzzle={chart.puzzle.id}
+            stickerless
+            label={t("app.name")}
+            timing={{ turnMs: Math.min(200, msPerBeat * 0.45), pauseMs: 0 }}
+          />
           {part?.explain && (
             <div className="lyrics">
               <p className="lyric-now">

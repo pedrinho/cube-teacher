@@ -1,33 +1,56 @@
-// Screens: setup → (paint) → song → results. The sound engine lives for the whole visit so the
-// audio context, started by the first Play click, keeps running.
+// Screens: setup → (paint) → ready → song → results. The sound engine lives for the whole visit so
+// the audio context, started by the first Play click, keeps running.
 import { useEffect, useRef, useState } from "react";
-import { SOLVED, applyAlg, randomScramble, type CubeState } from "cube-kit/cube/model";
+import { SOLVED, applyAlg, randomScramble, type CubeState, type Move } from "cube-kit/cube/model";
 import { solveFridrich } from "cube-kit/methods/fridrich/solver";
 import { solveLayers } from "cube-kit/methods/layers/solver";
+import { PYRA_SOLVED, applyPyraAlg, randomPyraScramble } from "cube-kit/pyraminx/model";
+import { solvePyraminx } from "cube-kit/pyraminx/solver";
 import { useI18n, type Lang } from "./i18n";
 import { Sound } from "./game/audio";
 import { buildChart, type Chart } from "./game/chart";
 import { maxPoints, type Score } from "./game/score";
-import { BPM, SPEEDS, loadMuted, loadSetup, saveBest, saveMuted, saveSetup, type Setup as SetupChoice } from "./settings";
+import type { KeyMap } from "./game/lanes";
+import {
+  BPM,
+  SPEEDS,
+  loadBest,
+  loadKeys,
+  loadMuted,
+  loadSetup,
+  saveBest,
+  saveKeys,
+  saveMuted,
+  saveSetup,
+  type Setup as SetupChoice,
+} from "./settings";
 import { Setup } from "./screens/Setup";
 import { Paint } from "./screens/Paint";
+import { Ready } from "./screens/Ready";
 import { Play } from "./screens/Play";
 import { Results } from "./screens/Results";
 
 type Screen =
   | { kind: "setup" }
   | { kind: "paint"; watch: boolean }
+  | { kind: "ready"; chart: Chart; scramble?: Move[]; watch: boolean }
   | { kind: "play"; chart: Chart; watch: boolean; run: number }
   | { kind: "results"; chart: Chart; watch: boolean; score: Score; newBest: boolean };
 
 function songFor(setup: SetupChoice, start: CubeState): Chart {
-  const stages = setup.method === "layers" ? solveLayers(start) : solveFridrich(start, "twoLook");
+  const stages =
+    setup.method === "pyraminx"
+      ? solvePyraminx(start)
+      : setup.method === "layers"
+        ? solveLayers(start)
+        : solveFridrich(start, "twoLook");
   return buildChart(setup.method, start, stages);
 }
 
 export function App() {
   const { t, lang, setLang } = useI18n();
   const [setup, setSetupState] = useState(loadSetup);
+  const [keys, setKeysState] = useState(loadKeys);
   const [screen, setScreen] = useState<Screen>({ kind: "setup" });
   const [muted, setMutedState] = useState(loadMuted);
   const sound = useRef<Sound | null>(null);
@@ -45,21 +68,37 @@ export function App() {
     saveSetup(next);
   };
 
+  const changeKeys = (next: KeyMap) => {
+    setKeysState(next);
+    saveKeys(next);
+  };
+
   const toggleMuted = () => {
     setMutedState(!muted);
     saveMuted(!muted);
     sound.current?.setMuted(!muted);
   };
 
-  const play = (start: CubeState, watch: boolean) => {
+  /** The song for a start is worked out here, so the ready screen can show it. */
+  const ready = (start: CubeState, watch: boolean, scramble?: Move[], choice = setup) =>
+    setScreen({ kind: "ready", chart: songFor(choice, start), scramble, watch });
+
+  const play = (chart: Chart, watch: boolean) => {
     audio();
-    setScreen({ kind: "play", chart: songFor(setup, start), watch, run: ++runs.current });
+    setScreen({ kind: "play", chart, watch, run: ++runs.current });
   };
 
   const begin = (watch: boolean, choice = setup) => {
     audio();
-    if (choice.cube === "paint") setScreen({ kind: "paint", watch });
-    else play(applyAlg(SOLVED, randomScramble()), watch);
+    // The pyraminx can't be painted (yet): it is always scrambled at random.
+    if (choice.method === "pyraminx") {
+      const scramble = randomPyraScramble();
+      ready(applyPyraAlg(PYRA_SOLVED, scramble), watch, scramble, choice);
+    } else if (choice.cube === "paint") setScreen({ kind: "paint", watch });
+    else {
+      const scramble = randomScramble();
+      ready(applyAlg(SOLVED, scramble), watch, scramble, choice);
+    }
   };
 
   const finish = (chart: Chart, watch: boolean, score: Score) => {
@@ -101,15 +140,31 @@ export function App() {
         </div>
       </header>
       <main className="page" data-screen={screen.kind}>
-        {screen.kind === "setup" && <Setup setup={setup} onChange={changeSetup} onPlay={(watch) => begin(watch)} />}
+        {screen.kind === "setup" && (
+          <Setup setup={setup} keys={keys} onChange={changeSetup} onKeysChange={changeKeys} onPlay={(watch) => begin(watch)} />
+        )}
         {screen.kind === "paint" && (
-          <Paint onDone={(state) => play(state, screen.watch)} onBack={() => setScreen({ kind: "setup" })} />
+          <Paint onDone={(state) => ready(state, screen.watch)} onBack={() => setScreen({ kind: "setup" })} />
+        )}
+        {screen.kind === "ready" && (
+          <Ready
+            chart={screen.chart}
+            scramble={screen.scramble}
+            speed={setup.speed}
+            keys={keys}
+            watch={screen.watch}
+            best={loadBest(setup.method, setup.speed)}
+            onStart={() => play(screen.chart, screen.watch)}
+            onShuffle={screen.scramble && (() => begin(screen.watch))}
+            onBack={() => setScreen({ kind: "setup" })}
+          />
         )}
         {screen.kind === "play" && (
           <Play
             key={screen.run}
             chart={screen.chart}
             bpm={BPM[setup.speed]}
+            keys={keys}
             auto={screen.watch}
             sound={sound.current!}
             onDone={(score) => finish(screen.chart, screen.watch, score)}

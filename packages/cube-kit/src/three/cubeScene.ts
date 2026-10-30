@@ -1,10 +1,13 @@
-// Our own 3D cube in three.js: black rounded cubies with rounded stickers.
-// Stickers are fixed to positions; a move animates its layer, then the colors are re-read from
+// Our own 3D cube in three.js: black rounded cubies with rounded stickers, or stickerless cubies
+// made all of colored plastic. Stickers are fixed to positions; a move animates its layer, then the colors are re-read from
 // the new state and the layer snaps back. So the picture always comes straight from a CubeState.
 import {
   AmbientLight,
+  BoxGeometry,
+  BufferGeometry,
   Color,
   DirectionalLight,
+  Float32BufferAttribute,
   Group,
   Mesh,
   MeshBasicMaterial,
@@ -29,6 +32,8 @@ export type StickerColors = Record<"W" | "Y" | "G" | "B" | "R" | "O" | "gray" | 
 const CUBIE = 0.97;
 const STICKER = 0.84;
 const STICKER_RADIUS = 0.13;
+/** Stickerless: how much of its color the deepest part of a seam keeps (1 on the flat of a side). */
+const SEAM_SHADE = 0.55;
 /** When the person taps ahead of the animation, waiting moves play faster. */
 const HURRY = 0.35;
 /** When more taps than this are waiting, the older ones are applied at once. */
@@ -50,6 +55,52 @@ function roundedSquare(size: number, radius: number): ShapeGeometry {
 }
 
 const posKey = (p: readonly number[]) => p.join(",");
+/** The side of a BoxGeometry facing `normal`, in its order: +x, -x, +y, -y, +z, -z. */
+const boxSide = (normal: Vec) => {
+  const axis = normal.findIndex((c) => c !== 0);
+  return axis * 2 + (normal[axis] > 0 ? 0 : 1);
+};
+
+/**
+ * A stickerless cubie: every triangle of `body` goes to the outer side it lies closest to, so the
+ * inner walls take that side's color instead of the black body. They are drawn darker than the
+ * side itself, so the seams between pieces still show.
+ */
+function stickerlessBody(body: BufferGeometry, outer: Vec[]): BufferGeometry {
+  const position = body.getAttribute("position");
+  const normal = body.getAttribute("normal");
+  const sides = outer.map((n) => new Vector3(...n));
+  const p = new Vector3();
+  const n = new Vector3();
+  // The triangles of each outer side, by their first vertex.
+  const triangles = sides.map(() => [] as number[]);
+  for (let first = 0; first < position.count; first += 3) {
+    const center = new Vector3();
+    for (let v = first; v < first + 3; v++) center.add(p.fromBufferAttribute(position, v));
+    let best = 0;
+    sides.forEach((s, k) => {
+      if (center.dot(s) > center.dot(sides[best])) best = k;
+    });
+    triangles[best].push(first);
+  }
+  const geometry = new BufferGeometry();
+  const positions: number[] = [];
+  const shades: number[] = [];
+  triangles.forEach((list, k) => {
+    geometry.addGroup(positions.length / 3, list.length * 3, boxSide(outer[k]));
+    for (const first of list)
+      for (let v = first; v < first + 3; v++) {
+        p.fromBufferAttribute(position, v);
+        const shade = SEAM_SHADE + (1 - SEAM_SHADE) * Math.max(0, n.fromBufferAttribute(normal, v).dot(sides[k]));
+        positions.push(p.x, p.y, p.z);
+        shades.push(shade, shade, shade);
+      }
+  });
+  geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("color", new Float32BufferAttribute(shades, 3));
+  return geometry;
+}
+
 const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
 
 /** One move waiting to play. Moves from the same `play` call share a group. */
@@ -80,7 +131,8 @@ export class CubeScene {
   private controls: OrbitControls;
   private root = new Group();
   private cubies = new Map<string, Group>();
-  private stickers: Mesh[] = [];
+  /** Where each sticker is drawn: its own mesh, or one side of its cubie when stickerless. */
+  private stickers: { mesh: Mesh; side?: number }[] = [];
   private materials: Record<string, Material> = {};
   private resize: ResizeObserver;
 
@@ -99,7 +151,7 @@ export class CubeScene {
     private container: HTMLElement,
     colors: StickerColors,
     initial: CubeState,
-    options: { fromBelow?: boolean } = {},
+    options: { fromBelow?: boolean; stickerless?: boolean } = {},
   ) {
     this.shown = initial;
     this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -108,11 +160,12 @@ export class CubeScene {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.append(this.renderer.domElement);
 
+    const stickerless = options.stickerless ?? false;
     for (const [name, value] of Object.entries(colors)) {
       this.materials[name] =
         name === "body"
           ? new MeshStandardMaterial({ color: new Color(value), roughness: 0.8, metalness: 0 })
-          : new MeshBasicMaterial({ color: new Color(value) });
+          : new MeshBasicMaterial({ color: new Color(value), vertexColors: stickerless });
     }
 
     this.scene.add(new AmbientLight(0xffffff, 1.2));
@@ -121,7 +174,7 @@ export class CubeScene {
     this.scene.add(light);
     this.scene.add(this.root);
 
-    this.buildCubies();
+    this.buildCubies(stickerless);
     this.paint();
 
     // Front-right-top view: F on the left, R on the right, like the pictures.
@@ -144,8 +197,11 @@ export class CubeScene {
     this.fit();
   }
 
-  private buildCubies() {
+  private buildCubies(stickerless: boolean) {
     const body = new RoundedBoxGeometry(CUBIE, CUBIE, CUBIE, 3, 0.09);
+    // Stickerless pieces have square corners. The extra segments let the inner walls split
+    // cleanly between the colors of a piece's outer sides.
+    const square = new BoxGeometry(CUBIE, CUBIE, CUBIE, 8, 8, 8).toNonIndexed();
     const sticker = roundedSquare(STICKER, STICKER_RADIUS);
     const front = new Vector3(0, 0, 1);
     for (const x of [-1, 0, 1])
@@ -155,24 +211,38 @@ export class CubeScene {
           const cubie = new Group();
           cubie.position.set(x, y, z);
           cubie.userData.home = [x, y, z] satisfies Vec;
-          cubie.add(new Mesh(body, this.materials.body));
+          // Stickerless: one material per side, so the outer sides can take the sticker colors.
+          // The whole cubie is drawn in its outer sides' colors, seams and inner walls too.
+          const outer = ([[x, 0, 0], [0, y, 0], [0, 0, z]] as Vec[]).filter((n) => n.some((c) => c !== 0));
+          cubie.add(
+            stickerless
+              ? new Mesh(stickerlessBody(square, outer), Array(6).fill(this.materials.body))
+              : new Mesh(body, this.materials.body),
+          );
           this.cubies.set(posKey([x, y, z]), cubie);
           this.root.add(cubie);
         }
     STICKERS.forEach((s, i) => {
+      const cubie = this.cubies.get(posKey(s.pos))!;
+      if (stickerless) {
+        this.stickers[i] = { mesh: cubie.children[0] as Mesh, side: boxSide(s.normal) };
+        return;
+      }
       const mesh = new Mesh(sticker, this.materials.gray);
       const n = new Vector3(...s.normal);
       mesh.position.copy(n).multiplyScalar(CUBIE / 2 + 0.002);
       mesh.quaternion.setFromUnitVectors(front, n);
-      this.cubies.get(posKey(s.pos))!.add(mesh);
-      this.stickers[i] = mesh;
+      cubie.add(mesh);
+      this.stickers[i] = { mesh };
     });
   }
 
   private paint() {
-    this.stickers.forEach((mesh, i) => {
+    this.stickers.forEach(({ mesh, side }, i) => {
       const c = this.shown[i];
-      mesh.material = !this.visible(i, this.shown) ? this.materials.gray : (this.materials[c] ?? this.materials.empty);
+      const material = !this.visible(i, this.shown) ? this.materials.gray : (this.materials[c] ?? this.materials.empty);
+      if (side === undefined) mesh.material = material;
+      else (mesh.material as Material[])[side] = material;
     });
     this.render();
   }

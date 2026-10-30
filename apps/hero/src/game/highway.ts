@@ -1,8 +1,11 @@
 // Draws the highway on a canvas: a strip of black cube plastic in perspective, with sticker gems
-// sliding down to a row of receptors. The letter on a gem is the key that plays it.
-import { centers, moveToString, type Color } from "cube-kit/cube/model";
+// sliding down to a row of receptors. A gem shows its move; when the player has moved that letter
+// to another key, a small keycap on the gem shows the key. Receptors show their lane's key. On the
+// pyraminx, gems and receptors are triangles, and a tip's gem is a small one.
+import { moveToString, type Color } from "cube-kit/cube/model";
 import { LEAD_IN, type Chart, type Note } from "./chart";
-import { LANES, laneOfKey, type Lane } from "./lanes";
+import { keyFor, keyLabel, laneOfKey, letterOf, type KeyMap, type Lane } from "./lanes";
+import type { Puzzle } from "./puzzles";
 import type { Judgment } from "./score";
 
 /** Beats of song visible ahead of the strike line. */
@@ -46,11 +49,16 @@ export class Highway {
   private w = 0;
   private h = 0;
 
+  private lanes: readonly Lane[];
+
   constructor(
     private canvas: HTMLCanvasElement,
     private colors: Palette,
+    private keys: KeyMap,
+    private puzzle: Puzzle,
   ) {
     this.ctx = canvas.getContext("2d")!;
+    this.lanes = puzzle.lanes;
   }
 
   /** Matches the canvas to its box on screen. */
@@ -73,7 +81,8 @@ export class Highway {
     return this.h - Math.min(70, this.h * 0.13);
   }
   private get halfWidth() {
-    return Math.min(this.w * 0.48, 330);
+    // Lanes keep their width: fewer lanes make a narrower road.
+    return Math.min(this.w * 0.48, 55 * this.lanes.length);
   }
 
   private scale(z: number) {
@@ -89,7 +98,7 @@ export class Highway {
   }
 
   private laneX(lane: number, half: number) {
-    return this.w / 2 + (-1 + (2 * lane + 1) / LANES.length) * half;
+    return this.w / 2 + (-1 + (2 * lane + 1) / this.lanes.length) * half;
   }
 
   private depth(beatsAhead: number) {
@@ -101,7 +110,8 @@ export class Highway {
   draw(f: HighwayFrame) {
     const { ctx } = this;
     ctx.clearRect(0, 0, this.w, this.h);
-    const faceColor = centers(f.next > 0 ? f.chart.notes[f.next - 1].after : f.chart.start);
+    const shown = f.next > 0 ? f.chart.notes[f.next - 1].after : f.chart.start;
+    const faceColor = (lane: Lane) => this.puzzle.laneColor(shown, lane);
 
     this.road();
     this.beatLines(f.beat);
@@ -145,8 +155,8 @@ export class Highway {
     // Lane dividers.
     ctx.strokeStyle = this.colors.line;
     ctx.lineWidth = 1;
-    for (let k = 1; k < LANES.length; k++) {
-      const t = -1 + (2 * k) / LANES.length;
+    for (let k = 1; k < this.lanes.length; k++) {
+      const t = -1 + (2 * k) / this.lanes.length;
       ctx.beginPath();
       ctx.moveTo(this.w / 2 + t * far.half, far.y);
       ctx.lineTo(this.w / 2 + t * this.at(BELOW - 0.05).half, near.y);
@@ -193,20 +203,20 @@ export class Highway {
   private noteColor(note: Note, result: Judgment | undefined) {
     if (result === "miss") return this.colors.gray;
     if (note.lane === "all") return this.colors.accent;
-    return this.colors[centers(note.before)[note.lane] as Color];
+    return this.colors[this.puzzle.laneColor(note.before, note.lane)];
   }
 
   private tail(note: Note, beat: number, result: Judgment | undefined) {
     if (note.move.amount !== 2 || note.lane === "all" || (result && result !== "miss")) return;
     const { ctx } = this;
-    const lane = LANES.indexOf(note.lane);
+    const lane = this.lanes.indexOf(note.lane);
     const z0 = Math.max(this.depth(note.beat - beat), BELOW);
     const z1 = Math.min(this.depth(note.beat + note.length - 0.35 - beat), 1);
     if (z1 <= z0) return;
     const a = this.at(z0);
     const b = this.at(z1);
-    const wA = (a.half / LANES.length) * 0.32;
-    const wB = (b.half / LANES.length) * 0.32;
+    const wA = (a.half / this.lanes.length) * 0.32;
+    const wB = (b.half / this.lanes.length) * 0.32;
     ctx.fillStyle = this.noteColor(note, result);
     ctx.globalAlpha = 0.5;
     ctx.beginPath();
@@ -224,7 +234,7 @@ export class Highway {
     const { ctx } = this;
     const z = this.depth(note.beat - beat);
     const { y, half, s } = this.at(z);
-    const laneW = (2 * half) / LANES.length;
+    const laneW = (2 * half) / this.lanes.length;
     ctx.globalAlpha = z < 0 ? Math.max(0, 1 + z / 0.25) : 1;
     const fill = this.noteColor(note, result);
 
@@ -236,24 +246,28 @@ export class Highway {
       ctx.lineWidth = Math.max(1, 3 * s);
       ctx.strokeStyle = this.colors.body;
       ctx.stroke();
-      if (laneW > 26) this.label(moveToString(note.move), this.w / 2, y, h * 0.7, "#ffffff");
+      if (laneW > 26) {
+        const text = moveToString(note.move);
+        this.label(text, this.w / 2, y, h * 0.7, "#ffffff");
+        const key = this.movedKey(note);
+        if (key) this.keycap(key, this.w / 2 + ctx.measureText(text).width / 2 + h * 0.6, y, h * 0.75);
+      }
       ctx.globalAlpha = 1;
       return;
     }
 
-    const lane = LANES.indexOf(note.lane);
+    const lane = this.lanes.indexOf(note.lane);
     const x = this.laneX(lane, half);
-    const size = laneW * 0.8;
-    const h = note.shape === "wide" ? size * 0.95 : size * 0.72;
-    const r = size * 0.2;
+    const size = laneW * 0.8 * (note.shape === "tip" ? 0.62 : 1);
+    const h = this.triangles ? size * 0.82 : note.shape === "wide" ? size * 0.95 : size * 0.72;
     const prime = note.move.amount === 3;
 
     if (prime && result !== "miss") {
-      roundRect(ctx, x - size / 2 - 4 * s, y - h / 2 - 4 * s, size + 8 * s, h + 8 * s, r + 4 * s);
+      this.gemPath(x, y, size + 8 * s, h + 8 * s);
       ctx.fillStyle = this.colors.accent;
       ctx.fill();
     }
-    roundRect(ctx, x - size / 2, y - h / 2, size, h, r);
+    this.gemPath(x, y, size, h);
     if (note.shape === "slice") {
       ctx.fillStyle = this.colors.body;
       ctx.fill();
@@ -267,17 +281,60 @@ export class Highway {
       ctx.strokeStyle = this.colors.body;
       ctx.stroke();
       // A soft shine, like a sticker.
-      ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
-      roundRect(ctx, x - size / 2 + size * 0.1, y - h / 2 + h * 0.1, size * 0.8, h * 0.28, r * 0.6);
-      ctx.fill();
+      if (!this.triangles) {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
+        ctx.beginPath();
+        ctx.rect(x - size / 2 + size * 0.1, y - h / 2 + h * 0.1, size * 0.8, h * 0.28);
+        ctx.fill();
+      }
     }
 
     if (size > 22) {
-      const face: string = centers(note.before)[note.lane];
+      const face = this.puzzle.laneColor(note.before, note.lane);
       const ink = note.shape === "slice" || result === "miss" || !DARK_TEXT.has(face) ? "#ffffff" : this.colors.ink;
-      this.label(moveToString(note.move), x, y - h * 0.02, h * 0.5, ink);
+      // A triangle's middle is low down.
+      this.label(moveToString(note.move), x, y + (this.triangles ? h * 0.14 : -h * 0.02), h * (this.triangles ? 0.42 : 0.5), ink);
+      const key = this.movedKey(note);
+      if (key) this.keycap(key, x + size / 2, y + h / 2, Math.max(h * 0.5, 16));
     }
     ctx.globalAlpha = 1;
+  }
+
+  /** Pyraminx notes are triangles, like its stickers. */
+  private get triangles() {
+    return this.puzzle.id === "pyraminx";
+  }
+
+  /** The outline of a gem or receptor centered on (x, y): a rectangle or a sharp-cornered triangle. */
+  private gemPath(x: number, y: number, w: number, h: number) {
+    const { ctx } = this;
+    ctx.beginPath();
+    if (!this.triangles) {
+      ctx.rect(x - w / 2, y - h / 2, w, h);
+      return;
+    }
+    ctx.moveTo(x, y - h / 2);
+    ctx.lineTo(x + w / 2, y + h / 2);
+    ctx.lineTo(x - w / 2, y + h / 2);
+    ctx.closePath();
+  }
+
+  /** The label of the key that plays a note, when it isn't the note's own letter. */
+  private movedKey(note: Note) {
+    const label = keyLabel(keyFor(note.move, this.keys));
+    return label === letterOf(note.move) ? undefined : label;
+  }
+
+  /** A small light keycap, like the keys on the setup screen. */
+  private keycap(text: string, x: number, y: number, size: number) {
+    const { ctx } = this;
+    roundRect(ctx, x - size / 2, y - size / 2, size, size, size * 0.25);
+    ctx.fillStyle = this.colors.text;
+    ctx.fill();
+    ctx.lineWidth = Math.max(1, size * 0.1);
+    ctx.strokeStyle = this.colors.body;
+    ctx.stroke();
+    this.label(text, x, y + size * 0.03, size * 0.68, this.colors.ink);
   }
 
   private label(text: string, x: number, y: number, size: number, color: string) {
@@ -289,29 +346,30 @@ export class Highway {
     ctx.fillText(text, x, y);
   }
 
-  /** The strike line: a receptor per lane in its face's color, lit while its key is down. */
-  private receptors(f: HighwayFrame, faceColor: Record<string, Color>) {
+  /** The strike line: a receptor per lane in its color, lit while its key is down. */
+  private receptors(f: HighwayFrame, faceColor: (lane: Lane) => Color) {
     const { ctx } = this;
     const { y, half } = this.at(0);
-    const laneW = (2 * half) / LANES.length;
+    const laneW = (2 * half) / this.lanes.length;
     const size = laneW * 0.8;
-    const h = size * 0.72;
-    const heldLanes = new Set([...f.held].map(laneOfKey));
+    const h = size * (this.triangles ? 0.82 : 0.72);
+    const heldLanes = new Set([...f.held].map((code) => laneOfKey(code, this.keys, this.puzzle)));
 
     const flashing = (lane: Lane | "all") =>
       f.pops.some((p) => (p.lane === lane || p.lane === "all") && p.judgment !== "miss" && p.judgment !== "wrong" && f.now - p.at < FLASH_MS);
 
-    LANES.forEach((lane, i) => {
+    this.lanes.forEach((lane, i) => {
       const x = this.laneX(i, half);
-      const color = this.colors[faceColor[lane]];
+      const color = this.colors[faceColor(lane)];
       const lit = heldLanes.has(lane) || flashing(lane);
-      roundRect(ctx, x - size / 2, y - h / 2, size, h, size * 0.2);
+      this.gemPath(x, y, size, h);
       ctx.fillStyle = lit ? color : "rgba(255, 255, 255, 0.04)";
       ctx.fill();
       ctx.lineWidth = 4;
       ctx.strokeStyle = color;
       ctx.stroke();
-      this.label(lane, x, y, h * 0.46, lit ? (DARK_TEXT.has(faceColor[lane]) ? this.colors.ink : "#ffffff") : color);
+      const ink = lit ? (DARK_TEXT.has(faceColor(lane)) ? this.colors.ink : "#ffffff") : color;
+      this.label(keyLabel(this.keys[lane]), x, y + (this.triangles ? h * 0.14 : 0), h * (this.triangles ? 0.4 : 0.46), ink);
     });
 
     // Whole-cube turns light the line across every lane.
@@ -328,11 +386,11 @@ export class Highway {
   private pops(f: HighwayFrame) {
     const { ctx } = this;
     const { y, half } = this.at(0);
-    const laneW = (2 * half) / LANES.length;
+    const laneW = (2 * half) / this.lanes.length;
     for (const p of f.pops) {
       const age = f.now - p.at;
       if (age > POP_MS || age < 0) continue;
-      const x = p.lane === "all" ? this.w / 2 : this.laneX(LANES.indexOf(p.lane), half);
+      const x = p.lane === "all" ? this.w / 2 : this.laneX(this.lanes.indexOf(p.lane), half);
       const rise = (age / POP_MS) * laneW * 0.9;
       ctx.globalAlpha = 1 - age / POP_MS;
       const text = f.words[p.judgment];

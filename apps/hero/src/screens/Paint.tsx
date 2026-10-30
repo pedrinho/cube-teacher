@@ -49,7 +49,7 @@ export function Paint({ onDone, onBack }: Props) {
       <div className="screen">
         <h1>{t("review.title")}</h1>
         <div className="review">
-          <Cube3D state={review} label={t("review.title")} />
+          <Cube3D state={review} stickerless label={t("review.title")} />
           <div>
             <p className="lead">{t("review.text")}</p>
             <div className="btn-row">

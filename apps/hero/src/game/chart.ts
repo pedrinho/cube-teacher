@@ -1,10 +1,11 @@
 // A song chart: the solver's stages laid out on a beat timeline, one note per move.
 // Sections are the solver's steps, parts are its segments ("line up the edge", "R U R'"), and
 // notes reach the strike line at their beat.
-import { applyMove, isRotation, type CubeState, type Move } from "cube-kit/cube/model";
+import { isRotation, type CubeState, type Move } from "cube-kit/cube/model";
 import type { KitMessageKey } from "cube-kit/i18n/en";
 import type { Explain, SegmentKind, Stage } from "cube-kit/methods/types";
-import { laneOf, shapeOf, type Lane, type NoteShape } from "./lanes";
+import type { Lane, NoteShape } from "./lanes";
+import { CUBE, PYRAMINX, type Puzzle } from "./puzzles";
 
 /** Beats for a quarter turn, a half turn and a whole-cube turn. */
 export const QUARTER = 1;
@@ -19,7 +20,10 @@ export const INFO = 2;
 /** Rest after the last note. */
 export const TAIL = 2;
 
-export type Method = "layers" | "fridrich";
+export type Method = "layers" | "fridrich" | "pyraminx";
+
+/** The puzzle a song is played on. States are that puzzle's (a cube's or a pyraminx's). */
+export const puzzleOf = (method: Method): Puzzle => (method === "pyraminx" ? PYRAMINX : CUBE);
 
 export interface Note {
   /** When the note reaches the strike line. */
@@ -60,6 +64,7 @@ export interface Section {
 
 export interface Chart {
   method: Method;
+  puzzle: Puzzle;
   start: CubeState;
   end: CubeState;
   notes: Note[];
@@ -72,10 +77,11 @@ export interface Chart {
 export const noteLength = (m: Move) => (isRotation(m) ? ROTATION : m.amount === 2 ? HALF : QUARTER);
 
 const stageTitle = (method: Method, step: number) =>
-  (method === "layers" ? `step.${step}.name` : `fr.stage.${step}`) as KitMessageKey;
+  (method === "layers" ? `step.${step}.name` : method === "fridrich" ? `fr.stage.${step}` : `py.stage.${step}`) as KitMessageKey;
 
 /** Lays out the stages of a solve, starting from `start`. */
 export function buildChart(method: Method, start: CubeState, stages: Stage[]): Chart {
+  const puzzle = puzzleOf(method);
   const notes: Note[] = [];
   const parts: Part[] = [];
   const sections: Section[] = [];
@@ -96,9 +102,9 @@ export function buildChart(method: Method, start: CubeState, stages: Stage[]): C
       const partFirst = notes.length;
       if (seg.moves.length === 0) beat += INFO;
       for (const move of seg.moves) {
-        const after = applyMove(state, move);
+        const after = puzzle.apply(state, move);
         const length = noteLength(move);
-        notes.push({ beat, length, move, lane: laneOf(move), shape: shapeOf(move), before: state, after, part, section });
+        notes.push({ beat, length, move, lane: puzzle.laneOf(move), shape: puzzle.shapeOf(move), before: state, after, part, section });
         state = after;
         beat += length;
       }
@@ -125,7 +131,7 @@ export function buildChart(method: Method, start: CubeState, stages: Stage[]): C
   }
 
   const end = sections.length ? sections[sections.length - 1].after : start;
-  return { method, start, end, notes, parts, sections, length: beat + TAIL };
+  return { method, puzzle, start, end, notes, parts, sections, length: beat + TAIL };
 }
 
 /** Index of the last note that has reached the strike line by `beat` (-1 before the first). */

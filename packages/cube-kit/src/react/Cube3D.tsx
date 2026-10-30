@@ -1,7 +1,33 @@
-// React wrapper for our three.js cube. three.js loads only when a 3D cube is on screen.
+// React wrapper for our three.js cube, or pyraminx. three.js loads only when one is on screen.
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { parseAlg, type CubeState, type Move } from "../cube/model";
-import type { CubeScene, StickerColors, Visible } from "../three/cubeScene";
+import type { StickerColors, Visible } from "../three/cubeScene";
+
+/** What both 3D puzzles can do. A state is the puzzle's sticker string. */
+interface PuzzleScene {
+  readonly finalState: string;
+  setState(state: string, visible?: Visible): void;
+  setVisible(visible?: Visible): void;
+  setTiming(turnMs: number, pauseMs: number): void;
+  play(moves: Move[], options?: { done?: () => void; onStep?: (index: number) => void }): void;
+  dispose(): void;
+}
+
+type SceneOptions = { fromBelow?: boolean; stickerless?: boolean };
+
+/** Loads the puzzle's scene code, then makes one. */
+const loadScene = (puzzle: "cube" | "pyraminx") =>
+  puzzle === "pyraminx"
+    ? import("../three/pyraminxScene").then(
+        ({ PyraminxScene }) =>
+          (el: HTMLElement, colors: StickerColors, state: string, options: SceneOptions): PuzzleScene =>
+            new PyraminxScene(el, colors, state, options),
+      )
+    : import("../three/cubeScene").then(
+        ({ CubeScene }) =>
+          (el: HTMLElement, colors: StickerColors, state: string, options: SceneOptions): PuzzleScene =>
+            new CubeScene(el, colors, state, options),
+      );
 
 /** How long one quarter turn takes, and the pause between moves played together. */
 export interface Timing {
@@ -34,6 +60,10 @@ export interface Cube3DProps {
   visible?: Visible;
   /** Look at the cube from below (to see a cross on the bottom). */
   fromBelow?: boolean;
+  /** Colored plastic pieces with no black body, like a stickerless speed cube. */
+  stickerless?: boolean;
+  /** A pyraminx instead of a cube; its state is a pyraminx state, its moves pyraminx moves. */
+  puzzle?: "cube" | "pyraminx";
   label: string;
   timing?: Timing;
   ref?: Ref<Cube3DHandle>;
@@ -55,16 +85,16 @@ function readColors(): StickerColors {
   };
 }
 
-export function Cube3D({ state, visible, fromBelow, label, timing = NORMAL, ref }: Cube3DProps) {
+export function Cube3D({ state, visible, fromBelow, stickerless, puzzle = "cube", label, timing = NORMAL, ref }: Cube3DProps) {
   const container = useRef<HTMLDivElement>(null);
-  const [scene, setScene] = useState<CubeScene | null>(null);
+  const [scene, setScene] = useState<PuzzleScene | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    let created: CubeScene | null = null;
-    import("../three/cubeScene").then(({ CubeScene }) => {
+    let created: PuzzleScene | null = null;
+    loadScene(puzzle).then((make) => {
       if (cancelled || !container.current) return;
-      created = new CubeScene(container.current, readColors(), state, { fromBelow });
+      created = make(container.current, readColors(), state, { fromBelow, stickerless });
       setScene(created);
     });
     return () => {
