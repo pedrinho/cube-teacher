@@ -1,11 +1,12 @@
 // The puzzles a song can be played on: how a move changes the state, how moves come down the
 // highway, the color of each lane, and which keys play it.
 import { SOLVED, applyMove, centers, isSolved as isCubeSolved, type Color, type Move } from "cube-kit/cube/model";
-import { CUBE_1, CUBE_1x2, CUBE_1x3, CUBE_1x4, type CuboidId } from "cube-kit/cuboid/model";
+import { CUBE_1, CUBE_1x2, CUBE_1x2x2, CUBE_1x3, CUBE_1x4, type CuboidId } from "cube-kit/cuboid/model";
 import { PYRA_SOLVED, applyPyraMove, isPyraSolved, type PyraMove } from "cube-kit/pyraminx/model";
 import {
   CUBE_1_TRACK,
   CUBE_1x2_TRACK,
+  CUBE_1x2x2_TRACK,
   CUBE_1x3_TRACK,
   CUBE_1x4_TRACK,
   CUBE_TRACK,
@@ -101,6 +102,19 @@ export const TOWER_4: Puzzle = {
   apply: CUBE_1x4.apply,
   isSolved: CUBE_1x4.isSolved,
   laneColor: (_, lane) => (lane === "U" ? "W" : "Y"),
+};
+
+/** The 1x2x2's sides only turn halfway, so each lane keeps its side's color, as on a solved cube. */
+const WALL_COLORS: Partial<Record<Lane, Color>> = { L: "O", U: "W", D: "Y", R: "R" };
+
+export const WALL: Puzzle = {
+  ...CUBE_1x2x2_TRACK,
+  id: "1x2x2",
+  keySet: "cube",
+  solved: CUBE_1x2x2.solved,
+  apply: CUBE_1x2x2.apply,
+  isSolved: CUBE_1x2x2.isSolved,
+  laneColor: (_, lane) => WALL_COLORS[lane]!,
 };
 
 /** The keys a puzzle is played with: its key set's, with its fixed keys on top. */

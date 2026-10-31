@@ -1,13 +1,15 @@
-// Sticker-level model of a small cuboid: the 1x1x1 to 1x1x4 of Cube Hero's first levels, and others
-// like the 2x2x1 later.
+// Sticker-level model of a small cuboid: the 1x1x1 to 1x1x4 and the 1x2x2 of Cube Hero's first
+// levels.
 //
 // Built from its geometry, like the 3x3's: cubies sit on a grid centered on the origin (at halves
 // when a side is even), every outer side of a cubie has a sticker, and moves are permutations of
 // the stickers. A state is a string of colors, one per sticker, face by face in the order U R F D L
-// B. Moves are written like the cube's (U, D, E, y…), and a cuboid only makes the quarter turns that
-// keep its shape: around an axis whose cross-section is square. A 1x1x2 turns U, D and y; a 1x1x3
-// also turns its middle layer, E, which like the cube's turns the way D does. From three layers up,
-// wide moves (u, d…) turn a face's layer and the one next to it: on a 1x1x4, the top or bottom two.
+// B. Moves are written like the cube's (U, D, E, y…), and a cuboid only makes the turns that keep its
+// shape: quarter turns around an axis whose cross-section is square, half turns around any other. A
+// 1x1x2 turns U, D and y; a 1x1x3 also turns its middle layer, E, which like the cube's turns the way
+// D does. From three layers up, wide moves (u, d…) turn a face's layer and the one next to it: on a
+// 1x1x4, the top or bottom two. A 1x2x2 standing up, two by two seen from the front, only turns its
+// sides halfway: R2, L2, U2 and D2.
 import { DEFAULT_SCHEME, FACES, type BaseMove, type Face, type Move, type Vec } from "../cube/model";
 
 const NORMAL: Record<Face, Vec> = {
@@ -66,8 +68,10 @@ export interface Cuboid {
   /** Position (its cubie's) and outward normal of every sticker. */
   stickers: { face: Face; pos: Vec; normal: Vec }[];
   solved: string;
-  /** The moves it can make. */
+  /** The moves it can make in quarter turns. */
   moves: BaseMove[];
+  /** The moves it can only make in half turns. */
+  halfMoves: BaseMove[];
   apply: (state: string, move: Move) => string;
   /** The rotation axis of a move and which cubie positions it turns. */
   moveLayer: (base: BaseMove) => { axis: Vec; inLayer: (pos: Vec) => boolean };
@@ -92,17 +96,21 @@ export function makeCuboid(dims: Vec): Cuboid {
     }
   }
 
-  // A quarter turn keeps the shape when the two other sides are the same length. A middle layer
-  // needs a middle: an odd number of layers, at least three. A wide move needs three layers too
-  // (on two, it would turn the whole thing).
-  const moves = CUBOID_MOVES.filter((m) => {
+  // A quarter turn keeps the shape when the two other sides are the same length, a half turn always.
+  // A middle layer needs a middle: an odd number of layers, at least three. A wide move needs three
+  // layers too (on two, it would turn the whole thing).
+  const square = (m: (typeof CUBOID_MOVES)[number]) => {
+    const [a, b] = [0, 1, 2].filter((i) => i !== AXIS_OF[m]);
+    return dims[a] === dims[b];
+  };
+  const turnable = CUBOID_MOVES.filter((m) => {
     const axis = AXIS_OF[m];
-    const [a, b] = [0, 1, 2].filter((i) => i !== axis);
-    if (dims[a] !== dims[b]) return false;
     if (SLICE_FACE[m]) return dims[axis] >= 3 && dims[axis] % 2 === 1;
     if (WIDE_FACE[m]) return dims[axis] >= 3;
     return true;
   });
+  const moves = turnable.filter(square);
+  const halfMoves = turnable.filter((m) => !square(m));
 
   const layer = (base: BaseMove): { axis: Vec; inLayer: (pos: Vec) => boolean } => {
     if (base === "x" || base === "y" || base === "z") {
@@ -125,22 +133,32 @@ export function makeCuboid(dims: Vec): Cuboid {
     return { axis: normal, inLayer: (p) => p[axis] === half[axis] * normal[axis] };
   };
 
-  const perms = new Map<string, number[]>();
-  for (const base of moves) {
+  /** Where each sticker comes from after `quarters` quarter turns of a move. */
+  const turned = (base: BaseMove, quarters: number) => {
     const { axis, inLayer } = layer(base);
     const q = stickers.map((_, i) => i);
     stickers.forEach((s, i) => {
-      if (inLayer(s.pos)) q[indexOf.get(key(turnVec(s.pos, axis), turnVec(s.normal, axis)))!] = i;
+      if (!inLayer(s.pos)) return;
+      let [pos, normal] = [s.pos, s.normal];
+      for (let k = 0; k < quarters; k++) [pos, normal] = [turnVec(pos, axis), turnVec(normal, axis)];
+      q[indexOf.get(key(pos, normal))!] = i;
     });
+    return q;
+  };
+
+  const perms = new Map<string, number[]>();
+  for (const base of moves) {
+    const q = turned(base, 1);
     const q2 = compose(q, q);
     perms.set(`${base}1`, q);
     perms.set(`${base}2`, q2);
     perms.set(`${base}3`, compose(q2, q));
   }
+  for (const base of halfMoves) perms.set(`${base}2`, turned(base, 2));
 
   const apply = (state: string, m: Move) => {
     const perm = perms.get(`${m.base}${m.amount}`);
-    if (!perm) throw new Error(`A ${dims.join("x")} can't turn ${m.base}`);
+    if (!perm) throw new Error(`A ${dims.join("x")} can't turn ${m.base}${m.amount === 2 ? "2" : m.amount === 3 ? "'" : ""}`);
     let out = "";
     for (let i = 0; i < perm.length; i++) out += state[perm[i]];
     return out;
@@ -153,7 +171,7 @@ export function makeCuboid(dims: Vec): Cuboid {
     });
 
   const solved = stickers.map((s) => DEFAULT_SCHEME[s.face]).join("");
-  return { dims, cubies, stickers, solved, moves, apply, moveLayer: layer, isSolved };
+  return { dims, cubies, stickers, solved, moves, halfMoves, apply, moveLayer: layer, isSolved };
 }
 
 export const CUBE_1 = makeCuboid([1, 1, 1]);
@@ -163,6 +181,14 @@ export const CUBE_1x2 = makeCuboid([1, 2, 1]);
 export const CUBE_1x3 = makeCuboid([1, 3, 1]);
 /** Four cubies, one on top of the other. */
 export const CUBE_1x4 = makeCuboid([1, 4, 1]);
+/** Four cubies, two by two, standing up: two wide, two tall, one deep. */
+export const CUBE_1x2x2 = makeCuboid([2, 2, 1]);
 
-export const CUBOIDS = { "1x1x1": CUBE_1, "1x1x2": CUBE_1x2, "1x1x3": CUBE_1x3, "1x1x4": CUBE_1x4 } as const;
+export const CUBOIDS = {
+  "1x1x1": CUBE_1,
+  "1x1x2": CUBE_1x2,
+  "1x1x3": CUBE_1x3,
+  "1x1x4": CUBE_1x4,
+  "1x2x2": CUBE_1x2x2,
+} as const;
 export type CuboidId = keyof typeof CUBOIDS;

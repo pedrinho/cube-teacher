@@ -5,7 +5,7 @@ import { parseAlg } from "cube-kit/cube/model";
 import type { MessageKey } from "../i18n/en";
 import type { Progress } from "../settings";
 import { layOut, type Chart, type SectionPlan } from "./chart";
-import { ONE, TOWER, TOWER_3, TOWER_4, type Puzzle } from "./puzzles";
+import { ONE, TOWER, TOWER_3, TOWER_4, WALL, type Puzzle } from "./puzzles";
 
 export const CHAPTERS = ["easy", "medium", "hard", "extreme"] as const;
 export type Chapter = (typeof CHAPTERS)[number];
@@ -157,6 +157,45 @@ export const LEVELS: Level[] = [
         parts: [
           { kind: "intuitive", moves: parseAlg("u U' d' U"), tip: "four.t5" },
           { kind: "intuitive", moves: parseAlg("d D' u' D"), tip: "four.t5b" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "easy-1x2x2",
+    chapter: "easy",
+    kind: "song",
+    tutorial: true,
+    title: "level.wall.title",
+    text: "level.wall.text",
+    about: "level.wall.about",
+    puzzle: WALL,
+    // Every note is a held half turn, a beat and a half long: a little faster than the towers.
+    bpm: 50,
+    // Every section turns the sides back. R2 and L2 together turn the whole thing upside down, U2
+    // and D2 turn it around, and R2 U2 three times takes three cubies around and back.
+    sections: [
+      { title: "wall.s1", parts: [{ kind: "align", moves: repeat("R2", 2), tip: "wall.t1" }] },
+      { title: "wall.s2", parts: [{ kind: "align", moves: repeat("L2", 2), tip: "wall.t2" }] },
+      {
+        title: "wall.s3",
+        parts: [
+          { kind: "align", moves: repeat("U2", 2), tip: "wall.t3" },
+          { kind: "align", moves: repeat("D2", 2), tip: "wall.t3b" },
+        ],
+      },
+      {
+        title: "wall.s4",
+        parts: [
+          { kind: "intuitive", moves: parseAlg("R2 L2"), tip: "wall.t4" },
+          { kind: "intuitive", moves: parseAlg("U2 D2"), tip: "wall.t4b" },
+        ],
+      },
+      {
+        title: "wall.s5",
+        parts: [
+          { kind: "intuitive", moves: repeat("R2 U2", 3), tip: "wall.t5" },
+          { kind: "intuitive", moves: repeat("L2 D2", 3), tip: "wall.t5b" },
         ],
       },
     ],
