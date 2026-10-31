@@ -77,6 +77,13 @@ export interface Chart {
 
 export const noteLength = (m: Move) => (isRotation(m) ? ROTATION : m.amount === 2 ? HALF : QUARTER);
 
+/** Half turns of a layer are held: their key stays down until the note's tail has gone by. */
+export const isHold = (n: Note): n is Note & { lane: Lane } => n.move.amount === 2 && n.lane !== "all";
+/** How far before the next note's beat a held note's tail stops, so the two never touch. */
+export const HOLD_TRIM = 0.35;
+export const holdEnd = (n: Note) => n.beat + n.length - HOLD_TRIM;
+export const holdCount = (chart: Chart) => chart.notes.filter(isHold).length;
+
 /** A section to lay out: its name and its parts, each a run of moves with what it says. */
 export interface SectionPlan {
   title: MessageKey;

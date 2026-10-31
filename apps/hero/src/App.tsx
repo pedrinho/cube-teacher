@@ -9,7 +9,7 @@ import { PYRA_SOLVED, applyPyraAlg, randomPyraScramble } from "cube-kit/pyraminx
 import { solvePyraminx } from "cube-kit/pyraminx/solver";
 import { useI18n, type Lang, type MessageKey } from "./i18n";
 import { Sound } from "./game/audio";
-import { buildChart, puzzleOf, type Chart, type Method } from "./game/chart";
+import { buildChart, holdCount, puzzleOf, type Chart, type Method } from "./game/chart";
 import {
   CHAPTERS,
   PASS_STARS,
@@ -141,7 +141,7 @@ export function App() {
   };
 
   const finish = (chart: Chart, watch: boolean, score: Score, level?: SongLevel) => {
-    const stars = starsFor(score.points, maxPoints(chart.notes.length));
+    const stars = starsFor(score.points, maxPoints(chart.notes.length, holdCount(chart)));
     const firstPass = !watch && !level && !passed(progress, REAL_CUBES) && stars >= PASS_STARS;
     let newBest = false;
     if (!watch) {
@@ -255,7 +255,7 @@ export function App() {
           (screen.level ? (
             <Results
               score={screen.score}
-              maxPoints={maxPoints(screen.chart.notes.length)}
+              maxPoints={maxPoints(screen.chart.notes.length, holdCount(screen.chart))}
               watched={screen.watch}
               newBest={screen.newBest}
               level={{ onNext: nextOf(screen.level, progress, openLevel) }}
@@ -265,7 +265,7 @@ export function App() {
           ) : (
             <Results
               score={screen.score}
-              maxPoints={maxPoints(screen.chart.notes.length)}
+              maxPoints={maxPoints(screen.chart.notes.length, holdCount(screen.chart))}
               watched={screen.watch}
               newBest={screen.newBest}
               firstPass={screen.firstPass}

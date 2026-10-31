@@ -4,12 +4,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Cube3D, type Cube3DHandle } from "cube-kit/react/Cube3D";
 import { explainText, useI18n } from "../i18n";
-import { sectionAt, type Chart, type Part } from "../game/chart";
+import { holdEnd, isHold, sectionAt, type Chart, type Part } from "../game/chart";
 import { BeatClock } from "../game/clock";
 import { Highway, type Palette, type Pop } from "../game/highway";
 import { Judge, type PlayEvent } from "../game/judge";
 import { LETTERS, gameKey, keyFor, keyLabel, laneOfKey, type KeyMap } from "../game/lanes";
-import { multiplier, newScore, record, wrongKey, type Score } from "../game/score";
+import { held, multiplier, newScore, record, wrongKey, type Score } from "../game/score";
 import type { Sound } from "../game/audio";
 
 interface Props {
@@ -75,7 +75,13 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
 
   const msPerBeat = 60000 / bpm;
   const sectionNames = chart.sections.map((s) => t(s.title));
-  const words = { perfect: t("judge.perfect"), good: t("judge.good"), miss: t("judge.miss"), wrong: t("judge.wrong") };
+  const words = {
+    perfect: t("judge.perfect"),
+    good: t("judge.good"),
+    miss: t("judge.miss"),
+    wrong: t("judge.wrong"),
+    held: t("judge.held"),
+  };
   const space = t("key.space");
   const labels = useRef({ sectionNames, words, space });
   labels.current = { sectionNames, words, space };
@@ -92,7 +98,13 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
     const g = game.current;
     const now = performance.now();
     for (const e of events) {
-      if (e.type === "stray") continue;
+      // A dropped hold only loses its bonus: the tail goes gray, nothing else.
+      if (e.type === "stray" || e.type === "dropped") continue;
+      if (e.type === "held") {
+        g.score = held(g.score);
+        g.pops.push({ lane: chart.notes[e.note].lane, judgment: "held", at: now });
+        continue;
+      }
       if (e.type === "wrong") {
         sound.wrong();
         g.score = wrongKey(g.score);
@@ -118,6 +130,8 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
     const g = game.current;
     if (g.phase !== "playing") return;
     g.clock.pause();
+    // Keys are let go to pause: holds in progress count as held.
+    handle(g.judge.settle());
     g.held.clear();
     setPhase("paused");
   };
@@ -179,7 +193,8 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
             const note = chart.notes[g.judge.next];
             const code = keyFor(note.move, keys);
             g.held.add(code);
-            setTimeout(() => g.held.delete(code), AUTO_HOLD);
+            // A half turn's key stays down until its tail has gone by (the judge then counts it held).
+            setTimeout(() => g.held.delete(code), isHold(note) ? (holdEnd(note) - note.beat) * msPerBeat : AUTO_HOLD);
             handle(g.judge.press(code, note.beat, msPerBeat));
           }
         }
@@ -207,6 +222,7 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
         results: g.judge.results,
         next: g.judge.next,
         held: g.held,
+        holds: g.judge.holds,
         pops: g.pops,
         now,
         sectionNames: labels.current.sectionNames,
@@ -233,7 +249,10 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
       if (g.phase === "playing") handle(g.judge.press(code, g.clock.beat, msPerBeat));
     };
     const onKeyUp = (e: KeyboardEvent) => {
-      if (!auto) g.held.delete(gameKey(e.code));
+      if (auto) return;
+      const code = gameKey(e.code);
+      g.held.delete(code);
+      if (g.phase === "playing") handle(g.judge.release(code, g.clock.beat));
     };
     const onHide = () => {
       if (document.hidden) pause();

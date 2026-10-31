@@ -2,9 +2,11 @@
 // sliding down to a row of receptors. A gem shows its move; when the player has moved that letter
 // to another key, a small keycap on the gem shows the key. Receptors show their lane's key. On the
 // pyraminx, gems and receptors are triangles, and a tip's gem is a small one. The 1x1x1's one lane
-// is a space bar: a wide road, with bars for notes and a bar for its receptor.
+// is a space bar: a wide road, with bars for notes and a bar for its receptor. A half turn has a
+// tail: once hit, it glows down to the strike line while its key is held, and goes gray if let go.
 import { moveToString, type Color } from "cube-kit/cube/model";
-import { LEAD_IN, type Chart, type Note } from "./chart";
+import { LEAD_IN, holdEnd, isHold, type Chart, type Note } from "./chart";
+import type { HoldState } from "./judge";
 import { keyFor, keyLabel, laneOfKey, letterOf, type KeyMap, type Lane } from "./lanes";
 import type { Puzzle } from "./puzzles";
 import type { Judgment } from "./score";
@@ -22,7 +24,7 @@ export type Palette = Record<Color | "gray" | "body" | "accent" | "ink" | "text"
 
 export interface Pop {
   lane: Lane | "all";
-  judgment: Judgment | "wrong";
+  judgment: Judgment | "wrong" | "held";
   /** performance.now() when it happened. */
   at: number;
 }
@@ -31,6 +33,8 @@ export interface HighwayFrame {
   chart: Chart;
   beat: number;
   results: readonly Judgment[];
+  /** How each half turn that was hit is being held. */
+  holds: readonly (HoldState | undefined)[];
   /** Index of the next note to play. */
   next: number;
   /** Keys held down right now. */
@@ -136,7 +140,7 @@ export class Highway {
       if (z < BELOW - 0.15) continue;
       visible.push(i);
     }
-    for (const i of visible) this.tail(f.chart.notes[i], f.beat, f.results[i]);
+    for (const i of visible) this.tail(f.chart.notes[i], f.beat, f.results[i], f.holds[i]);
     for (const i of [...visible].reverse()) this.gem(f.chart.notes[i], f.beat, f.results[i]);
 
     this.receptors(f, faceColor);
@@ -216,19 +220,22 @@ export class Highway {
     return this.colors[this.puzzle.laneColor(note.before, note.lane)];
   }
 
-  private tail(note: Note, beat: number, result: Judgment | undefined) {
-    if (note.move.amount !== 2 || note.lane === "all" || (result && result !== "miss")) return;
+  private tail(note: Note, beat: number, result: Judgment | undefined, hold: HoldState | undefined) {
+    if (!isHold(note) || hold === "held") return;
     const { ctx } = this;
     const lane = this.lanes.indexOf(note.lane);
-    const z0 = Math.max(this.depth(note.beat - beat), BELOW);
-    const z1 = Math.min(this.depth(note.beat + note.length - 0.35 - beat), 1);
+    // While its key is held the tail is being played, so it starts at the strike line.
+    const holding = hold === "holding";
+    const z0 = holding ? 0 : Math.max(this.depth(note.beat - beat), BELOW);
+    const z1 = Math.min(this.depth(holdEnd(note) - beat), 1);
     if (z1 <= z0) return;
     const a = this.at(z0);
     const b = this.at(z1);
-    const wA = (a.half / this.lanes.length) * 0.32;
-    const wB = (b.half / this.lanes.length) * 0.32;
-    ctx.fillStyle = this.noteColor(note, result);
-    ctx.globalAlpha = 0.5;
+    const width = holding ? 0.42 : 0.32;
+    const wA = (a.half / this.lanes.length) * width;
+    const wB = (b.half / this.lanes.length) * width;
+    ctx.fillStyle = hold === "dropped" ? this.colors.gray : this.noteColor(note, result);
+    ctx.globalAlpha = holding ? 0.95 : 0.5;
     ctx.beginPath();
     ctx.moveTo(this.laneX(lane, a.half) - wA, a.y);
     ctx.lineTo(this.laneX(lane, b.half) - wB, b.y);
@@ -419,7 +426,12 @@ export class Highway {
       const rise = (age / POP_MS) * laneW * 0.9;
       ctx.globalAlpha = 1 - age / POP_MS;
       const text = f.words[p.judgment];
-      const color = p.judgment === "perfect" ? "#ffffff" : p.judgment === "good" ? this.colors.textSoft : this.colors.gray;
+      const color =
+        p.judgment === "perfect" || p.judgment === "held"
+          ? "#ffffff"
+          : p.judgment === "good"
+            ? this.colors.textSoft
+            : this.colors.gray;
       ctx.font = `800 ${Math.round(Math.min(26, laneW * 0.32))}px "Lexend Variable", Lexend, system-ui, sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "bottom";

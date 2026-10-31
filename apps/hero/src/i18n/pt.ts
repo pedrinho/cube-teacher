@@ -42,7 +42,7 @@ export const pt: Messages = {
   "tower.s2": "U' gira de volta",
   "tower.t2": "U' gira para o outro lado, com a mesma tecla: {U}.",
   "tower.s3": "U2 é meia volta",
-  "tower.t3": "U2 também é a tecla {U}: meia volta de uma vez.",
+  "tower.t3": "U2 também é a tecla {U}, segurada: segure até o rabinho passar.",
   "tower.s4": "D gira a base",
   "tower.t4": "Aperte {D}: agora gira o cubo de baixo.",
   "tower.s5": "Tudo junto",
@@ -78,6 +78,7 @@ export const pt: Messages = {
   "setup.pyHow2": "' não muda a tecla: R' também é a tecla {R}.",
   "setup.pyHow3": "As notas pequenas giram só uma ponta: l, u, b e r também são as teclas {L}, {U}, {B} e {R}.",
   "setup.how4": "Esc ou a barra de espaço pausam a música.",
+  "setup.howHold": "Meias voltas (R2) têm um rabinho: segure a tecla até ele passar, para ganhar pontos extras.",
 
   "keys.title": "Suas teclas",
   "keys.faces": "Faces",
@@ -133,6 +134,7 @@ export const pt: Messages = {
   "judge.good": "Bom",
   "judge.miss": "Errou",
   "judge.wrong": "Opa",
+  "judge.held": "Segurou!",
 
   "results.title": "Montado!",
   "results.watched": "Esse foi o computador. Agora é a sua vez!",

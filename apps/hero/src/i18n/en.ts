@@ -41,7 +41,7 @@ export const en = {
   "tower.s2": "U' turns it back",
   "tower.t2": "U' turns the other way, with the same key: {U}.",
   "tower.s3": "U2 is a half turn",
-  "tower.t3": "U2 is the {U} key too: half a turn at once.",
+  "tower.t3": "U2 is the {U} key too, held down: keep it down until the tail has gone by.",
   "tower.s4": "D turns the bottom",
   "tower.t4": "Press {D}: now the bottom cube turns.",
   "tower.s5": "All together",
@@ -75,6 +75,7 @@ export const en = {
   "setup.how2": "' and 2 don't change the key: R' and R2 are the {R} key too.",
   "setup.how3": "Purple bars turn the whole cube: x, y and z are the {X}, {Y} and {Z} keys. Outlined notes turn a middle layer: M, E and S are the {M}, {E} and {S} keys.",
   "setup.how4": "Esc or the space bar pauses the song.",
+  "setup.howHold": "Half turns (R2) have a tail: hold the key down until it has gone by, for extra points.",
   "setup.pyHow2": "' doesn't change the key: R' is the {R} key too.",
   "setup.pyHow3": "Small notes turn only a tip: l, u, b and r are the {L}, {U}, {B} and {R} keys too.",
 
@@ -132,6 +133,7 @@ export const en = {
   "judge.good": "Good",
   "judge.miss": "Miss",
   "judge.wrong": "Oops",
+  "judge.held": "Held!",
 
   "results.title": "Solved!",
   "results.watched": "That was the computer. Your turn!",

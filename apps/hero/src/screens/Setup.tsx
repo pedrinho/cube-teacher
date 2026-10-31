@@ -254,6 +254,8 @@ export function Setup({ setup, keys, onChange, onKeysChange, onPlay, onBack }: P
           <li>{t("setup.how1", keyNames)}</li>
           <li>{t(pyraminx ? "setup.pyHow2" : "setup.how2", keyNames)}</li>
           <li>{t(pyraminx ? "setup.pyHow3" : "setup.how3", keyNames)}</li>
+          {/* The pyraminx has no half turns, so nothing to hold. */}
+          {!pyraminx && <li>{t("setup.howHold")}</li>}
           <li>{t("setup.how4")}</li>
         </ul>
         {/* A new editor for each puzzle, so a letter picked on one isn't still waiting on the other. */}

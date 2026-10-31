@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accuracy, judge, maxPoints, multiplier, newScore, record, stars, wrongKey, type Judgment } from "./score";
+import { HOLD_BONUS, accuracy, held, judge, maxPoints, multiplier, newScore, record, stars, wrongKey, type Judgment } from "./score";
 
 const play = (js: Judgment[], score = newScore()) => js.reduce(record, score);
 const many = (n: number, j: Judgment) => Array<Judgment>(n).fill(j);
@@ -27,6 +27,13 @@ describe("score", () => {
 
   it("matches the best possible score with all perfects", () => {
     expect(play(many(57, "perfect")).points).toBe(maxPoints(57));
+  });
+
+  it("adds a bonus for each hold, which the best possible score counts", () => {
+    const s = held(play(many(3, "perfect")));
+    expect(s.points).toBe(300 + HOLD_BONUS);
+    expect(s.combo).toBe(3);
+    expect(maxPoints(3, 1)).toBe(s.points);
   });
 
   it("gives five stars for a perfect song and fewer otherwise", () => {

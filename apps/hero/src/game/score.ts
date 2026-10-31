@@ -1,5 +1,6 @@
 // Scoring. Each note is judged by how close to its beat the right key was pressed: perfect,
-// good, or missed. Hits in a row raise the multiplier; a miss or a wrong key starts over.
+// good, or missed. Hits in a row raise the multiplier; a miss or a wrong key starts over. Holding a
+// half turn's key until its tail has gone by earns a bonus on top.
 
 export type Judgment = "perfect" | "good" | "miss";
 
@@ -47,9 +48,13 @@ export function record(score: Score, j: Judgment): Score {
 /** A wrong key breaks the streak (the note can still be played). */
 export const wrongKey = (score: Score): Score => ({ ...score, combo: 0 });
 
-/** The best possible score for a number of notes: all perfect, in one streak. */
-export function maxPoints(notes: number): number {
-  let points = 0;
+/** Points for holding a half turn's key to the end of its tail. Letting go early only loses them. */
+export const HOLD_BONUS = 50;
+export const held = (score: Score): Score => ({ ...score, points: score.points + HOLD_BONUS });
+
+/** The best possible score: every note perfect, in one streak, and every hold held. */
+export function maxPoints(notes: number, holds = 0): number {
+  let points = holds * HOLD_BONUS;
   for (let combo = 0; combo < notes; combo++) points += POINTS.perfect * multiplier(combo);
   return points;
 }

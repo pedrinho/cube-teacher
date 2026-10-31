@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SOLVED, applyAlg, invertAlg, parseAlg } from "cube-kit/cube/model";
-import { buildChart } from "./chart";
-import { Judge } from "./judge";
+import { buildChart, holdEnd, isHold } from "./chart";
+import { HOLD_SLACK, Judge } from "./judge";
 import { DEFAULT_KEYS, rebind } from "./lanes";
 
 // 60 turns per minute: one beat is one second.
@@ -85,5 +85,55 @@ describe("judge", () => {
     const judge = new Judge(c.notes, DEFAULT_KEYS);
     expect(judge.press("KeyY", c.notes[0].beat, MS)[0].type).toBe("hit");
     expect(judge.press("KeyF", c.notes[1].beat, MS)[0].type).toBe("hit");
+  });
+});
+
+describe("holds", () => {
+  // Undoing "R2 U" is U' then R2: the half turn is held.
+  const chart = chartOf("R2 U");
+  const [quarter, half] = chart.notes;
+
+  /** A judge that has just hit both notes, right on the beat. */
+  function played() {
+    const judge = new Judge(chart.notes, DEFAULT_KEYS);
+    judge.press("KeyU", quarter.beat, MS);
+    judge.press("KeyR", half.beat, MS);
+    return judge;
+  }
+
+  it("only holds half turns of a layer", () => {
+    expect(chart.notes.map(isHold)).toEqual([false, true]);
+    expect(chartOf("y2").notes.map(isHold)).toEqual([false]);
+  });
+
+  it("holds a half turn's key until its tail has gone by", () => {
+    const judge = played();
+    expect(judge.holds).toEqual([undefined, "holding"]);
+    expect(judge.update(holdEnd(half) - 0.1, MS)).toEqual([]);
+    expect(judge.update(holdEnd(half), MS)).toEqual([{ type: "held", note: 1 }]);
+    expect(judge.holds[1]).toBe("held");
+    // Letting go afterwards changes nothing.
+    expect(judge.release("KeyR", holdEnd(half) + 0.5)).toEqual([]);
+  });
+
+  it("drops a hold let go early, but the hit still counts", () => {
+    const judge = played();
+    expect(judge.release("KeyU", half.beat + 0.5)).toEqual([]);
+    expect(judge.release("KeyR", half.beat + 0.5)).toEqual([{ type: "dropped", note: 1 }]);
+    expect(judge.results).toEqual(["perfect", "perfect"]);
+    expect(judge.update(holdEnd(half) + 1, MS)).toEqual([]);
+  });
+
+  it("counts letting go just before the tail ends as held, to reach the next key", () => {
+    const judge = played();
+    expect(judge.release("KeyR", holdEnd(half) - HOLD_SLACK)).toEqual([{ type: "held", note: 1 }]);
+  });
+
+  it("ends the holds as held on a pause, and forgets them on a restart", () => {
+    const judge = played();
+    expect(judge.settle()).toEqual([{ type: "held", note: 1 }]);
+    expect(judge.settle()).toEqual([]);
+    judge.reset();
+    expect(judge.holds).toEqual([]);
   });
 });
