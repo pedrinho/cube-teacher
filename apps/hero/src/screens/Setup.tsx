@@ -103,17 +103,21 @@ const KEY_GROUPS: KeyGroup[] = [
 ];
 
 /**
- * The pyraminx's letters are the cube's U L R B, so changing them changes both. They are listed
- * in the order of its lanes.
+ * The pyraminx's letters, in the order of its lanes. They are the cube's U L R B, but the pyraminx
+ * has keys of its own, so changing them here leaves the cube's alone.
  */
 const PYRAMINX_KEY_GROUPS: KeyGroup[] = [{ title: "keys.corners", letters: [...PYRAMINX_LANES] }];
 
-/** Change a letter's key: click it, then press the new key. Esc cancels. */
+/**
+ * Change a letter's key: click it, then press the new key. Esc cancels. Only the letters shown
+ * count: on the pyraminx, a key taken from a cube-only letter (M) quietly gives it the old one.
+ */
 function KeyEditor({ keys, groups, onChange }: { keys: KeyMap; groups: KeyGroup[]; onChange: (keys: KeyMap) => void }) {
   const { t } = useI18n();
   const [waiting, setWaiting] = useState<Letter | null>(null);
   const [status, setStatus] = useState("");
-  const standard = LETTERS.every((l) => keys[l] === DEFAULT_KEYS[l]);
+  const shown = (l: Letter) => groups.some((g) => g.letters.includes(l));
+  const standard = LETTERS.every((l) => !shown(l) || keys[l] === DEFAULT_KEYS[l]);
 
   useEffect(() => {
     if (!waiting) return;
@@ -132,7 +136,7 @@ function KeyEditor({ keys, groups, onChange }: { keys: KeyMap; groups: KeyGroup[
       const move = moveOfLetter(waiting);
       const key = keyLabel(code);
       setStatus(
-        other && other !== waiting
+        other && other !== waiting && groups.some((g) => g.letters.includes(other))
           ? t("keys.swapped", { move, key, other: moveOfLetter(other), otherKey: keyLabel(keys[waiting]) })
           : t("keys.done", { move, key }),
       );
@@ -141,7 +145,7 @@ function KeyEditor({ keys, groups, onChange }: { keys: KeyMap; groups: KeyGroup[
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [waiting, keys, onChange, t]);
+  }, [waiting, keys, groups, onChange, t]);
 
   const pick = (letter: Letter) => {
     setWaiting(waiting === letter ? null : letter);
@@ -264,7 +268,13 @@ export function Setup({ setup, keys, onChange, onKeysChange, onPlay }: Props) {
           <li>{t(pyraminx ? "setup.pyHow3" : "setup.how3", keyNames)}</li>
           <li>{t("setup.how4")}</li>
         </ul>
-        <KeyEditor keys={keys} groups={pyraminx ? PYRAMINX_KEY_GROUPS : KEY_GROUPS} onChange={onKeysChange} />
+        {/* A new editor for each puzzle, so a letter picked on one isn't still waiting on the other. */}
+        <KeyEditor
+          key={puzzleOf(setup.method).id}
+          keys={keys}
+          groups={pyraminx ? PYRAMINX_KEY_GROUPS : KEY_GROUPS}
+          onChange={onKeysChange}
+        />
       </aside>
     </div>
   );

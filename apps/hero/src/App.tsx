@@ -8,9 +8,10 @@ import { PYRA_SOLVED, applyPyraAlg, randomPyraScramble } from "cube-kit/pyraminx
 import { solvePyraminx } from "cube-kit/pyraminx/solver";
 import { useI18n, type Lang } from "./i18n";
 import { Sound } from "./game/audio";
-import { buildChart, type Chart } from "./game/chart";
+import { buildChart, puzzleOf, type Chart } from "./game/chart";
 import { maxPoints, type Score } from "./game/score";
 import type { KeyMap } from "./game/lanes";
+import type { Puzzle } from "./game/puzzles";
 import {
   BPM,
   SPEEDS,
@@ -50,7 +51,11 @@ function songFor(setup: SetupChoice, start: CubeState): Chart {
 export function App() {
   const { t, lang, setLang } = useI18n();
   const [setup, setSetupState] = useState(loadSetup);
-  const [keys, setKeysState] = useState(loadKeys);
+  // The cube and the pyraminx each have their own keys: both cube songs share the cube's.
+  const [keys, setKeysState] = useState<Record<Puzzle["id"], KeyMap>>(() => ({
+    cube: loadKeys("cube"),
+    pyraminx: loadKeys("pyraminx"),
+  }));
   const [screen, setScreen] = useState<Screen>({ kind: "setup" });
   const [muted, setMutedState] = useState(loadMuted);
   const sound = useRef<Sound | null>(null);
@@ -68,9 +73,9 @@ export function App() {
     saveSetup(next);
   };
 
-  const changeKeys = (next: KeyMap) => {
-    setKeysState(next);
-    saveKeys(next);
+  const changeKeys = (puzzle: Puzzle["id"], next: KeyMap) => {
+    setKeysState({ ...keys, [puzzle]: next });
+    saveKeys(puzzle, next);
   };
 
   const toggleMuted = () => {
@@ -141,7 +146,13 @@ export function App() {
       </header>
       <main className="page" data-screen={screen.kind}>
         {screen.kind === "setup" && (
-          <Setup setup={setup} keys={keys} onChange={changeSetup} onKeysChange={changeKeys} onPlay={(watch) => begin(watch)} />
+          <Setup
+            setup={setup}
+            keys={keys[puzzleOf(setup.method).id]}
+            onChange={changeSetup}
+            onKeysChange={(next) => changeKeys(puzzleOf(setup.method).id, next)}
+            onPlay={(watch) => begin(watch)}
+          />
         )}
         {screen.kind === "paint" && (
           <Paint onDone={(state) => ready(state, screen.watch)} onBack={() => setScreen({ kind: "setup" })} />
@@ -151,7 +162,7 @@ export function App() {
             chart={screen.chart}
             scramble={screen.scramble}
             speed={setup.speed}
-            keys={keys}
+            keys={keys[screen.chart.puzzle.id]}
             watch={screen.watch}
             best={loadBest(setup.method, setup.speed)}
             onStart={() => play(screen.chart, screen.watch)}
@@ -164,7 +175,7 @@ export function App() {
             key={screen.run}
             chart={screen.chart}
             bpm={BPM[setup.speed]}
-            keys={keys}
+            keys={keys[screen.chart.puzzle.id]}
             auto={screen.watch}
             sound={sound.current!}
             onDone={(score) => finish(screen.chart, screen.watch, score)}

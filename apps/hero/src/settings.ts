@@ -1,7 +1,8 @@
-// Choices that stick between visits (per browser): song, speed, cube, keys, sound and best scores.
-// Storage can be blocked (private windows), so every read and write falls back quietly.
+// Choices that stick between visits (per browser): song, speed, cube, each puzzle's keys, sound and
+// best scores. Storage can be blocked (private windows), so every read and write falls back quietly.
 import type { Method } from "./game/chart";
 import { DEFAULT_KEYS, isKeyMap, type KeyMap } from "./game/lanes";
+import type { Puzzle } from "./game/puzzles";
 
 export type Speed = "easy" | "medium" | "hard" | "expert";
 export const SPEEDS: Speed[] = ["easy", "medium", "hard", "expert"];
@@ -17,7 +18,8 @@ export interface Setup {
 }
 
 const SETUP_KEY = "cube-hero.setup";
-const KEYS_KEY = "cube-hero.keys";
+/** The cube's keys keep the name they had before the pyraminx got keys of its own. */
+const KEYS_KEY: Record<Puzzle["id"], string> = { cube: "cube-hero.keys", pyraminx: "cube-hero.keys.pyraminx" };
 const MUTED_KEY = "cube-hero.muted";
 const BESTS_KEY = "cube-hero.bests";
 export const PAINT_KEY = "cube-hero.paint";
@@ -57,8 +59,8 @@ const isSetup = (v: unknown): v is Setup => {
 export const loadSetup = (): Setup => read(SETUP_KEY, { method: "layers", speed: "easy", cube: "random" }, isSetup);
 export const saveSetup = (setup: Setup) => write(SETUP_KEY, setup);
 
-export const loadKeys = (): KeyMap => read(KEYS_KEY, DEFAULT_KEYS, isKeyMap);
-export const saveKeys = (keys: KeyMap) => write(KEYS_KEY, keys);
+export const loadKeys = (puzzle: Puzzle["id"]): KeyMap => read(KEYS_KEY[puzzle], DEFAULT_KEYS, isKeyMap);
+export const saveKeys = (puzzle: Puzzle["id"], keys: KeyMap) => write(KEYS_KEY[puzzle], keys);
 
 export const loadMuted = () => read(MUTED_KEY, false, (v): v is boolean => typeof v === "boolean");
 export const saveMuted = (muted: boolean) => write(MUTED_KEY, muted);
