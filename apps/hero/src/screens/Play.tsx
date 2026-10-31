@@ -4,11 +4,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Cube3D, type Cube3DHandle } from "cube-kit/react/Cube3D";
 import { explainText, useI18n } from "../i18n";
-import { sectionAt, type Chart } from "../game/chart";
+import { sectionAt, type Chart, type Part } from "../game/chart";
 import { BeatClock } from "../game/clock";
 import { Highway, type Palette, type Pop } from "../game/highway";
 import { Judge, type PlayEvent } from "../game/judge";
-import { gameKey, keyFor, laneOfKey, type KeyMap } from "../game/lanes";
+import { LETTERS, gameKey, keyFor, keyLabel, laneOfKey, type KeyMap } from "../game/lanes";
 import { multiplier, newScore, record, wrongKey, type Score } from "../game/score";
 import type { Sound } from "../game/audio";
 
@@ -76,8 +76,11 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
   const msPerBeat = 60000 / bpm;
   const sectionNames = chart.sections.map((s) => t(s.title));
   const words = { perfect: t("judge.perfect"), good: t("judge.good"), miss: t("judge.miss"), wrong: t("judge.wrong") };
-  const labels = useRef({ sectionNames, words });
-  labels.current = { sectionNames, words };
+  const space = t("key.space");
+  const labels = useRef({ sectionNames, words, space });
+  labels.current = { sectionNames, words, space };
+  // A level's tips name the player's keys: "press {U}".
+  const keyNames = Object.fromEntries(LETTERS.map((l) => [l, keyLabel(keys[l])]));
 
   const setPhase = (p: Phase) => {
     game.current.phase = p;
@@ -208,12 +211,14 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
         now,
         sectionNames: labels.current.sectionNames,
         words: labels.current.words,
+        space: labels.current.space,
       });
     };
     frame = requestAnimationFrame(loop);
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.code === "Escape" || e.code === "Space") {
+      // The space bar pauses too, unless the song is played on it (the 1x1x1).
+      if (e.code === "Escape" || (e.code === "Space" && !gameKeys.has("Space"))) {
         e.preventDefault();
         if (e.repeat) return;
         if (g.phase === "playing") pause();
@@ -255,6 +260,10 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
   const part = chart.parts[partIndex];
   const after = chart.parts[partIndex + 1];
   const current = chart.sections[section];
+  /** What a part says: the solver's explanation, or a level's tip. */
+  const lyric = (p?: Part) => (p?.explain ? explainText(t, p.explain) : p?.tip && t(p.tip, keyNames));
+  const now = lyric(part);
+  const then = after && after.section === part?.section ? lyric(after) : undefined;
 
   return (
     <div className="play">
@@ -333,16 +342,16 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
             label={t("app.name")}
             timing={{ turnMs: Math.min(200, msPerBeat * 0.45), pauseMs: 0 }}
           />
-          {part?.explain && (
+          {now && (
             <div className="lyrics">
               <p className="lyric-now">
                 <span className="lyric-label">{t("play.now")}</span>
-                {explainText(t, part.explain)}
+                {now}
               </p>
-              {after?.explain && after.section === part.section && (
+              {then && (
                 <p className="lyric-next">
                   <span className="lyric-label">{t("play.next")}</span>
-                  {explainText(t, after.explain)}
+                  {then}
                 </p>
               )}
             </div>

@@ -1,7 +1,8 @@
 // Draws the highway on a canvas: a strip of black cube plastic in perspective, with sticker gems
 // sliding down to a row of receptors. A gem shows its move; when the player has moved that letter
 // to another key, a small keycap on the gem shows the key. Receptors show their lane's key. On the
-// pyraminx, gems and receptors are triangles, and a tip's gem is a small one.
+// pyraminx, gems and receptors are triangles, and a tip's gem is a small one. The 1x1x1's one lane
+// is a space bar: a wide road, with bars for notes and a bar for its receptor.
 import { moveToString, type Color } from "cube-kit/cube/model";
 import { LEAD_IN, type Chart, type Note } from "./chart";
 import { keyFor, keyLabel, laneOfKey, letterOf, type KeyMap, type Lane } from "./lanes";
@@ -40,6 +41,8 @@ export interface HighwayFrame {
   sectionNames: readonly string[];
   /** Words for the judgments, translated. */
   words: Record<Pop["judgment"], string>;
+  /** What the space bar is called, translated. */
+  space: string;
 }
 
 const DARK_TEXT = new Set<string>(["W", "Y", "O"]);
@@ -50,6 +53,7 @@ export class Highway {
   private h = 0;
 
   private lanes: readonly Lane[];
+  private space = "";
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -80,9 +84,14 @@ export class Highway {
   private get strikeY() {
     return this.h - Math.min(70, this.h * 0.13);
   }
+  /** How many lanes wide the road is: a space bar is as wide as three. */
+  private get columns() {
+    return this.puzzle.bar ? 3 : this.lanes.length;
+  }
+
   private get halfWidth() {
     // Lanes keep their width: fewer lanes make a narrower road.
-    return Math.min(this.w * 0.48, 55 * this.lanes.length);
+    return Math.min(this.w * 0.48, 55 * this.columns);
   }
 
   private scale(z: number) {
@@ -110,6 +119,7 @@ export class Highway {
   draw(f: HighwayFrame) {
     const { ctx } = this;
     ctx.clearRect(0, 0, this.w, this.h);
+    this.space = f.space;
     const shown = f.next > 0 ? f.chart.notes[f.next - 1].after : f.chart.start;
     const faceColor = (lane: Lane) => this.puzzle.laneColor(shown, lane);
 
@@ -234,7 +244,7 @@ export class Highway {
     const { ctx } = this;
     const z = this.depth(note.beat - beat);
     const { y, half, s } = this.at(z);
-    const laneW = (2 * half) / this.lanes.length;
+    const laneW = (2 * half) / this.columns;
     ctx.globalAlpha = z < 0 ? Math.max(0, 1 + z / 0.25) : 1;
     const fill = this.noteColor(note, result);
 
@@ -246,7 +256,8 @@ export class Highway {
       ctx.lineWidth = Math.max(1, 3 * s);
       ctx.strokeStyle = this.colors.body;
       ctx.stroke();
-      if (laneW > 26) {
+      if (this.puzzle.bar) this.label(this.space, this.w / 2, y, h * 0.55, "#ffffff");
+      else if (laneW > 26) {
         const text = moveToString(note.move);
         this.label(text, this.w / 2, y, h * 0.7, "#ffffff");
         const key = this.movedKey(note);
@@ -357,6 +368,20 @@ export class Highway {
 
     const flashing = (lane: Lane | "all") =>
       f.pops.some((p) => (p.lane === lane || p.lane === "all") && p.judgment !== "miss" && p.judgment !== "wrong" && f.now - p.at < FLASH_MS);
+
+    if (this.puzzle.bar) {
+      // One bar the shape of the notes, lit while the space bar is down.
+      const barH = ((2 * half) / this.columns) * 0.5;
+      const lit = heldLanes.has("all") || flashing("all");
+      roundRect(ctx, this.w / 2 - half * 0.97, y - barH / 2, half * 1.94, barH, barH * 0.3);
+      ctx.fillStyle = lit ? this.colors.accent : "rgba(255, 255, 255, 0.04)";
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = this.colors.accent;
+      ctx.stroke();
+      this.label(this.space, this.w / 2, y, barH * 0.42, lit ? "#ffffff" : this.colors.accent);
+      return;
+    }
 
     this.lanes.forEach((lane, i) => {
       const x = this.laneX(i, half);

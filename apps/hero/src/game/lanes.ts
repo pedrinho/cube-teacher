@@ -1,7 +1,8 @@
 // The highway's lanes. On the cube there is one per face, and every move goes in the lane of the
 // face it turns. Slices go with the face they follow (M with L, E with D, S with F), wide moves
 // with their face, and whole-cube turns take every lane. On the pyraminx there is one per corner,
-// for its turns and its tip's.
+// for its turns and its tip's. The 1x1x2 has a lane for its top and one for its bottom, and the
+// 1x1x1 a single wide one, played with the space bar.
 import type { BaseMove, Face, Move } from "cube-kit/cube/model";
 
 /** Lanes from left to right: L and R on their own sides, the other faces in between. */
@@ -74,9 +75,17 @@ export interface Track {
   letters: readonly Letter[];
   laneOf: (move: Move) => Lane | "all";
   shapeOf: (move: Move) => NoteShape;
+  /** One wide lane, like the space bar: its notes and its receptor go across the whole road. */
+  bar?: boolean;
 }
 
 export const CUBE_TRACK: Track = { lanes: LANES, letters: LETTERS, laneOf, shapeOf };
+
+/** Every 1x1x1 note spins the whole cube (y), on the one lane. */
+export const CUBE_1_TRACK: Track = { lanes: ["U"], letters: ["Y"], laneOf: () => "all", shapeOf: () => "rotation", bar: true };
+
+/** The 1x1x2's top turns with U and its bottom with D, each in its lane. */
+export const CUBE_1x2_TRACK: Track = { lanes: ["U", "D"], letters: ["U", "D"], laneOf, shapeOf };
 
 /** Pyraminx moves are U L R B; the tips (u l r b) use their corner's lane and letter. */
 export const PYRAMINX_TRACK: Track = {

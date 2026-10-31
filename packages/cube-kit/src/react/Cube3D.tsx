@@ -1,6 +1,8 @@
-// React wrapper for our three.js cube, or pyraminx. three.js loads only when one is on screen.
+// React wrapper for our three.js cube, pyraminx, or small cuboid (1x1x1, 1x1x2). three.js loads only
+// when one is on screen.
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { parseAlg, type CubeState, type Move } from "../cube/model";
+import { CUBOIDS, type CuboidId } from "../cuboid/model";
 import type { StickerColors, Visible } from "../three/cubeScene";
 
 /** What both 3D puzzles can do. A state is the puzzle's sticker string. */
@@ -15,8 +17,10 @@ interface PuzzleScene {
 
 type SceneOptions = { fromBelow?: boolean; stickerless?: boolean };
 
-/** Loads the puzzle's scene code, then makes one. */
-const loadScene = (puzzle: "cube" | "pyraminx") =>
+export type PuzzleKind = "cube" | "pyraminx" | CuboidId;
+
+/** Loads the puzzle's scene code, then makes one. A cuboid is drawn by the cube's scene. */
+const loadScene = (puzzle: PuzzleKind) =>
   puzzle === "pyraminx"
     ? import("../three/pyraminxScene").then(
         ({ PyraminxScene }) =>
@@ -26,7 +30,7 @@ const loadScene = (puzzle: "cube" | "pyraminx") =>
     : import("../three/cubeScene").then(
         ({ CubeScene }) =>
           (el: HTMLElement, colors: StickerColors, state: string, options: SceneOptions): PuzzleScene =>
-            new CubeScene(el, colors, state, options),
+            new CubeScene(el, colors, state, { ...options, shape: puzzle === "cube" ? undefined : CUBOIDS[puzzle] }),
       );
 
 /** How long one quarter turn takes, and the pause between moves played together. */
@@ -62,8 +66,8 @@ export interface Cube3DProps {
   fromBelow?: boolean;
   /** Colored plastic pieces with no black body, like a stickerless speed cube. */
   stickerless?: boolean;
-  /** A pyraminx instead of a cube; its state is a pyraminx state, its moves pyraminx moves. */
-  puzzle?: "cube" | "pyraminx";
+  /** A pyraminx or a small cuboid instead of a cube; the state and moves are that puzzle's. */
+  puzzle?: PuzzleKind;
   label: string;
   timing?: Timing;
   ref?: Ref<Cube3DHandle>;

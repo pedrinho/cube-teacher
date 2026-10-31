@@ -23,9 +23,27 @@ import {
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
-import { STICKERS, applyMove, moveLayer, type CubeState, type Move, type Vec } from "../cube/model";
+import { STICKERS, applyMove, moveLayer, type BaseMove, type CubeState, type Move, type Vec } from "../cube/model";
 
 export type Visible = (stickerIndex: number, state: CubeState) => boolean;
+
+/** What the scene draws: where the cubies and stickers are, and how moves change the state. */
+export interface CubeShape {
+  cubies: Vec[];
+  stickers: { pos: Vec; normal: Vec }[];
+  apply: (state: CubeState, move: Move) => CubeState;
+  moveLayer: (base: BaseMove) => { axis: Vec; inLayer: (pos: Vec) => boolean };
+}
+
+/** The 3x3: every cubie but the hidden one in the middle. */
+const CUBE_3: CubeShape = {
+  cubies: [-1, 0, 1].flatMap((x) =>
+    [-1, 0, 1].flatMap((y) => [-1, 0, 1].flatMap((z): Vec[] => (x || y || z ? [[x, y, z]] : []))),
+  ),
+  stickers: STICKERS,
+  apply: applyMove,
+  moveLayer,
+};
 
 export type StickerColors = Record<"W" | "Y" | "G" | "B" | "R" | "O" | "gray" | "empty" | "body", string>;
 
@@ -146,13 +164,15 @@ export class CubeScene {
   private turnMs = 450;
   private pauseMs = 250;
   private reducedMotion: boolean;
+  private shape: CubeShape;
 
   constructor(
     private container: HTMLElement,
     colors: StickerColors,
     initial: CubeState,
-    options: { fromBelow?: boolean; stickerless?: boolean } = {},
+    options: { fromBelow?: boolean; stickerless?: boolean; shape?: CubeShape } = {},
   ) {
+    this.shape = options.shape ?? CUBE_3;
     this.shown = initial;
     this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -177,10 +197,12 @@ export class CubeScene {
     this.buildCubies(stickerless);
     this.paint();
 
-    // Front-right-top view: F on the left, R on the right, like the pictures.
+    // Front-right-top view: F on the left, R on the right, like the pictures. Smaller puzzles are
+    // seen from closer, but not so close that a 1x1x1 looks as big as a 3x3.
     const lat = ((options.fromBelow ? -28 : 28) * Math.PI) / 180;
     const lon = (32 * Math.PI) / 180;
-    const d = 11;
+    const size = 1 + 2 * Math.max(...this.shape.cubies.flat().map(Math.abs));
+    const d = (11 * (size + 1)) / 4;
     this.camera.position.set(Math.sin(lon) * Math.cos(lat) * d, Math.sin(lat) * d, Math.cos(lon) * Math.cos(lat) * d);
     this.camera.lookAt(0, 0, 0);
 
@@ -204,25 +226,26 @@ export class CubeScene {
     const square = new BoxGeometry(CUBIE, CUBIE, CUBIE, 8, 8, 8).toNonIndexed();
     const sticker = roundedSquare(STICKER, STICKER_RADIUS);
     const front = new Vector3(0, 0, 1);
-    for (const x of [-1, 0, 1])
-      for (const y of [-1, 0, 1])
-        for (const z of [-1, 0, 1]) {
-          if (x === 0 && y === 0 && z === 0) continue;
-          const cubie = new Group();
-          cubie.position.set(x, y, z);
-          cubie.userData.home = [x, y, z] satisfies Vec;
-          // Stickerless: one material per side, so the outer sides can take the sticker colors.
-          // The whole cubie is drawn in its outer sides' colors, seams and inner walls too.
-          const outer = ([[x, 0, 0], [0, y, 0], [0, 0, z]] as Vec[]).filter((n) => n.some((c) => c !== 0));
-          cubie.add(
-            stickerless
-              ? new Mesh(stickerlessBody(square, outer), Array(6).fill(this.materials.body))
-              : new Mesh(body, this.materials.body),
-          );
-          this.cubies.set(posKey([x, y, z]), cubie);
-          this.root.add(cubie);
-        }
-    STICKERS.forEach((s, i) => {
+    const { cubies, stickers } = this.shape;
+    for (const pos of cubies) {
+      const cubie = new Group();
+      cubie.position.set(...pos);
+      cubie.userData.home = pos;
+      // Stickerless: one material per side, so the outer sides can take the sticker colors.
+      // The whole cubie is drawn in its outer sides' colors, seams and inner walls too.
+      const outer = stickers
+        .filter((s) => posKey(s.pos) === posKey(pos))
+        .map((s) => s.normal)
+        .sort((a, b) => boxSide(a) - boxSide(b));
+      cubie.add(
+        stickerless
+          ? new Mesh(stickerlessBody(square, outer), Array(6).fill(this.materials.body))
+          : new Mesh(body, this.materials.body),
+      );
+      this.cubies.set(posKey(pos), cubie);
+      this.root.add(cubie);
+    }
+    stickers.forEach((s, i) => {
       const cubie = this.cubies.get(posKey(s.pos))!;
       if (stickerless) {
         this.stickers[i] = { mesh: cubie.children[0] as Mesh, side: boxSide(s.normal) };
@@ -314,7 +337,7 @@ export class CubeScene {
     // Far behind (many quick taps): jump over the older moves without animating them.
     while (this.groupsWaiting() > MAX_BEHIND + 1) {
       const skipped = this.queue.shift()!;
-      this.shown = applyMove(this.shown, skipped.move);
+      this.shown = this.shape.apply(this.shown, skipped.move);
       skipped.onStep?.(skipped.index);
       skipped.done?.();
     }
@@ -325,7 +348,7 @@ export class CubeScene {
       return;
     }
     item.onStep?.(item.index);
-    const { axis, inLayer } = moveLayer(item.move.base);
+    const { axis, inLayer } = this.shape.moveLayer(item.move.base);
     const cubies = [...this.cubies.values()].filter((c) => inLayer(c.userData.home as Vec));
     this.paint();
     const pivot = new Group();
@@ -383,15 +406,15 @@ export class CubeScene {
     }
     this.root.remove(turn.pivot);
     this.turn = null;
-    if (completed) this.shown = applyMove(this.shown, turn.move);
+    if (completed) this.shown = this.shape.apply(this.shown, turn.move);
     this.paint();
   }
 
   /** The state shown once all queued moves have played. */
   get finalState(): CubeState {
     let s = this.shown;
-    if (this.turn) s = applyMove(s, this.turn.move);
-    for (const q of this.queue) s = applyMove(s, q.move);
+    if (this.turn) s = this.shape.apply(s, this.turn.move);
+    for (const q of this.queue) s = this.shape.apply(s, q.move);
     return s;
   }
 

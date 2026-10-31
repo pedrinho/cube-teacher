@@ -1,6 +1,9 @@
-// The end of the song: the solved cube, stars, score and how the notes went. Stickers rain once.
+// The end of the song: stars, score and how the notes went. Stickers rain once, unless a level's
+// song needed more stars. A level's song says whether it passed and opens the next one; the full
+// songs can be played faster or changed.
 import { useMemo } from "react";
 import { useI18n } from "../i18n";
+import { PASS_STARS } from "../game/levels";
 import { accuracy, stars as starsFor, type Score } from "../game/score";
 
 interface Props {
@@ -8,10 +11,15 @@ interface Props {
   maxPoints: number;
   watched: boolean;
   newBest: boolean;
-  canGoFaster: boolean;
+  /** A level's own song: the next level, when this play opened it (or it was open already). */
+  level?: { onNext?: () => void };
+  /** The full songs passed their level for the first time. */
+  firstPass?: boolean;
+  canGoFaster?: boolean;
   onAgain: () => void;
-  onFaster: () => void;
-  onChange: () => void;
+  onFaster?: () => void;
+  onChange?: () => void;
+  onLevels: () => void;
 }
 
 const STICKERS = ["W", "Y", "G", "B", "R", "O"];
@@ -47,14 +55,30 @@ function Confetti() {
   );
 }
 
-export function Results({ score, maxPoints, watched, newBest, canGoFaster, onAgain, onFaster, onChange }: Props) {
+export function Results({
+  score,
+  maxPoints,
+  watched,
+  newBest,
+  level,
+  firstPass,
+  canGoFaster,
+  onAgain,
+  onFaster,
+  onChange,
+  onLevels,
+}: Props) {
   const { t } = useI18n();
   const stars = starsFor(score.points, maxPoints);
+  const passed = stars >= PASS_STARS;
+  const next = level && passed ? level.onNext : undefined;
 
   return (
     <div className="screen results">
-      <Confetti />
-      <h1>{t("results.title")}</h1>
+      {(!level || passed) && <Confetti />}
+      <h1>{t(!level ? "results.title" : passed ? "results.passed" : "results.almost")}</h1>
+      {level && <p className="lead">{t(!passed ? "results.needStars" : next ? "results.nextOpen" : "results.allDone")}</p>}
+      {firstPass && !watched && <p className="level-passed">{t("results.passed")}</p>}
       {watched ? (
         <p className="lead">{t("results.watched")}</p>
       ) : (
@@ -94,16 +118,26 @@ export function Results({ score, maxPoints, watched, newBest, canGoFaster, onAga
         </div>
       </dl>
       <div className="btn-row results-actions">
-        <button type="button" className="btn btn-primary btn-big" onClick={onAgain} autoFocus>
-          {t("results.again")}
+        {next && (
+          <button type="button" className="btn btn-primary btn-big" onClick={next} autoFocus>
+            {t("results.next")}
+          </button>
+        )}
+        <button type="button" className={next ? "btn" : "btn btn-primary btn-big"} onClick={onAgain} autoFocus={!next}>
+          {t(level && !passed ? "results.retry" : "results.again")}
         </button>
-        {canGoFaster && !watched && (
+        {canGoFaster && onFaster && !watched && (
           <button type="button" className="btn" onClick={onFaster}>
             {t("results.faster")}
           </button>
         )}
-        <button type="button" className="btn" onClick={onChange}>
-          {t("results.change")}
+        {onChange && (
+          <button type="button" className="btn" onClick={onChange}>
+            {t("results.change")}
+          </button>
+        )}
+        <button type="button" className="btn btn-quiet" onClick={onLevels}>
+          {t("results.levels")}
         </button>
       </div>
     </div>

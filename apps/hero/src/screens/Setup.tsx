@@ -1,5 +1,5 @@
-// Pick a song (the method, or the pyraminx), a speed and where the cube comes from, then play or
-// watch. The keys can be changed here too.
+// The "real cubes" level: pick a song (the method, or the pyraminx), a speed and where the cube
+// comes from, then play or watch. The keys can be changed here too.
 import { useEffect, useState } from "react";
 import { useI18n, type MessageKey } from "../i18n";
 import { BPM, SPEEDS, loadBest, type CubeSource, type Setup as SetupChoice } from "../settings";
@@ -25,18 +25,9 @@ interface Props {
   onChange: (setup: SetupChoice) => void;
   onKeysChange: (keys: KeyMap) => void;
   onPlay: (watch: boolean) => void;
+  /** Back to the levels. */
+  onBack: () => void;
 }
-
-const TITLE: { letter: string; color: string }[] = [
-  { letter: "C", color: "W" },
-  { letter: "U", color: "Y" },
-  { letter: "B", color: "G" },
-  { letter: "E", color: "B" },
-  { letter: "H", color: "R" },
-  { letter: "E", color: "O" },
-  { letter: "R", color: "G" },
-  { letter: "O", color: "Y" },
-];
 
 function Choice<T extends string>({
   label,
@@ -197,7 +188,7 @@ function KeyEditor({ keys, groups, onChange }: { keys: KeyMap; groups: KeyGroup[
   );
 }
 
-export function Setup({ setup, keys, onChange, onKeysChange, onPlay }: Props) {
+export function Setup({ setup, keys, onChange, onKeysChange, onPlay, onBack }: Props) {
   const { t } = useI18n();
   const best = loadBest(setup.method, setup.speed);
   const keyNames = Object.fromEntries(LETTERS.map((l) => [l, keyLabel(keys[l])]));
@@ -206,13 +197,10 @@ export function Setup({ setup, keys, onChange, onKeysChange, onPlay }: Props) {
   return (
     <div className="setup">
       <section className="setup-main">
-        <h1 className="title" aria-label={t("app.name")}>
-          {TITLE.map((c, i) => (
-            <span key={i} className="title-key" data-color={c.color} aria-hidden="true">
-              {c.letter}
-            </span>
-          ))}
-        </h1>
+        <button type="button" className="btn btn-quiet back" onClick={onBack}>
+          ← {t("levels.back")}
+        </button>
+        <h1>{t("level.real.title")}</h1>
         <p className="lead">{t("setup.lead")}</p>
 
         <Choice<Method>

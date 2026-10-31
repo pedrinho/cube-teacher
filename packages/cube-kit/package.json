@@ -6,6 +6,7 @@
   "description": "The cube model, validation, the layer and Fridrich solvers, a three.js cube and shared React pieces.",
   "exports": {
     "./cube/*": "./src/cube/*.ts",
+    "./cuboid/*": "./src/cuboid/*.ts",
     "./methods/layers": "./src/methods/layers/index.ts",
     "./methods/fridrich": "./src/methods/fridrich/index.ts",
     "./methods/*": "./src/methods/*.ts",

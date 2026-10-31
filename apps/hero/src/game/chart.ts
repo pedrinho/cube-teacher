@@ -1,9 +1,9 @@
-// A song chart: the solver's stages laid out on a beat timeline, one note per move.
-// Sections are the solver's steps, parts are its segments ("line up the edge", "R U R'"), and
-// notes reach the strike line at their beat.
+// A song chart: sections of moves laid out on a beat timeline, one note per move. A song's
+// sections are the solver's steps and its parts the solver's segments ("line up the edge",
+// "R U R'"); a level's are written out by hand, with tips. Notes reach the strike line at their beat.
 import { isRotation, type CubeState, type Move } from "cube-kit/cube/model";
-import type { KitMessageKey } from "cube-kit/i18n/en";
 import type { Explain, SegmentKind, Stage } from "cube-kit/methods/types";
+import type { MessageKey } from "../i18n/en";
 import type { Lane, NoteShape } from "./lanes";
 import { CUBE, PYRAMINX, type Puzzle } from "./puzzles";
 
@@ -42,6 +42,8 @@ export interface Note {
 export interface Part {
   kind: SegmentKind;
   explain?: Explain;
+  /** What a level says to do here, when it isn't a solver's explanation. */
+  tip?: MessageKey;
   caseId?: string;
   section: number;
   startBeat: number;
@@ -53,7 +55,7 @@ export interface Part {
 
 export interface Section {
   /** The step's name. */
-  title: KitMessageKey;
+  title: MessageKey;
   startBeat: number;
   endBeat: number;
   before: CubeState;
@@ -63,7 +65,6 @@ export interface Section {
 }
 
 export interface Chart {
-  method: Method;
   puzzle: Puzzle;
   start: CubeState;
   end: CubeState;
@@ -76,19 +77,41 @@ export interface Chart {
 
 export const noteLength = (m: Move) => (isRotation(m) ? ROTATION : m.amount === 2 ? HALF : QUARTER);
 
+/** A section to lay out: its name and its parts, each a run of moves with what it says. */
+export interface SectionPlan {
+  title: MessageKey;
+  parts: PartPlan[];
+}
+
+export interface PartPlan {
+  kind: SegmentKind;
+  moves: Move[];
+  explain?: Explain;
+  tip?: MessageKey;
+  caseId?: string;
+  /** Where the part starts, when the solver says so; otherwise where the one before ended. */
+  before?: CubeState;
+}
+
 const stageTitle = (method: Method, step: number) =>
-  (method === "layers" ? `step.${step}.name` : method === "fridrich" ? `fr.stage.${step}` : `py.stage.${step}`) as KitMessageKey;
+  (method === "layers" ? `step.${step}.name` : method === "fridrich" ? `fr.stage.${step}` : `py.stage.${step}`) as MessageKey;
 
 /** Lays out the stages of a solve, starting from `start`. */
-export function buildChart(method: Method, start: CubeState, stages: Stage[]): Chart {
-  const puzzle = puzzleOf(method);
+export const buildChart = (method: Method, start: CubeState, stages: Stage[]): Chart =>
+  layOut(
+    puzzleOf(method),
+    start,
+    stages.map((stage) => ({ title: stageTitle(method, stage.step), parts: stage.segments })),
+  );
+
+/** Lays out sections of moves on the beat, starting from `start`. */
+export function layOut(puzzle: Puzzle, start: CubeState, plan: SectionPlan[]): Chart {
   const notes: Note[] = [];
   const parts: Part[] = [];
   const sections: Section[] = [];
   let beat = 0;
 
-  for (const stage of stages) {
-    const { segments } = stage;
+  for (const { title, parts: segments } of plan) {
     const section = sections.length;
     const before = segments[0]?.before ?? (sections.length ? sections[sections.length - 1].after : start);
     const startBeat = beat;
@@ -111,6 +134,7 @@ export function buildChart(method: Method, start: CubeState, stages: Stage[]): C
       parts.push({
         kind: seg.kind,
         explain: seg.explain,
+        tip: seg.tip,
         caseId: seg.caseId,
         section,
         startBeat: partStart,
@@ -120,7 +144,7 @@ export function buildChart(method: Method, start: CubeState, stages: Stage[]): C
       });
     });
     sections.push({
-      title: stageTitle(method, stage.step),
+      title,
       startBeat,
       endBeat: beat,
       before,
@@ -131,7 +155,7 @@ export function buildChart(method: Method, start: CubeState, stages: Stage[]): C
   }
 
   const end = sections.length ? sections[sections.length - 1].after : start;
-  return { method, puzzle, start, end, notes, parts, sections, length: beat + TAIL };
+  return { puzzle, start, end, notes, parts, sections, length: beat + TAIL };
 }
 
 /** Index of the last note that has reached the strike line by `beat` (-1 before the first). */
