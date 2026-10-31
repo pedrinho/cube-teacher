@@ -1,9 +1,18 @@
 // The puzzles a song can be played on: how a move changes the state, how moves come down the
 // highway, the color of each lane, and which keys play it.
 import { SOLVED, applyMove, centers, isSolved as isCubeSolved, type Color, type Move } from "cube-kit/cube/model";
-import { CUBE_1, CUBE_1x2, type CuboidId } from "cube-kit/cuboid/model";
+import { CUBE_1, CUBE_1x2, CUBE_1x3, type CuboidId } from "cube-kit/cuboid/model";
 import { PYRA_SOLVED, applyPyraMove, isPyraSolved, type PyraMove } from "cube-kit/pyraminx/model";
-import { CUBE_1_TRACK, CUBE_1x2_TRACK, CUBE_TRACK, PYRAMINX_TRACK, type KeyMap, type Lane, type Track } from "./lanes";
+import {
+  CUBE_1_TRACK,
+  CUBE_1x2_TRACK,
+  CUBE_1x3_TRACK,
+  CUBE_TRACK,
+  PYRAMINX_TRACK,
+  type KeyMap,
+  type Lane,
+  type Track,
+} from "./lanes";
 
 /** The cube and the pyraminx each have keys of their own; the small cuboids use the cube's. */
 export type KeySet = "cube" | "pyraminx";
@@ -68,6 +77,17 @@ export const TOWER: Puzzle = {
   solved: CUBE_1x2.solved,
   apply: CUBE_1x2.apply,
   isSolved: CUBE_1x2.isSolved,
+  laneColor: (_, lane) => (lane === "U" ? "W" : "Y"),
+};
+
+/** The 1x1x3's lanes are the 1x1x2's: white for the top, yellow for the bottom and the middle. */
+export const TOWER_3: Puzzle = {
+  ...CUBE_1x3_TRACK,
+  id: "1x1x3",
+  keySet: "cube",
+  solved: CUBE_1x3.solved,
+  apply: CUBE_1x3.apply,
+  isSolved: CUBE_1x3.isSolved,
   laneColor: (_, lane) => (lane === "U" ? "W" : "Y"),
 };
 

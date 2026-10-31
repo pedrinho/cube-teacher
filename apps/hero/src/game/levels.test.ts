@@ -16,30 +16,39 @@ describe("levels", () => {
     for (const section of chart.sections) expect(level.puzzle.isSolved(section.after)).toBe(true);
   });
 
-  it("plays the 1x1x1 on the space bar, and the 1x1x2 on U and D", () => {
-    const [one, tower] = songs;
+  it("plays the 1x1x1 on the space bar, the 1x1x2 on U and D, and the 1x1x3 on U, D and E", () => {
+    const [one, tower, tall] = songs;
     const oneKeys = keysFor(one.puzzle, keys);
     expect(new Set(levelChart(one).notes.map((n) => keyFor(n.move, oneKeys)))).toEqual(new Set(["Space"]));
     // The 1x1x1 spins in fours: it ends the way it started.
     expect(levelChart(one).end).toBe(levelChart(one).start);
     const towerKeys = keysFor(tower.puzzle, keys);
     expect(new Set(levelChart(tower).notes.map((n) => keyFor(n.move, towerKeys)))).toEqual(new Set(["KeyU", "KeyD"]));
+    const tallKeys = keysFor(tall.puzzle, keys);
+    expect(new Set(levelChart(tall).notes.map((n) => keyFor(n.move, tallKeys)))).toEqual(new Set(["KeyU", "KeyD", "KeyE"]));
+    // E comes down D's lane, outlined, as on the cube.
+    const e = levelChart(tall).notes.find((n) => n.move.base === "E")!;
+    expect([e.lane, e.shape]).toEqual(["D", "slice"]);
   });
 
   it("opens each level once the one before has three stars", () => {
-    const [one, tower] = LEVELS;
+    const [one, tower, tall] = LEVELS;
+    const pass = { stars: 3, points: 500 };
     expect(isOpen({}, one)).toBe(true);
     expect(isOpen({}, tower)).toBe(false);
     expect(isOpen({ [one.id]: { stars: 2, points: 900 } }, tower)).toBe(false);
-    expect(isOpen({ [one.id]: { stars: 3, points: 900 } }, tower)).toBe(true);
-    expect(isOpen({ [one.id]: { stars: 5, points: 9000 } }, REAL_CUBES)).toBe(false);
-    expect(isOpen({ [one.id]: { stars: 5, points: 9000 }, [tower.id]: { stars: 3, points: 500 } }, REAL_CUBES)).toBe(true);
+    expect(isOpen({ [one.id]: pass }, tower)).toBe(true);
+    expect(isOpen({ [one.id]: pass }, tall)).toBe(false);
+    expect(isOpen({ [one.id]: pass, [tower.id]: pass }, tall)).toBe(true);
+    expect(isOpen({ [one.id]: pass, [tower.id]: pass }, REAL_CUBES)).toBe(false);
+    expect(isOpen({ [one.id]: pass, [tower.id]: pass, [tall.id]: pass }, REAL_CUBES)).toBe(true);
   });
 
   it("numbers the levels in each chapter", () => {
     expect(LEVELS.map((l) => [l.chapter, numberOf(l)])).toEqual([
       ["easy", 1],
       ["easy", 2],
+      ["easy", 3],
       ["medium", 1],
     ]);
     expect(nextLevel(LEVELS[0])).toBe(LEVELS[1]);

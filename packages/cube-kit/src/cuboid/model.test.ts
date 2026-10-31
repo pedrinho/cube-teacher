@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseAlg } from "../cube/model";
-import { CUBE_1, CUBE_1x2, makeCuboid, type Cuboid } from "./model";
+import { CUBE_1, CUBE_1x2, CUBE_1x3, makeCuboid, type Cuboid } from "./model";
 
 const play = (c: Cuboid, alg: string, from = c.solved) => parseAlg(alg).reduce(c.apply, from);
 
@@ -12,12 +12,17 @@ describe("cuboid model", () => {
     expect(CUBE_1x2.cubies).toHaveLength(2);
     expect(CUBE_1x2.stickers).toHaveLength(10);
     expect(CUBE_1x2.solved).toBe("WRRGGYOOBB");
+    expect(CUBE_1x3.stickers).toHaveLength(14);
     expect(makeCuboid([2, 2, 2]).stickers).toHaveLength(24);
   });
 
   it("only turns the ways that keep its shape", () => {
     expect(CUBE_1.moves).toEqual(["U", "D", "R", "L", "F", "B", "x", "y", "z"]);
     expect(CUBE_1x2.moves).toEqual(["U", "D", "y"]);
+    expect(CUBE_1x3.moves).toEqual(["U", "D", "E", "y"]);
+    // A middle layer needs a middle.
+    expect(makeCuboid([2, 2, 2]).moves).not.toContain("E");
+    expect(makeCuboid([3, 3, 3]).moves).toContain("M");
     expect(() => play(CUBE_1x2, "R")).toThrow();
   });
 
@@ -44,5 +49,14 @@ describe("cuboid model", () => {
     const s = play(CUBE_1x2, "U D2 U'");
     expect(s[0]).toBe("W");
     expect(s[5]).toBe("Y");
+  });
+
+  it("turns the middle of a 1x1x3 like D", () => {
+    expect(play(CUBE_1x3, "E E E E")).toBe(CUBE_1x3.solved);
+    expect(CUBE_1x3.isSolved(play(CUBE_1x3, "E"))).toBe(false);
+    // U, E' and D' turn all three layers the same way: the whole tower.
+    expect(play(CUBE_1x3, "U E' D'")).toBe(play(CUBE_1x3, "y"));
+    expect(play(CUBE_1x3, "D E U'")).toBe(play(CUBE_1x3, "y'"));
+    expect(CUBE_1x3.isSolved(play(CUBE_1x3, "U2 E2 D2"))).toBe(true);
   });
 });

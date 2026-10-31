@@ -1,11 +1,12 @@
-// Sticker-level model of a small cuboid: the 1x1x1 and 1x1x2 of Cube Hero's first levels, and
-// others like the 2x2x1 later.
+// Sticker-level model of a small cuboid: the 1x1x1, 1x1x2 and 1x1x3 of Cube Hero's first levels,
+// and others like the 2x2x1 later.
 //
 // Built from its geometry, like the 3x3's: cubies sit on a grid centered on the origin (at halves
 // when a side is even), every outer side of a cubie has a sticker, and moves are permutations of
 // the stickers. A state is a string of colors, one per sticker, face by face in the order U R F D L
-// B. Moves are written like the cube's (U, D, y…), and a cuboid only makes the quarter turns that
-// keep its shape: around an axis whose cross-section is square. A 1x1x2 turns U, D and y.
+// B. Moves are written like the cube's (U, D, E, y…), and a cuboid only makes the quarter turns that
+// keep its shape: around an axis whose cross-section is square. A 1x1x2 turns U, D and y; a 1x1x3
+// also turns its middle layer, E, which like the cube's turns the way D does.
 import { DEFAULT_SCHEME, FACES, type BaseMove, type Face, type Move, type Vec } from "../cube/model";
 
 const NORMAL: Record<Face, Vec> = {
@@ -35,11 +36,18 @@ function turnVec(v: Vec, axis: Vec): Vec {
 
 const compose = (first: number[], second: number[]) => second.map((i) => first[i]);
 
-/** The moves a cuboid can know: its outer layers and whole-cuboid turns. */
-const CUBOID_MOVES = ["U", "D", "R", "L", "F", "B", "x", "y", "z"] as const satisfies readonly BaseMove[];
+/** The moves a cuboid can know: its outer layers, middle layers and whole-cuboid turns. */
+const CUBOID_MOVES = ["U", "D", "R", "L", "F", "B", "M", "E", "S", "x", "y", "z"] as const satisfies readonly BaseMove[];
 
 /** Which axis (0 = x, 1 = y, 2 = z) a move turns around. */
-const AXIS_OF: Record<(typeof CUBOID_MOVES)[number], number> = { U: 1, D: 1, y: 1, R: 0, L: 0, x: 0, F: 2, B: 2, z: 2 };
+const AXIS_OF: Record<(typeof CUBOID_MOVES)[number], number> = {
+  U: 1, D: 1, E: 1, y: 1,
+  R: 0, L: 0, M: 0, x: 0,
+  F: 2, B: 2, S: 2, z: 2,
+};
+
+/** The face each middle layer turns like, as on the cube: M like L, E like D, S like F. */
+const SLICE_FACE: Partial<Record<BaseMove, Face>> = { M: "L", E: "D", S: "F" };
 
 export interface Cuboid {
   /** Cubies along x, y and z (right, up, front). */
@@ -75,15 +83,23 @@ export function makeCuboid(dims: Vec): Cuboid {
     }
   }
 
-  // A quarter turn keeps the shape when the two other sides are the same length.
+  // A quarter turn keeps the shape when the two other sides are the same length. A middle layer
+  // needs a middle: an odd number of layers, at least three.
   const moves = CUBOID_MOVES.filter((m) => {
-    const [a, b] = [0, 1, 2].filter((i) => i !== AXIS_OF[m]);
-    return dims[a] === dims[b];
+    const axis = AXIS_OF[m];
+    const [a, b] = [0, 1, 2].filter((i) => i !== axis);
+    return dims[a] === dims[b] && (!SLICE_FACE[m] || (dims[axis] >= 3 && dims[axis] % 2 === 1));
   });
 
   const layer = (base: BaseMove): { axis: Vec; inLayer: (pos: Vec) => boolean } => {
     if (base === "x" || base === "y" || base === "z") {
       return { axis: NORMAL[base === "x" ? "R" : base === "y" ? "U" : "F"], inLayer: () => true };
+    }
+    const slice = SLICE_FACE[base];
+    if (slice) {
+      const normal = NORMAL[slice];
+      const axis = normal.findIndex((c) => c !== 0);
+      return { axis: normal, inLayer: (p) => p[axis] === 0 };
     }
     const normal = NORMAL[base as Face];
     const axis = normal.findIndex((c) => c !== 0);
@@ -124,6 +140,8 @@ export function makeCuboid(dims: Vec): Cuboid {
 export const CUBE_1 = makeCuboid([1, 1, 1]);
 /** Two cubies, one on top of the other. */
 export const CUBE_1x2 = makeCuboid([1, 2, 1]);
+/** Three cubies, one on top of the other. */
+export const CUBE_1x3 = makeCuboid([1, 3, 1]);
 
-export const CUBOIDS = { "1x1x1": CUBE_1, "1x1x2": CUBE_1x2 } as const;
+export const CUBOIDS = { "1x1x1": CUBE_1, "1x1x2": CUBE_1x2, "1x1x3": CUBE_1x3 } as const;
 export type CuboidId = keyof typeof CUBOIDS;

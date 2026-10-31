@@ -5,7 +5,7 @@ import { parseAlg } from "cube-kit/cube/model";
 import type { MessageKey } from "../i18n/en";
 import type { Progress } from "../settings";
 import { layOut, type Chart, type SectionPlan } from "./chart";
-import { ONE, TOWER, type Puzzle } from "./puzzles";
+import { ONE, TOWER, TOWER_3, type Puzzle } from "./puzzles";
 
 export const CHAPTERS = ["easy", "medium", "hard", "extreme"] as const;
 export type Chapter = (typeof CHAPTERS)[number];
@@ -98,6 +98,33 @@ export const LEVELS: Level[] = [
           { kind: "intuitive", moves: parseAlg("U U D D"), tip: "tower.t5d" },
         ],
       },
+    ],
+  },
+  {
+    id: "easy-1x1x3",
+    chapter: "easy",
+    kind: "song",
+    tutorial: true,
+    title: "level.tall.title",
+    text: "level.tall.text",
+    about: "level.tall.about",
+    puzzle: TOWER_3,
+    bpm: 40,
+    // Every section brings the three layers back in line: E turns like D, so U, E' and D' turn
+    // all three the same way.
+    sections: [
+      { title: "tall.s1", parts: [{ kind: "align", moves: repeat("E", 4), tip: "tall.t1" }] },
+      { title: "tall.s2", parts: [{ kind: "align", moves: repeat("E'", 4), tip: "tall.t2" }] },
+      { title: "tall.s3", parts: [{ kind: "align", moves: repeat("E2", 2), tip: "tall.t3" }] },
+      {
+        title: "tall.s4",
+        parts: [
+          { kind: "intuitive", moves: parseAlg("U E' D'"), tip: "tall.t4" },
+          { kind: "intuitive", moves: parseAlg("U2 E2 D2"), tip: "tall.t4b" },
+          { kind: "intuitive", moves: parseAlg("D E U'"), tip: "tall.t4c" },
+        ],
+      },
+      { title: "tall.s5", parts: [{ kind: "intuitive", moves: parseAlg("U U E' E' D' D'"), tip: "tall.t5" }] },
     ],
   },
   REAL_CUBES,
