@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseAlg } from "../cube/model";
-import { CUBE_1, CUBE_1x2, CUBE_1x3, makeCuboid, type Cuboid } from "./model";
+import { CUBE_1, CUBE_1x2, CUBE_1x3, CUBE_1x4, makeCuboid, type Cuboid } from "./model";
 
 const play = (c: Cuboid, alg: string, from = c.solved) => parseAlg(alg).reduce(c.apply, from);
 
@@ -13,13 +13,15 @@ describe("cuboid model", () => {
     expect(CUBE_1x2.stickers).toHaveLength(10);
     expect(CUBE_1x2.solved).toBe("WRRGGYOOBB");
     expect(CUBE_1x3.stickers).toHaveLength(14);
+    expect(CUBE_1x4.stickers).toHaveLength(18);
     expect(makeCuboid([2, 2, 2]).stickers).toHaveLength(24);
   });
 
   it("only turns the ways that keep its shape", () => {
     expect(CUBE_1.moves).toEqual(["U", "D", "R", "L", "F", "B", "x", "y", "z"]);
     expect(CUBE_1x2.moves).toEqual(["U", "D", "y"]);
-    expect(CUBE_1x3.moves).toEqual(["U", "D", "E", "y"]);
+    expect(CUBE_1x3.moves).toEqual(["U", "D", "E", "u", "d", "y"]);
+    expect(CUBE_1x4.moves).toEqual(["U", "D", "u", "d", "y"]);
     // A middle layer needs a middle.
     expect(makeCuboid([2, 2, 2]).moves).not.toContain("E");
     expect(makeCuboid([3, 3, 3]).moves).toContain("M");
@@ -58,5 +60,17 @@ describe("cuboid model", () => {
     expect(play(CUBE_1x3, "U E' D'")).toBe(play(CUBE_1x3, "y"));
     expect(play(CUBE_1x3, "D E U'")).toBe(play(CUBE_1x3, "y'"));
     expect(CUBE_1x3.isSolved(play(CUBE_1x3, "U2 E2 D2"))).toBe(true);
+  });
+
+  it("turns the top or bottom two layers of a 1x1x4 with u and d", () => {
+    expect(play(CUBE_1x4, "u u u u")).toBe(CUBE_1x4.solved);
+    expect(CUBE_1x4.isSolved(play(CUBE_1x4, "u"))).toBe(false);
+    // The two halves turned the same way: the whole tower.
+    expect(play(CUBE_1x4, "u d'")).toBe(play(CUBE_1x4, "y"));
+    // u turns two layers and U' takes the top one back: only the second one is out.
+    expect(CUBE_1x4.isSolved(play(CUBE_1x4, "u U'"))).toBe(false);
+    expect(play(CUBE_1x4, "u U' d' U")).toBe(play(CUBE_1x4, "y"));
+    // On a 1x1x3, u is the top two of three, like on the cube.
+    expect(play(CUBE_1x3, "u")).toBe(play(CUBE_1x3, "U E'"));
   });
 });
