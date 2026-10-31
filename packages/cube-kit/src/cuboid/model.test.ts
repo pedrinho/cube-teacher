@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseAlg } from "../cube/model";
-import { CUBE_1, CUBE_1x2, CUBE_1x2x2, CUBE_1x3, CUBE_1x4, makeCuboid, type Cuboid } from "./model";
+import { CUBE_1, CUBE_1x2, CUBE_1x2x2, CUBE_1x2x3, CUBE_1x3, CUBE_1x4, makeCuboid, type Cuboid } from "./model";
 
 const play = (c: Cuboid, alg: string, from = c.solved) => parseAlg(alg).reduce(c.apply, from);
 
@@ -16,6 +16,8 @@ describe("cuboid model", () => {
     expect(CUBE_1x4.stickers).toHaveLength(18);
     expect(CUBE_1x2x2.cubies).toHaveLength(4);
     expect(CUBE_1x2x2.stickers).toHaveLength(16);
+    expect(CUBE_1x2x3.cubies).toHaveLength(6);
+    expect(CUBE_1x2x3.stickers).toHaveLength(22);
     expect(makeCuboid([2, 2, 2]).stickers).toHaveLength(24);
   });
 
@@ -34,6 +36,11 @@ describe("cuboid model", () => {
     expect(CUBE_1x2x2.halfMoves).toEqual(["U", "D", "R", "L", "x", "y"]);
     expect(() => play(CUBE_1x2x2, "R")).toThrow();
     expect(() => play(CUBE_1x2x2, "R'")).toThrow();
+    // No side of a 1x2x3 is square: everything turns halfway, its middle row too.
+    expect(CUBE_1x2x3.moves).toEqual([]);
+    expect(CUBE_1x2x3.halfMoves).toEqual(["U", "D", "R", "L", "F", "B", "E", "u", "d", "x", "y", "z"]);
+    expect(() => play(CUBE_1x2x3, "E")).toThrow();
+    expect(() => play(CUBE_1x2x3, "F")).toThrow();
   });
 
   it("turns a 1x1x1 whole, whichever side turns", () => {
@@ -98,5 +105,30 @@ describe("cuboid model", () => {
     expect(play(CUBE_1x2x2, "R2 U2 R2 U2 R2 U2")).toBe(CUBE_1x2x2.solved);
     // Its front, seen straight on, also turns a quarter: the whole thing again.
     expect(play(CUBE_1x2x2, "F")).toBe(play(CUBE_1x2x2, "z"));
+  });
+
+  it("turns the rows and columns of a 1x2x3 halfway", () => {
+    expect(play(CUBE_1x2x3, "E2 E2")).toBe(CUBE_1x2x3.solved);
+    expect(CUBE_1x2x3.isSolved(play(CUBE_1x2x3, "E2"))).toBe(false);
+    // R2 turns the right column over: its top and bottom trade places, its middle turns around.
+    const s = play(CUBE_1x2x3, "R2");
+    const at = (face: string, x: number, y: number) =>
+      s[CUBE_1x2x3.stickers.findIndex((t) => t.face === face && t.pos[0] === x && t.pos[1] === y)];
+    expect([at("F", 0.5, 0), at("F", -0.5, 0), at("U", 0.5, 1), at("D", 0.5, -1)]).toEqual(["B", "G", "Y", "W"]);
+    // The three rows, or the two columns, turned together: the whole thing. The top and bottom
+    // alone leave the middle behind.
+    expect(play(CUBE_1x2x3, "U2 E2 D2")).toBe(play(CUBE_1x2x3, "y2"));
+    expect(CUBE_1x2x3.isSolved(play(CUBE_1x2x3, "U2 D2"))).toBe(false);
+    expect(play(CUBE_1x2x3, "R2 L2")).toBe(play(CUBE_1x2x3, "x2"));
+    expect(play(CUBE_1x2x3, "u2")).toBe(play(CUBE_1x2x3, "U2 E2"));
+    // R2 E2 twice puts every cubie back with the middle row turned around; four times, all back.
+    const twice = play(CUBE_1x2x3, "R2 E2 R2 E2");
+    expect(CUBE_1x2x3.isSolved(twice)).toBe(false);
+    expect(play(CUBE_1x2x3, "R2 E2 R2 E2", twice)).toBe(CUBE_1x2x3.solved);
+    // R2 U2 R2 D2 takes three corners around: three times and they're back.
+    expect(CUBE_1x2x3.isSolved(play(CUBE_1x2x3, "R2 U2 R2 D2"))).toBe(false);
+    expect(play(CUBE_1x2x3, "R2 U2 R2 D2 R2 U2 R2 D2 R2 U2 R2 D2")).toBe(CUBE_1x2x3.solved);
+    // Its front, seen straight on, turns halfway too: the whole thing again.
+    expect(play(CUBE_1x2x3, "F2")).toBe(play(CUBE_1x2x3, "z2"));
   });
 });

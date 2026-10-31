@@ -5,7 +5,7 @@ import { parseAlg } from "cube-kit/cube/model";
 import type { MessageKey } from "../i18n/en";
 import type { Progress } from "../settings";
 import { layOut, type Chart, type SectionPlan } from "./chart";
-import { ONE, TOWER, TOWER_3, TOWER_4, WALL, type Puzzle } from "./puzzles";
+import { ONE, TOWER, TOWER_3, TOWER_4, WALL, WALL_3, type Puzzle } from "./puzzles";
 
 export const CHAPTERS = ["easy", "medium", "hard", "extreme"] as const;
 export type Chapter = (typeof CHAPTERS)[number];
@@ -198,6 +198,41 @@ export const LEVELS: Level[] = [
           { kind: "intuitive", moves: repeat("L2 D2", 3), tip: "wall.t5b" },
         ],
       },
+    ],
+  },
+  {
+    id: "easy-1x2x3",
+    chapter: "easy",
+    kind: "song",
+    tutorial: true,
+    title: "level.wall3.title",
+    text: "level.wall3.text",
+    about: "level.wall3.about",
+    puzzle: WALL_3,
+    // The 1x2x2's speed: the middle row and the longer runs are the step up.
+    bpm: 50,
+    // Every section turns it back in line. U2, E2 and D2 together turn the whole thing around, and
+    // R2 and L2 upside down. R2 E2 swaps the right corners and the middle two: twice and they're
+    // home with the middle row turned around, four times and it's all back. R2 U2 R2 D2 takes three
+    // corners around.
+    sections: [
+      { title: "wall3.s1", parts: [{ kind: "align", moves: repeat("E2", 2), tip: "wall3.t1" }] },
+      {
+        title: "wall3.s2",
+        parts: [
+          { kind: "intuitive", moves: parseAlg("U2 E2 D2"), tip: "wall3.t2" },
+          { kind: "intuitive", moves: parseAlg("D2 E2 U2"), tip: "wall3.t2b" },
+        ],
+      },
+      {
+        title: "wall3.s3",
+        parts: [
+          { kind: "align", moves: repeat("R2", 2), tip: "wall3.t3" },
+          { kind: "intuitive", moves: parseAlg("R2 L2"), tip: "wall3.t3b" },
+        ],
+      },
+      { title: "wall3.s4", parts: [{ kind: "intuitive", moves: repeat("R2 E2", 4), tip: "wall3.t4" }] },
+      { title: "wall3.s5", parts: [{ kind: "intuitive", moves: repeat("R2 U2 R2 D2", 3), tip: "wall3.t5" }] },
     ],
   },
   REAL_CUBES,
