@@ -1,6 +1,5 @@
-// The end of the song: stars, score and how the notes went. Stickers rain once, unless a level's
-// song needed more stars. A level's song says whether it passed and opens the next one; the full
-// songs can be played faster or changed.
+// The end of a level's song: stars, score and how the notes went. It says whether the level passed
+// (stickers rain when it did) and, if so, opens the next one.
 import { useMemo } from "react";
 import { useI18n } from "../i18n";
 import { PASS_STARS } from "../game/levels";
@@ -9,16 +8,10 @@ import { accuracy, stars as starsFor, type Score } from "../game/score";
 interface Props {
   score: Score;
   maxPoints: number;
-  watched: boolean;
   newBest: boolean;
-  /** A level's own song: the next level, when this play opened it (or it was open already). */
-  level?: { onNext?: () => void };
-  /** The full songs passed their level for the first time. */
-  firstPass?: boolean;
-  canGoFaster?: boolean;
+  /** The next level, when this play opened it (or it was open already). */
+  onNext?: () => void;
   onAgain: () => void;
-  onFaster?: () => void;
-  onChange?: () => void;
   onLevels: () => void;
 }
 
@@ -55,45 +48,28 @@ function Confetti() {
   );
 }
 
-export function Results({
-  score,
-  maxPoints,
-  watched,
-  newBest,
-  level,
-  firstPass,
-  canGoFaster,
-  onAgain,
-  onFaster,
-  onChange,
-  onLevels,
-}: Props) {
+export function Results({ score, maxPoints, newBest, onNext, onAgain, onLevels }: Props) {
   const { t } = useI18n();
   const stars = starsFor(score.points, maxPoints);
   const passed = stars >= PASS_STARS;
-  const next = level && passed ? level.onNext : undefined;
+  const next = passed ? onNext : undefined;
 
   return (
     <div className="screen results">
-      {(!level || passed) && <Confetti />}
-      <h1>{t(!level ? "results.title" : passed ? "results.passed" : "results.almost")}</h1>
-      {level && <p className="lead">{t(!passed ? "results.needStars" : next ? "results.nextOpen" : "results.allDone")}</p>}
-      {firstPass && !watched && <p className="level-passed">{t("results.passed")}</p>}
-      {watched ? (
-        <p className="lead">{t("results.watched")}</p>
-      ) : (
-        <p className="stars" role="img" aria-label={t("results.stars", { n: stars })}>
-          {Array.from({ length: 5 }, (_, i) => (
-            <span key={i} data-on={i < stars || undefined}>
-              ★
-            </span>
-          ))}
-        </p>
-      )}
+      {passed && <Confetti />}
+      <h1>{t(passed ? "results.passed" : "results.almost")}</h1>
+      <p className="lead">{t(!passed ? "results.needStars" : next ? "results.nextOpen" : "results.allDone")}</p>
+      <p className="stars" role="img" aria-label={t("results.stars", { n: stars })}>
+        {Array.from({ length: 5 }, (_, i) => (
+          <span key={i} data-on={i < stars || undefined}>
+            ★
+          </span>
+        ))}
+      </p>
       <p className="results-score">
         <span className="stat-label">{t("results.score")}</span>
         <span className="results-points">{score.points.toLocaleString()}</span>
-        {newBest && !watched && <span className="new-best">{t("results.newBest")}</span>}
+        {newBest && <span className="new-best">{t("results.newBest")}</span>}
       </p>
       <dl className="results-grid">
         <div>
@@ -124,18 +100,8 @@ export function Results({
           </button>
         )}
         <button type="button" className={next ? "btn" : "btn btn-primary btn-big"} onClick={onAgain} autoFocus={!next}>
-          {t(level && !passed ? "results.retry" : "results.again")}
+          {t(passed ? "results.again" : "results.retry")}
         </button>
-        {canGoFaster && onFaster && !watched && (
-          <button type="button" className="btn" onClick={onFaster}>
-            {t("results.faster")}
-          </button>
-        )}
-        {onChange && (
-          <button type="button" className="btn" onClick={onChange}>
-            {t("results.change")}
-          </button>
-        )}
         <button type="button" className="btn btn-quiet" onClick={onLevels}>
           {t("results.levels")}
         </button>

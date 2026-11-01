@@ -1,11 +1,11 @@
-// A song chart: sections of moves laid out on a beat timeline, one note per move. A song's
-// sections are the solver's steps and its parts the solver's segments ("line up the edge",
-// "R U R'"); a level's are written out by hand, with tips. Notes reach the strike line at their beat.
+// A song chart: sections of moves laid out on a beat timeline, one note per move. A level writes its
+// sections and their parts out by hand, each part with a tip. Notes reach the strike line at their
+// beat.
 import { isRotation, type CubeState, type Move } from "cube-kit/cube/model";
-import type { Explain, SegmentKind, Stage } from "cube-kit/methods/types";
+import type { SegmentKind } from "cube-kit/methods/types";
 import type { MessageKey } from "../i18n/en";
 import type { Lane, NoteShape } from "./lanes";
-import { CUBE, PYRAMINX, type Puzzle } from "./puzzles";
+import type { Puzzle } from "./puzzles";
 
 /** Beats for a quarter turn, a half turn and a whole-cube turn. */
 export const QUARTER = 1;
@@ -19,11 +19,6 @@ export const LEAD_IN = 4;
 export const INFO = 2;
 /** Rest after the last note. */
 export const TAIL = 2;
-
-export type Method = "layers" | "fridrich" | "pyraminx";
-
-/** The puzzle a song is played on. States are that puzzle's (a cube's or a pyraminx's). */
-export const puzzleOf = (method: Method): Puzzle => (method === "pyraminx" ? PYRAMINX : CUBE);
 
 export interface Note {
   /** When the note reaches the strike line. */
@@ -41,10 +36,8 @@ export interface Note {
 
 export interface Part {
   kind: SegmentKind;
-  explain?: Explain;
-  /** What a level says to do here, when it isn't a solver's explanation. */
+  /** What the level says to do here. */
   tip?: MessageKey;
-  caseId?: string;
   section: number;
   startBeat: number;
   endBeat: number;
@@ -93,23 +86,8 @@ export interface SectionPlan {
 export interface PartPlan {
   kind: SegmentKind;
   moves: Move[];
-  explain?: Explain;
   tip?: MessageKey;
-  caseId?: string;
-  /** Where the part starts, when the solver says so; otherwise where the one before ended. */
-  before?: CubeState;
 }
-
-const stageTitle = (method: Method, step: number) =>
-  (method === "layers" ? `step.${step}.name` : method === "fridrich" ? `fr.stage.${step}` : `py.stage.${step}`) as MessageKey;
-
-/** Lays out the stages of a solve, starting from `start`. */
-export const buildChart = (method: Method, start: CubeState, stages: Stage[]): Chart =>
-  layOut(
-    puzzleOf(method),
-    start,
-    stages.map((stage) => ({ title: stageTitle(method, stage.step), parts: stage.segments })),
-  );
 
 /** Lays out sections of moves on the beat, starting from `start`. */
 export function layOut(puzzle: Puzzle, start: CubeState, plan: SectionPlan[]): Chart {
@@ -120,7 +98,7 @@ export function layOut(puzzle: Puzzle, start: CubeState, plan: SectionPlan[]): C
 
   for (const { title, parts: segments } of plan) {
     const section = sections.length;
-    const before = segments[0]?.before ?? (sections.length ? sections[sections.length - 1].after : start);
+    const before = sections.length ? sections[sections.length - 1].after : start;
     const startBeat = beat;
     const firstNote = notes.length;
     beat += LEAD_IN;
@@ -140,9 +118,7 @@ export function layOut(puzzle: Puzzle, start: CubeState, plan: SectionPlan[]): C
       }
       parts.push({
         kind: seg.kind,
-        explain: seg.explain,
         tip: seg.tip,
-        caseId: seg.caseId,
         section,
         startBeat: partStart,
         endBeat: beat,

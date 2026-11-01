@@ -1,27 +1,22 @@
-// The levels, in four chapters from easy to extreme. A level is a song written out by hand on a
-// small puzzle (the first ones are tutorials), or the choice of the full songs on a real cube or a
-// pyraminx. Each level opens once the one before it has three stars.
+// The levels, in four chapters from easy to extreme. Each is a song written out by hand for a
+// puzzle, always at the same speed, with tips (the first ones are tutorials). Each level opens once
+// the one before it has three stars.
 import { parseAlg } from "cube-kit/cube/model";
 import type { MessageKey } from "../i18n/en";
 import type { Progress } from "../settings";
 import { layOut, type Chart, type SectionPlan } from "./chart";
-import { FLOPPY, ONE, PILLAR, TOWER, TOWER_3, TOWER_4, WALL, WALL_3, type Puzzle } from "./puzzles";
+import { FLOPPY, ONE, PILLAR, POCKET, TOWER, TOWER_3, TOWER_4, WALL, WALL_3, type Puzzle } from "./puzzles";
 
 export const CHAPTERS = ["easy", "medium", "hard", "extreme"] as const;
 export type Chapter = (typeof CHAPTERS)[number];
 
-interface LevelBase {
+export interface Level {
   id: string;
   chapter: Chapter;
   title: MessageKey;
   /** One line under the title on the levels screen. */
   text: MessageKey;
   tutorial?: boolean;
-}
-
-/** A song written for the level, always at the same speed. */
-export interface SongLevel extends LevelBase {
-  kind: "song";
   puzzle: Puzzle;
   bpm: number;
   /** What the level is about, on the screen before it. */
@@ -29,30 +24,13 @@ export interface SongLevel extends LevelBase {
   sections: SectionPlan[];
 }
 
-/** The full songs: the player picks one, its speed and the cube. */
-export interface ChoiceLevel extends LevelBase {
-  kind: "choice";
-}
-
-export type Level = SongLevel | ChoiceLevel;
-
 /** The same moves, `times` times over. */
 const repeat = (alg: string, times: number) => parseAlg(Array(times).fill(alg).join(" "));
-
-/** The layer method, Fridrich and the pyraminx, as they were before there were levels. */
-export const REAL_CUBES: ChoiceLevel = {
-  id: "medium-real",
-  chapter: "medium",
-  kind: "choice",
-  title: "level.real.title",
-  text: "level.real.text",
-};
 
 export const LEVELS: Level[] = [
   {
     id: "easy-1x1x1",
     chapter: "easy",
-    kind: "song",
     tutorial: true,
     title: "level.one.title",
     text: "level.one.text",
@@ -76,7 +54,6 @@ export const LEVELS: Level[] = [
   {
     id: "easy-1x1x2",
     chapter: "easy",
-    kind: "song",
     tutorial: true,
     title: "level.tower.title",
     text: "level.tower.text",
@@ -103,7 +80,6 @@ export const LEVELS: Level[] = [
   {
     id: "easy-1x1x3",
     chapter: "easy",
-    kind: "song",
     tutorial: true,
     title: "level.tall.title",
     text: "level.tall.text",
@@ -130,7 +106,6 @@ export const LEVELS: Level[] = [
   {
     id: "easy-1x1x4",
     chapter: "easy",
-    kind: "song",
     tutorial: true,
     title: "level.four.title",
     text: "level.four.text",
@@ -164,7 +139,6 @@ export const LEVELS: Level[] = [
   {
     id: "easy-1x2x2",
     chapter: "easy",
-    kind: "song",
     tutorial: true,
     title: "level.wall.title",
     text: "level.wall.text",
@@ -203,7 +177,6 @@ export const LEVELS: Level[] = [
   {
     id: "easy-1x2x3",
     chapter: "easy",
-    kind: "song",
     tutorial: true,
     title: "level.wall3.title",
     text: "level.wall3.text",
@@ -238,7 +211,6 @@ export const LEVELS: Level[] = [
   {
     id: "easy-1x3x3",
     chapter: "easy",
-    kind: "song",
     tutorial: true,
     title: "level.floppy.title",
     text: "level.floppy.text",
@@ -266,7 +238,6 @@ export const LEVELS: Level[] = [
   {
     id: "easy-2x2x3",
     chapter: "easy",
-    kind: "song",
     tutorial: true,
     title: "level.pillar.title",
     text: "level.pillar.text",
@@ -291,10 +262,46 @@ export const LEVELS: Level[] = [
       { title: "pillar.s5", parts: [{ kind: "intuitive", moves: repeat("F2 E F2 E'", 3), tip: "pillar.t5" }] },
     ],
   },
-  REAL_CUBES,
+  {
+    id: "medium-2x2x2",
+    chapter: "medium",
+    tutorial: true,
+    title: "level.pocket.title",
+    text: "level.pocket.text",
+    about: "level.pocket.about",
+    puzzle: POCKET,
+    // A real cube now, and Medium: a quarter turn a second, the tap-heavy songs of real solves.
+    bpm: 60,
+    // Every section comes back to where it started. R L' turns the whole cube (x), back after four;
+    // R U R' U' comes back after six, R2 U2 and R2 F2 after three.
+    sections: [
+      {
+        title: "pocket.s1",
+        parts: [
+          { kind: "align", moves: repeat("R", 4), tip: "pocket.t1" },
+          { kind: "align", moves: repeat("F'", 4), tip: "pocket.t1b" },
+        ],
+      },
+      { title: "pocket.s2", parts: [{ kind: "intuitive", moves: repeat("R L'", 4), tip: "pocket.t2" }] },
+      {
+        title: "pocket.s3",
+        parts: [
+          { kind: "intuitive", moves: repeat("R U R' U'", 3), tip: "pocket.t3" },
+          { kind: "intuitive", moves: repeat("R U R' U'", 3), tip: "pocket.t3b" },
+        ],
+      },
+      {
+        title: "pocket.s4",
+        parts: [
+          { kind: "intuitive", moves: repeat("R2 U2", 3), tip: "pocket.t4" },
+          { kind: "intuitive", moves: repeat("R2 F2", 3), tip: "pocket.t4b" },
+        ],
+      },
+    ],
+  },
 ];
 
-export const levelChart = (level: SongLevel): Chart => layOut(level.puzzle, level.puzzle.solved, level.sections);
+export const levelChart = (level: Level): Chart => layOut(level.puzzle, level.puzzle.solved, level.sections);
 
 /** Stars a level needs to count as passed and open the next one. */
 export const PASS_STARS = 3;

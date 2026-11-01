@@ -1,21 +1,18 @@
-// The highway's lanes. On the cube there is one per face, and every move goes in the lane of the
-// face it turns. Slices go with the face they follow (M with L, E with D, S with F), wide moves
-// with their face, and whole-cube turns take every lane. On the pyraminx there is one per corner,
-// for its turns and its tip's. The 1x1x2 has a lane for its top and one for its bottom (the 1x1x3's
-// middle layer, E, comes down D's lane, as on the cube, and the 1x1x4's wide u and d their face's),
-// the 1x2x2 one for each side (the 1x2x3's middle row, E, in D's, and the 1x3x3's middle column, M,
-// in L's), the 2x2x3 one for its top, front, bottom and right (E in D's again), and the 1x1x1 a single
-// wide one, played with the space bar.
+// The highway's lanes: one per face, and every move goes in the lane of the face it turns. Slices go
+// with the face they follow (M with L, E with D, S with F), wide moves with their face, and
+// whole-cube turns take every lane. Each puzzle only has the lanes it plays: the 1x1x2 one for its
+// top and one for its bottom (the 1x1x3's middle layer, E, comes down D's lane, and the 1x1x4's wide
+// u and d their face's), the 1x2x2 one for each side (the 1x2x3's middle row, E, in D's, and the
+// 1x3x3's middle column, M, in L's), the 2x2x3 one for its top, front, bottom and right (E in D's
+// again), the 2x2x2 its left, top, front and right, and the 1x1x1 a single wide one, played with the
+// space bar.
 import type { BaseMove, Face, Move } from "cube-kit/cube/model";
 
 /** Lanes from left to right: L and R on their own sides, the other faces in between. */
 export const LANES = ["L", "U", "F", "D", "B", "R"] as const satisfies readonly Face[];
 export type Lane = (typeof LANES)[number];
 
-/** The pyraminx's corners, left to right as it is held: front left, top, back, front right. */
-export const PYRAMINX_LANES = ["L", "U", "B", "R"] as const satisfies readonly Lane[];
-
-export type NoteShape = "face" | "wide" | "slice" | "rotation" | "tip";
+export type NoteShape = "face" | "wide" | "slice" | "rotation";
 
 const SLICE_LANE: Partial<Record<BaseMove, Lane>> = { M: "L", E: "D", S: "F" };
 
@@ -82,8 +79,6 @@ export interface Track {
   bar?: boolean;
 }
 
-export const CUBE_TRACK: Track = { lanes: LANES, letters: LETTERS, laneOf, shapeOf };
-
 /** Every 1x1x1 note spins the whole cube (y), on the one lane. */
 export const CUBE_1_TRACK: Track = { lanes: ["U"], letters: ["Y"], laneOf: () => "all", shapeOf: () => "rotation", bar: true };
 
@@ -108,16 +103,11 @@ export const CUBE_1x3x3_TRACK: Track = { lanes: ["L", "U", "D", "R"], letters: [
 /** The 2x2x3 turns U, E and D a quarter, and R2 and F2 halfway: the front gets a lane of its own. */
 export const CUBE_2x2x3_TRACK: Track = { lanes: ["U", "F", "D", "R"], letters: ["U", "D", "E", "R", "F"], laneOf, shapeOf };
 
-/** Pyraminx moves are U L R B; the tips (u l r b) use their corner's lane and letter. */
-export const PYRAMINX_TRACK: Track = {
-  lanes: PYRAMINX_LANES,
-  letters: ["U", "L", "R", "B"],
-  laneOf: (move) => move.base.toUpperCase() as Lane,
-  shapeOf: (move) => (move.base === move.base.toUpperCase() ? "face" : "tip"),
-};
+/** The 2x2x2 turns every side a quarter; its song plays the left, top, front and right. */
+export const CUBE_2x2x2_TRACK: Track = { lanes: ["L", "U", "F", "R"], letters: ["U", "L", "R", "F"], laneOf, shapeOf };
 
 /** The lane where a key's notes come down ("all" for X, Y and Z), if the puzzle plays it. */
-export function laneOfKey(code: string, keys: KeyMap, track: Track = CUBE_TRACK): Lane | "all" | null {
+export function laneOfKey(code: string, keys: KeyMap, track: Track): Lane | "all" | null {
   const letter = letterOfKey(code, keys);
   return letter && track.letters.includes(letter) ? track.laneOf({ base: moveOfLetter(letter), amount: 1 }) : null;
 }

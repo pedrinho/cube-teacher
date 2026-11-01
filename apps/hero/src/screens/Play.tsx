@@ -3,12 +3,12 @@
 // as they come in.
 import { useEffect, useRef, useState } from "react";
 import { Cube3D, type Cube3DHandle } from "cube-kit/react/Cube3D";
-import { explainText, useI18n } from "../i18n";
-import { holdEnd, isHold, sectionAt, type Chart, type Part } from "../game/chart";
+import { useI18n } from "../i18n";
+import { sectionAt, type Chart, type Part } from "../game/chart";
 import { BeatClock } from "../game/clock";
 import { Highway, type Palette, type Pop } from "../game/highway";
 import { Judge, type PlayEvent } from "../game/judge";
-import { LETTERS, gameKey, keyFor, keyLabel, laneOfKey, type KeyMap } from "../game/lanes";
+import { LETTERS, gameKey, keyLabel, laneOfKey, type KeyMap } from "../game/lanes";
 import { held, multiplier, newScore, record, wrongKey, type Score } from "../game/score";
 import type { Sound } from "../game/audio";
 
@@ -16,8 +16,6 @@ interface Props {
   chart: Chart;
   bpm: number;
   keys: KeyMap;
-  /** The computer plays every note perfectly. */
-  auto: boolean;
   sound: Sound;
   onDone: (score: Score) => void;
   onQuit: () => void;
@@ -27,8 +25,6 @@ type Phase = "playing" | "paused" | "countdown" | "done";
 
 /** Seconds of 3-2-1 before the song goes on after a pause. */
 const COUNTDOWN = 1.5;
-/** How long the computer "holds" a key in watch mode, in ms. */
-const AUTO_HOLD = 140;
 
 function readPalette(): Palette {
   const css = getComputedStyle(document.documentElement);
@@ -51,7 +47,7 @@ function readPalette(): Palette {
   };
 }
 
-export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
+export function Play({ chart, bpm, keys, sound, onDone, onQuit }: Props) {
   const { t } = useI18n();
   const canvas = useRef<HTMLCanvasElement>(null);
   const cube = useRef<Cube3DHandle>(null);
@@ -162,7 +158,7 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
     const g = game.current;
     const el = canvas.current!;
     const highway = new Highway(el, readPalette(), keys, chart.puzzle);
-    // Only the letters this puzzle plays: on the pyraminx, U L R B.
+    // Only the letters this puzzle plays: on the 1x1x2, U and D.
     const gameKeys = new Set(chart.puzzle.letters.map((l) => keys[l]));
     const resize = new ResizeObserver(() => highway.resize());
     resize.observe(el);
@@ -188,16 +184,6 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
 
       if (g.phase === "playing") {
         const beat = g.clock.beat;
-        if (auto) {
-          while (!g.judge.done && chart.notes[g.judge.next].beat <= beat) {
-            const note = chart.notes[g.judge.next];
-            const code = keyFor(note.move, keys);
-            g.held.add(code);
-            // A half turn's key stays down until its tail has gone by (the judge then counts it held).
-            setTimeout(() => g.held.delete(code), isHold(note) ? (holdEnd(note) - note.beat) * msPerBeat : AUTO_HOLD);
-            handle(g.judge.press(code, note.beat, msPerBeat));
-          }
-        }
         handle(g.judge.update(beat, msPerBeat));
 
         const s = sectionAt(chart, beat);
@@ -244,12 +230,11 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
       const code = gameKey(e.code);
       if (!gameKeys.has(code) || e.metaKey || e.ctrlKey || e.altKey) return;
       e.preventDefault();
-      if (e.repeat || auto) return;
+      if (e.repeat) return;
       g.held.add(code);
       if (g.phase === "playing") handle(g.judge.press(code, g.clock.beat, msPerBeat));
     };
     const onKeyUp = (e: KeyboardEvent) => {
-      if (auto) return;
       const code = gameKey(e.code);
       g.held.delete(code);
       if (g.phase === "playing") handle(g.judge.release(code, g.clock.beat));
@@ -279,8 +264,8 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
   const part = chart.parts[partIndex];
   const after = chart.parts[partIndex + 1];
   const current = chart.sections[section];
-  /** What a part says: the solver's explanation, or a level's tip. */
-  const lyric = (p?: Part) => (p?.explain ? explainText(t, p.explain) : p?.tip && t(p.tip, keyNames));
+  /** What a part says: the level's tip. */
+  const lyric = (p?: Part) => p?.tip && t(p.tip, keyNames);
   const now = lyric(part);
   const then = after && after.section === part?.section ? lyric(after) : undefined;
 
@@ -326,7 +311,6 @@ export function Play({ chart, bpm, keys, auto, sound, onDone, onQuit }: Props) {
             <span className="stat-label">{t("play.streak")}</span>
             <span className="stat-value stat-small">{score.combo}</span>
           </p>
-          {auto && <p className="watching">{t("play.watching")}</p>}
         </div>
 
         <div className="highway-wrap">

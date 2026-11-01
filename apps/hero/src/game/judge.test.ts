@@ -1,20 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { SOLVED, applyAlg, invertAlg, parseAlg } from "cube-kit/cube/model";
-import { buildChart, holdEnd, isHold } from "./chart";
+import { invertAlg, parseAlg, type Move } from "cube-kit/cube/model";
+import { holdEnd, isHold, layOut } from "./chart";
 import { HOLD_SLACK, Judge } from "./judge";
 import { DEFAULT_KEYS, rebind } from "./lanes";
+import { POCKET } from "./puzzles";
 
 // 60 turns per minute: one beat is one second.
 const MS = 1000;
 
+/** A one-part song on the 2x2x2 that plays `moves` from `start`. */
+const songOf = (moves: Move[], start = POCKET.solved) =>
+  layOut(POCKET, start, [{ title: "pocket.s1", parts: [{ kind: "intuitive", moves }] }]);
+
 /** A one-part song that undoes a scramble. */
-function chartOf(scramble: string) {
-  const start = applyAlg(SOLVED, scramble);
-  const moves = invertAlg(parseAlg(scramble));
-  return buildChart("layers", start, [
-    { step: 1, segments: [{ kind: "intuitive", moves, explain: { key: "seg.1.done" }, before: start, after: SOLVED }] },
-  ]);
-}
+const chartOf = (scramble: string) => songOf(invertAlg(parseAlg(scramble)), parseAlg(scramble).reduce(POCKET.apply, POCKET.solved));
 
 describe("judge", () => {
   // Undoing "R U" is U' then R'.
@@ -72,16 +71,7 @@ describe("judge", () => {
   });
 
   it("takes the letter of a half turn and of a whole-cube turn", () => {
-    const start = applyAlg(SOLVED, "R2");
-    const c = buildChart("layers", start, [
-      {
-        step: 1,
-        segments: [
-          { kind: "rotate", moves: [{ base: "y", amount: 1 }], explain: { key: "seg.1.rotate" }, before: start, after: applyAlg(start, "y") },
-          { kind: "alg", moves: [{ base: "F", amount: 2 }], explain: { key: "seg.1.done" }, before: applyAlg(start, "y"), after: applyAlg(start, "y F2") },
-        ],
-      },
-    ]);
+    const c = songOf(parseAlg("y F2"));
     const judge = new Judge(c.notes, DEFAULT_KEYS);
     expect(judge.press("KeyY", c.notes[0].beat, MS)[0].type).toBe("hit");
     expect(judge.press("KeyF", c.notes[1].beat, MS)[0].type).toBe("hit");

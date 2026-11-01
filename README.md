@@ -34,20 +34,16 @@ For kids who already solve the cube, following
 
 **Play it:** https://pedrinho.github.io/cube-teacher/hero/
 
-A Guitar Hero–style game: the solve of a scrambled cube (random, or painted from a real one)
-comes down a highway as notes, and you play it on the keyboard. Each note is played with its own
-letter: `R`, `R'` and `R2` with the R key, `y` with the Y key, the middle layer `M` with the M key
-(wide moves like `r` use their face's letter). Each lane is a face, and notes are painted in that
-face's color. Hits are judged Perfect or Good by timing; a missed note still turns the cube, so
-every song ends solved. The songs are the layer
-method and Fridrich solves from Cube Teacher, so playing them is practice for the real thing.
+A Guitar Hero–style game: a song of turns comes down a highway as notes, and you play it on the
+keyboard. Each note is played with its own letter: `R`, `R'` and `R2` with the R key, `y` with the
+Y key, the middle layer `M` with the M key (wide moves like `r` use their face's letter). Each lane
+is a face, and notes are painted in that face's color. Half turns have a tail: hold the key until it
+has gone by. Hits are judged Perfect or Good by timing; a missed note still turns the cube.
 
-Before each song a ready screen shows the scrambled puzzle in 3D and the turns that scramble a real
-one the same way (it can play them on the 3D one too), so you can follow along in your hands.
-
-There is a Pyraminx song too: a random pyramid is solved with the beginner's method (tips, centers,
-yellow base, top) on four lanes, one per corner, played with `U`, `L`, `R` and `B`. Small notes
-turn only a tip (`u` is still the U key).
+The songs are levels, in four chapters from Easy to Extreme, and each opens once the level before it
+has three stars. Chapter 1 starts with a cube of just one piece and builds up, one new move at a
+time, through the 1×1×2 to 1×1×4 towers, the 1×2×2, 1×2×3 and 1×3×3, and the 2×2×3. Chapter 2
+opens with the 2×2×2, the first real cube. The keys can be changed on the levels screen.
 
 ## Development
 
@@ -83,5 +79,5 @@ Every push to `main` runs the tests, builds both apps and publishes them to GitH
 - `packages/cube-kit/src/three`: the 3D cube and pyraminx (three.js); `src/react`: components both apps use.
 - `apps/teacher/src/content/layers`: lesson content; every case picture is checked against its text in tests.
 - `apps/teacher/src/components`, `apps/teacher/src/pages`: the Cube Teacher app.
-- `apps/hero/src/game`: the song chart (solver steps laid out on beats), the puzzles, lanes and keys, hit judging,
+- `apps/hero/src/game`: the levels and their song charts (laid out on beats), the puzzles, lanes and keys, hit judging,
   scoring, the highway renderer and the synthesized music; `apps/hero/src/screens`: the game's screens.

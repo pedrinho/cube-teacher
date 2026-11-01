@@ -1,10 +1,10 @@
-// The game's texts: cube-kit's (colors, step names, solver instructions, painting) plus its own.
+// The game's texts: cube-kit's plus its own.
 import type { ReactNode } from "react";
 import { I18nProvider as KitI18nProvider, useI18n as useKitI18n, type I18n as KitI18n } from "cube-kit/i18n";
 import { en, type MessageKey } from "./en";
 import { pt } from "./pt";
 
-export { explainText, type Lang } from "cube-kit/i18n";
+export type { Lang } from "cube-kit/i18n";
 export type { MessageKey } from "./en";
 
 export type I18n = KitI18n<MessageKey>;

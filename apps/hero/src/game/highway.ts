@@ -1,9 +1,9 @@
 // Draws the highway on a canvas: a strip of black cube plastic in perspective, with sticker gems
 // sliding down to a row of receptors. A gem shows its move; when the player has moved that letter
-// to another key, a small keycap on the gem shows the key. Receptors show their lane's key. On the
-// pyraminx, gems and receptors are triangles, and a tip's gem is a small one. The 1x1x1's one lane
-// is a space bar: a wide road, with bars for notes and a bar for its receptor. A half turn has a
-// tail: once hit, it glows down to the strike line while its key is held, and goes gray if let go.
+// to another key, a small keycap on the gem shows the key. Receptors show their lane's key. The
+// 1x1x1's one lane is a space bar: a wide road, with bars for notes and a bar for its receptor. A
+// half turn has a tail: once hit, it glows down to the strike line while its key is held, and goes
+// gray if let go.
 import { moveToString, type Color } from "cube-kit/cube/model";
 import { LEAD_IN, holdEnd, isHold, type Chart, type Note } from "./chart";
 import type { HoldState } from "./judge";
@@ -276,8 +276,8 @@ export class Highway {
 
     const lane = this.lanes.indexOf(note.lane);
     const x = this.laneX(lane, half);
-    const size = laneW * 0.8 * (note.shape === "tip" ? 0.62 : 1);
-    const h = this.triangles ? size * 0.82 : note.shape === "wide" ? size * 0.95 : size * 0.72;
+    const size = laneW * 0.8;
+    const h = note.shape === "wide" ? size * 0.95 : size * 0.72;
     const prime = note.move.amount === 3;
 
     if (prime && result !== "miss") {
@@ -299,42 +299,27 @@ export class Highway {
       ctx.strokeStyle = this.colors.body;
       ctx.stroke();
       // A soft shine, like a sticker.
-      if (!this.triangles) {
-        ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
-        ctx.beginPath();
-        ctx.rect(x - size / 2 + size * 0.1, y - h / 2 + h * 0.1, size * 0.8, h * 0.28);
-        ctx.fill();
-      }
+      ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
+      ctx.beginPath();
+      ctx.rect(x - size / 2 + size * 0.1, y - h / 2 + h * 0.1, size * 0.8, h * 0.28);
+      ctx.fill();
     }
 
     if (size > 22) {
       const face = this.puzzle.laneColor(note.before, note.lane);
       const ink = note.shape === "slice" || result === "miss" || !DARK_TEXT.has(face) ? "#ffffff" : this.colors.ink;
-      // A triangle's middle is low down.
-      this.label(moveToString(note.move), x, y + (this.triangles ? h * 0.14 : -h * 0.02), h * (this.triangles ? 0.42 : 0.5), ink);
+      this.label(moveToString(note.move), x, y - h * 0.02, h * 0.5, ink);
       const key = this.movedKey(note);
       if (key) this.keycap(key, x + size / 2, y + h / 2, Math.max(h * 0.5, 16));
     }
     ctx.globalAlpha = 1;
   }
 
-  /** Pyraminx notes are triangles, like its stickers. */
-  private get triangles() {
-    return this.puzzle.id === "pyraminx";
-  }
-
-  /** The outline of a gem or receptor centered on (x, y): a rectangle or a sharp-cornered triangle. */
+  /** The outline of a gem or receptor centered on (x, y). */
   private gemPath(x: number, y: number, w: number, h: number) {
     const { ctx } = this;
     ctx.beginPath();
-    if (!this.triangles) {
-      ctx.rect(x - w / 2, y - h / 2, w, h);
-      return;
-    }
-    ctx.moveTo(x, y - h / 2);
-    ctx.lineTo(x + w / 2, y + h / 2);
-    ctx.lineTo(x - w / 2, y + h / 2);
-    ctx.closePath();
+    ctx.rect(x - w / 2, y - h / 2, w, h);
   }
 
   /** The label of the key that plays a note, when it isn't the note's own letter. */
@@ -343,7 +328,7 @@ export class Highway {
     return label === letterOf(note.move) ? undefined : label;
   }
 
-  /** A small light keycap, like the keys on the setup screen. */
+  /** A small light keycap, like the keys on the levels screen. */
   private keycap(text: string, x: number, y: number, size: number) {
     const { ctx } = this;
     roundRect(ctx, x - size / 2, y - size / 2, size, size, size * 0.25);
@@ -370,7 +355,7 @@ export class Highway {
     const { y, half } = this.at(0);
     const laneW = (2 * half) / this.lanes.length;
     const size = laneW * 0.8;
-    const h = size * (this.triangles ? 0.82 : 0.72);
+    const h = size * 0.72;
     const heldLanes = new Set([...f.held].map((code) => laneOfKey(code, this.keys, this.puzzle)));
 
     const flashing = (lane: Lane | "all") =>
@@ -401,7 +386,7 @@ export class Highway {
       ctx.strokeStyle = color;
       ctx.stroke();
       const ink = lit ? (DARK_TEXT.has(faceColor(lane)) ? this.colors.ink : "#ffffff") : color;
-      this.label(keyLabel(this.keys[lane]), x, y + (this.triangles ? h * 0.14 : 0), h * (this.triangles ? 0.4 : 0.46), ink);
+      this.label(keyLabel(this.keys[lane]), x, y, h * 0.46, ink);
     });
 
     // Whole-cube turns light the line across every lane.

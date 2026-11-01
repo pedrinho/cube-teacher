@@ -1,11 +1,16 @@
 // The home screen: the four chapters, easy to extreme, and their levels. A level shows its stars,
-// or a lock until the level before it has three stars. Chapters without levels yet say so.
+// or a lock until the level before it has three stars. Chapters without levels yet say so. The
+// player's keys can be changed under them.
 import { useI18n, type MessageKey } from "../i18n";
 import { CHAPTERS, LEVELS, isOpen, numberOf, type Level } from "../game/levels";
+import type { KeyMap } from "../game/lanes";
 import type { Progress } from "../settings";
+import { KeyEditor } from "./Keys";
 
 interface Props {
   progress: Progress;
+  keys: KeyMap;
+  onKeysChange: (keys: KeyMap) => void;
   onPlay: (level: Level) => void;
 }
 
@@ -29,7 +34,7 @@ function Lock() {
   );
 }
 
-export function Levels({ progress, onPlay }: Props) {
+export function Levels({ progress, keys, onKeysChange, onPlay }: Props) {
   const { t } = useI18n();
 
   return (
@@ -94,6 +99,8 @@ export function Levels({ progress, onPlay }: Props) {
           );
         })}
       </div>
+
+      <KeyEditor keys={keys} onChange={onKeysChange} />
     </div>
   );
 }

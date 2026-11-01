@@ -138,28 +138,6 @@ p {
   align-items: center;
 }
 
-.notice {
-  border-radius: var(--radius-panel);
-  padding: 1rem 1.25rem;
-  background: var(--accent-soft);
-}
-.notice-error {
-  background: var(--danger-soft);
-  color: var(--danger);
-  margin-top: 1.5rem;
-}
-.notice-error h3 {
-  margin-bottom: 0.25rem;
-}
-.notice-error ul {
-  margin: 0 0 0.5rem;
-  padding-left: 1.2rem;
-}
-.notice-error p,
-.notice-error li {
-  color: var(--ink);
-}
-
 /* ---- Top bar ---- */
 .bar {
   display: flex;
@@ -184,7 +162,7 @@ p {
 .brand:disabled {
   cursor: default;
 }
-/* On the setup screen the keycap title already says it. */
+/* On the levels screen the keycap title already says it. */
 .bar[data-home] .brand {
   visibility: hidden;
 }
@@ -222,14 +200,7 @@ p {
   padding: 0.5rem var(--gutter) 3rem;
 }
 
-/* ---- Setup ---- */
-.setup {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: 3rem;
-  align-items: start;
-  padding-top: 1rem;
-}
+/* ---- Title ---- */
 
 /* The title, on keycaps colored like stickers: the two things the game is made of. */
 .title {
@@ -263,109 +234,27 @@ p {
   margin-left: 1.1rem;
 }
 
-.choice {
-  border: 0;
-  padding: 0;
-  margin: 0 0 1rem;
-}
-.choice legend {
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  padding: 0;
-}
-.choice-options {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
-  gap: 0.5rem;
-}
-.choice-options button {
-  font: inherit;
-  display: grid;
-  gap: 0.1rem;
-  text-align: left;
-  padding: 0.55rem 1rem;
-  border-radius: 0.8rem;
-  border: 2px solid var(--line);
-  background: var(--panel);
-  color: var(--ink);
-  cursor: pointer;
-}
-.choice-options button[aria-pressed="true"] {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: 0 3px 0 var(--accent);
-}
-.choice-title {
-  font-weight: 700;
-}
-.choice-text {
-  font-size: var(--step--1);
-  color: var(--ink-soft);
-}
-.setup-actions {
-  margin-top: 1.5rem;
-}
-.setup .lead {
-  font-size: var(--step-0);
-  margin-bottom: 1.5rem;
-}
 .best {
   margin-top: 1rem;
   color: var(--ink-soft);
 }
 
-.setup-how {
-  background: var(--panel);
-  border-radius: var(--radius-panel);
-  padding: 1.5rem;
-  /* The keyboard sizes itself to this panel. */
-  container-type: inline-size;
-}
-.how {
-  margin: 1.25rem 0 0;
-  padding-left: 1.1rem;
-  color: var(--ink-soft);
-}
-.how li + li {
-  margin-top: 0.4rem;
-}
-
-/* A keyboard with the game's keys lit, each drawn like its notes: faces solid, middle layers
-   outlined (hollow notes), whole-cube turns violet (the bars). Sizes are in --u, one key plus the
-   gap after it, so the keyboard shrinks to fit its panel: the widest row, Q to P, is 10.4 units. */
-.kb {
-  --u: min(2.4rem, 100cqi / 10.5);
-  display: grid;
-  gap: calc(var(--u) * 0.125);
-  justify-content: center;
-}
-.kb-row {
-  display: flex;
-  gap: calc(var(--u) * 0.125);
-}
-.kb-row:nth-child(2) {
-  padding-left: calc(var(--u) * 0.46);
-}
-.kb-row:nth-child(3) {
-  padding-left: calc(var(--u) * 0.92);
-}
-.kb-row:nth-child(4) {
-  padding-left: calc(var(--u) * 1.38);
-}
+/* A keycap drawn like the notes it plays: faces solid, middle layers outlined (hollow notes),
+   whole-cube turns violet (the bars). */
 .kb-key {
   display: grid;
   place-items: center;
-  width: calc(var(--u, 2.4rem) * 0.875);
-  height: calc(var(--u, 2.4rem) * 0.875);
+  width: 2.1rem;
+  height: 2.1rem;
   border-radius: 0.45rem;
   background: var(--panel-raised);
   color: var(--ink-soft);
-  font-size: calc(var(--u, 2.4rem) * 0.33);
+  font-size: 0.8rem;
   opacity: 0.45;
 }
 .kb-key[data-kind] {
   opacity: 1;
-  font-size: calc(var(--u, 2.4rem) * 0.52);
+  font-size: 1.25rem;
   font-weight: 800;
 }
 .kb-key[data-kind="face"] {
@@ -383,23 +272,10 @@ p {
   color: #fff;
   box-shadow: 0 3px 0 #4a2d9c;
 }
-/* A key that plays another letter keeps its own letter small in the corner. */
-.kb-key {
-  position: relative;
-}
 /* The space bar, wide enough for its name. */
 .kb-key[data-wide] {
   width: auto;
   padding: 0 0.75em;
-}
-.kb-legend {
-  position: absolute;
-  top: calc(var(--u) * 0.06);
-  left: calc(var(--u) * 0.1);
-  font-size: calc(var(--u) * 0.23);
-  font-weight: 700;
-  line-height: 1;
-  opacity: 0.75;
 }
 
 /* Changing keys: each move next to its key; the one waiting for a new key is highlighted. */
@@ -464,21 +340,9 @@ p {
   padding-left: 0;
 }
 
-/* ---- Paint and review ---- */
+/* ---- Screens ---- */
 .screen {
   padding-top: 1rem;
-}
-.paint-actions {
-  margin-top: 1.5rem;
-}
-.review {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 2rem;
-  align-items: center;
-}
-.face-grid {
-  margin-top: 0.5rem;
 }
 
 /* ---- Ready: the scrambled puzzle and what the song holds ---- */
@@ -526,10 +390,7 @@ p {
   color: var(--ink-soft);
   margin-bottom: 0.75rem;
 }
-.ready-show {
-  margin-top: 0.5rem;
-  padding-left: 0;
-}
+
 .ready-steps {
   display: flex;
   flex-wrap: wrap;
@@ -689,10 +550,6 @@ p {
   color: var(--accent);
   text-shadow: 0 0 18px var(--violet);
 }
-.watching {
-  font-size: var(--step--1);
-  color: var(--ink-soft);
-}
 
 .highway-wrap {
   position: relative;
@@ -790,6 +647,14 @@ p {
 }
 .chapter[data-chapter="extreme"] {
   --chapter: var(--st-R);
+}
+/* The keys, under the chapters, in a panel like theirs. */
+.levels-screen .keys {
+  max-width: 40rem;
+  padding: 1.25rem;
+  border-top: 0;
+  border-radius: var(--radius-panel);
+  background: var(--panel);
 }
 .chapter h2 {
   display: flex;
@@ -975,13 +840,6 @@ p {
 .results-actions {
   justify-content: center;
 }
-.level-passed {
-  padding: 0.2rem 1rem;
-  border-radius: 999px;
-  background: var(--ok);
-  color: var(--accent-ink);
-  font-weight: 800;
-}
 
 /* Stickers raining down once, when the cube is solved. */
 .confetti {
@@ -1010,8 +868,6 @@ p {
 
 /* ---- Small screens ---- */
 @media (max-width: 900px) {
-  .setup,
-  .review,
   .ready {
     grid-template-columns: 1fr;
   }

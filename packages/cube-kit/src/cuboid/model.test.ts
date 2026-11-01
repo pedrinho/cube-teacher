@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { parseAlg } from "../cube/model";
-import { CUBE_1, CUBE_1x2, CUBE_1x2x2, CUBE_1x2x3, CUBE_1x3, CUBE_1x3x3, CUBE_1x4, CUBE_2x2x3, makeCuboid, type Cuboid } from "./model";
+import {
+  CUBE_1,
+  CUBE_1x2,
+  CUBE_1x2x2,
+  CUBE_1x2x3,
+  CUBE_1x3,
+  CUBE_1x3x3,
+  CUBE_1x4,
+  CUBE_2x2x2,
+  CUBE_2x2x3,
+  makeCuboid,
+  type Cuboid,
+} from "./model";
 
 const play = (c: Cuboid, alg: string, from = c.solved) => parseAlg(alg).reduce(c.apply, from);
 
@@ -22,7 +34,8 @@ describe("cuboid model", () => {
     expect(CUBE_1x3x3.stickers).toHaveLength(30);
     expect(CUBE_2x2x3.cubies).toHaveLength(12);
     expect(CUBE_2x2x3.stickers).toHaveLength(32);
-    expect(makeCuboid([2, 2, 2]).stickers).toHaveLength(24);
+    expect(CUBE_2x2x2.cubies).toHaveLength(8);
+    expect(CUBE_2x2x2.stickers).toHaveLength(24);
   });
 
   it("only turns the ways that keep its shape", () => {
@@ -31,7 +44,7 @@ describe("cuboid model", () => {
     expect(CUBE_1x3.moves).toEqual(["U", "D", "E", "u", "d", "y"]);
     expect(CUBE_1x4.moves).toEqual(["U", "D", "u", "d", "y"]);
     // A middle layer needs a middle.
-    expect(makeCuboid([2, 2, 2]).moves).not.toContain("E");
+    expect(CUBE_2x2x2.moves).not.toContain("E");
     expect(makeCuboid([3, 3, 3]).moves).toContain("M");
     expect(() => play(CUBE_1x2, "R")).toThrow();
     // The other ways, only halfway.
@@ -54,6 +67,9 @@ describe("cuboid model", () => {
     expect(CUBE_2x2x3.halfMoves).toEqual(["R", "L", "F", "B", "x", "z"]);
     expect(() => play(CUBE_2x2x3, "F")).toThrow();
     expect(() => play(CUBE_2x2x3, "R'")).toThrow();
+    // A 2x2x2 is square every way: every side turns a quarter.
+    expect(CUBE_2x2x2.moves).toEqual(["U", "D", "R", "L", "F", "B", "x", "y", "z"]);
+    expect(CUBE_2x2x2.halfMoves).toEqual([]);
   });
 
   it("turns a 1x1x1 whole, whichever side turns", () => {
@@ -192,5 +208,23 @@ describe("cuboid model", () => {
     expect(moved.length).toBeGreaterThan(0);
     expect(moved.every((t) => t.pos[1] === 0)).toBe(true);
     expect(play(CUBE_2x2x3, "F2 E F2 E' F2 E F2 E'", middle)).toBe(CUBE_2x2x3.solved);
+  });
+
+  it("turns every side of a 2x2x2 a quarter", () => {
+    expect(play(CUBE_2x2x2, "R R R R")).toBe(CUBE_2x2x2.solved);
+    expect(play(CUBE_2x2x2, "F' F' F' F'")).toBe(CUBE_2x2x2.solved);
+    expect(play(CUBE_2x2x2, "R R'")).toBe(CUBE_2x2x2.solved);
+    expect(CUBE_2x2x2.isSolved(play(CUBE_2x2x2, "R"))).toBe(false);
+    // Two opposite sides turned the same way: the whole cube. Four times and it's back.
+    expect(play(CUBE_2x2x2, "R L'")).toBe(play(CUBE_2x2x2, "x"));
+    expect(CUBE_2x2x2.isSolved(play(CUBE_2x2x2, "R L'"))).toBe(true);
+    expect(play(CUBE_2x2x2, "R L' R L' R L' R L'")).toBe(CUBE_2x2x2.solved);
+    // R U R' U' comes back after six, R2 U2 and R2 F2 after three.
+    const sexy = (n: number) => Array(n).fill("R U R' U'").join(" ");
+    expect(CUBE_2x2x2.isSolved(play(CUBE_2x2x2, sexy(3)))).toBe(false);
+    expect(play(CUBE_2x2x2, sexy(6))).toBe(CUBE_2x2x2.solved);
+    expect(CUBE_2x2x2.isSolved(play(CUBE_2x2x2, "R2 U2"))).toBe(false);
+    expect(play(CUBE_2x2x2, "R2 U2 R2 U2 R2 U2")).toBe(CUBE_2x2x2.solved);
+    expect(play(CUBE_2x2x2, "R2 F2 R2 F2 R2 F2")).toBe(CUBE_2x2x2.solved);
   });
 });

@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { holdCount } from "./chart";
 import { DEFAULT_KEYS, keyFor } from "./lanes";
-import { LEVELS, REAL_CUBES, isOpen, levelChart, nextLevel, numberOf, type SongLevel } from "./levels";
+import { LEVELS, isOpen, levelChart, nextLevel, numberOf } from "./levels";
 import { keysFor } from "./puzzles";
 
-const songs = LEVELS.filter((l): l is SongLevel => l.kind === "song");
-const keys = { cube: DEFAULT_KEYS, pyraminx: DEFAULT_KEYS };
+const keys = DEFAULT_KEYS;
 
 describe("levels", () => {
-  it.each(songs.map((l) => [l.id, l] as const))("%s is played on its puzzle's keys, every section ending solved", (_, level) => {
+  it.each(LEVELS.map((l) => [l.id, l] as const))("%s is played on its puzzle's keys, every section ending solved", (_, level) => {
     const chart = levelChart(level);
     const played = keysFor(level.puzzle, keys);
     const puzzleKeys = new Set(level.puzzle.letters.map((l) => played[l]));
@@ -17,8 +16,8 @@ describe("levels", () => {
     for (const section of chart.sections) expect(level.puzzle.isSolved(section.after)).toBe(true);
   });
 
-  it("plays the 1x1x1 on the space bar, the 1x1x2 and 1x1x4 on U and D, the 1x1x3 on U, D and E, the 1x2x2 on R, L, U and D, the 1x2x3 on those and E, the 1x3x3 on those, E and M, and the 2x2x3 on U, D, E, R and F", () => {
-    const [one, tower, tall, four, wall, wall3, floppy, pillar] = songs;
+  it("plays the 1x1x1 on the space bar, the 1x1x2 and 1x1x4 on U and D, the 1x1x3 on U, D and E, the 1x2x2 on R, L, U and D, the 1x2x3 on those and E, the 1x3x3 on those, E and M, the 2x2x3 on U, D, E, R and F, and the 2x2x2 on R, U, F and L", () => {
+    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket] = LEVELS;
     const oneKeys = keysFor(one.puzzle, keys);
     expect(new Set(levelChart(one).notes.map((n) => keyFor(n.move, oneKeys)))).toEqual(new Set(["Space"]));
     // The 1x1x1 spins in fours: it ends the way it started.
@@ -64,10 +63,19 @@ describe("levels", () => {
     expect(holdCount(pillarChart)).toBeLessThan(pillarChart.notes.length);
     const f2 = pillarChart.notes.find((n) => n.move.base === "F")!;
     expect([f2.lane, f2.shape]).toEqual(["F", "face"]);
+    // The 2x2x2 turns every side a quarter, both ways, tapped; its half turns are held.
+    const pocketKeys = keysFor(pocket.puzzle, keys);
+    const pocketChart = levelChart(pocket);
+    expect(new Set(pocketChart.notes.map((n) => keyFor(n.move, pocketKeys)))).toEqual(new Set(["KeyR", "KeyU", "KeyF", "KeyL"]));
+    expect(new Set(pocketChart.notes.map((n) => n.move.amount))).toEqual(new Set([1, 2, 3]));
+    expect(holdCount(pocketChart)).toBe(pocketChart.notes.filter((n) => n.move.amount === 2).length);
+    // It's a real cube, so its sections come back to where they started, not just to a solved
+    // cube turned some other way.
+    for (const section of pocketChart.sections) expect(section.after).toBe(pocket.puzzle.solved);
   });
 
   it("opens each level once the one before has three stars", () => {
-    const [one, tower, tall, four, wall, wall3, floppy, pillar] = LEVELS;
+    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket] = LEVELS;
     const pass = { stars: 3, points: 500 };
     expect(isOpen({}, one)).toBe(true);
     expect(isOpen({}, tower)).toBe(false);
@@ -87,8 +95,10 @@ describe("levels", () => {
     expect(isOpen(firstSix, pillar)).toBe(false);
     const firstSeven = { ...firstSix, [floppy.id]: pass };
     expect(isOpen(firstSeven, pillar)).toBe(true);
-    expect(isOpen(firstSeven, REAL_CUBES)).toBe(false);
-    expect(isOpen({ ...firstSeven, [pillar.id]: pass }, REAL_CUBES)).toBe(true);
+    // The 2x2x2 opens chapter 2 once the 2x2x3 has three stars.
+    expect(isOpen(firstSeven, pocket)).toBe(false);
+    expect(isOpen({ ...firstSeven, [pillar.id]: { stars: 2, points: 900 } }, pocket)).toBe(false);
+    expect(isOpen({ ...firstSeven, [pillar.id]: pass }, pocket)).toBe(true);
   });
 
   it("numbers the levels in each chapter", () => {
@@ -104,6 +114,6 @@ describe("levels", () => {
       ["medium", 1],
     ]);
     expect(nextLevel(LEVELS[0])).toBe(LEVELS[1]);
-    expect(nextLevel(REAL_CUBES)).toBeUndefined();
+    expect(nextLevel(LEVELS[LEVELS.length - 1])).toBeUndefined();
   });
 });
