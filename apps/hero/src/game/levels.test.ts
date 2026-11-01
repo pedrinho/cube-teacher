@@ -32,7 +32,7 @@ describe("levels", () => {
   });
 
   it("plays the 1x1x1 on the space bar, the 1x1x2 and 1x1x4 on U and D, the 1x1x3 on U, D and E, the 1x2x2 on R, L, U and D, the 1x2x3 on those and E, the 1x3x3 on those, E and M, the 2x2x3 on U, D, E, R and F, the 2x2x2 on R, U, F and L, and the pyraminxes on their corners", () => {
-    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra, pyra2, pyra3] = LEVELS;
+    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra, pyra2, pyra3, twist] = LEVELS;
     const oneKeys = keysFor(one.puzzle, keys);
     expect(new Set(levelChart(one).notes.map((n) => keyFor(n.move, oneKeys)))).toEqual(new Set(["Space"]));
     // The 1x1x1 spins in fours: it ends the way it started.
@@ -111,6 +111,19 @@ describe("levels", () => {
     for (const n of tips) expect([n.lane, keyFor(n.move, pyra3Keys)]).toEqual([n.move.base.toUpperCase(), `Key${n.move.base.toUpperCase()}`]);
     // It ends on a tip.
     expect(pyra3Chart.notes[pyra3Chart.notes.length - 1].shape).toBe("tip");
+    // The corner twist's corners are big notes in their own lanes, played with their own keys.
+    const twistKeys = keysFor(twist.puzzle, keys);
+    const twistChart = levelChart(twist);
+    expect(new Set(twistChart.notes.map((n) => keyFor(n.move, twistKeys)))).toEqual(new Set(["KeyU", "KeyL", "KeyR", "KeyB"]));
+    for (const n of twistChart.notes) expect([n.lane, n.shape]).toEqual([n.move.base, "face"]);
+    expect(holdCount(twistChart)).toBe(0);
+    expect(twist.puzzle.lanes.map((l) => twist.puzzle.laneColor(twistChart.start, l))).toEqual(["B", "Y", "G", "R"]);
+    // It runs across the lanes, left to right and back.
+    const lanesOf = (alg: string) => alg.split(" ") as Lane[];
+    const played = twistChart.notes.map((n) => n.lane);
+    const run = (lanes: Lane[]) => played.some((_, i) => lanes.every((l, k) => played[i + k] === l));
+    expect(run(lanesOf("L U B R L U B R"))).toBe(true);
+    expect(run(lanesOf("R B U L R B U L"))).toBe(true);
   });
 
   it("teaches in chapter 1, with a tip for every part, and from chapter 2 on just plays", () => {
@@ -122,7 +135,7 @@ describe("levels", () => {
   });
 
   it("opens each level once the one before has three stars", () => {
-    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra, pyra2, pyra3] = LEVELS;
+    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra, pyra2, pyra3, twist] = LEVELS;
     const pass = { stars: 3, points: 500 };
     expect(isOpen({}, one)).toBe(true);
     expect(isOpen({}, tower)).toBe(false);
@@ -156,6 +169,9 @@ describe("levels", () => {
     const firstEleven = { ...firstSeven, [pillar.id]: pass, [pocket.id]: pass, [pyra.id]: pass };
     expect(isOpen(firstEleven, pyra3)).toBe(false);
     expect(isOpen({ ...firstEleven, [pyra2.id]: pass }, pyra3)).toBe(true);
+    // Then the corner twist.
+    expect(isOpen({ ...firstEleven, [pyra2.id]: pass }, twist)).toBe(false);
+    expect(isOpen({ ...firstEleven, [pyra2.id]: pass, [pyra3.id]: pass }, twist)).toBe(true);
   });
 
   it("numbers the levels in each chapter", () => {
@@ -172,6 +188,7 @@ describe("levels", () => {
       ["medium", 2],
       ["medium", 3],
       ["medium", 4],
+      ["medium", 5],
     ]);
     expect(nextLevel(LEVELS[0])).toBe(LEVELS[1]);
     expect(nextLevel(LEVELS[LEVELS.length - 1])).toBeUndefined();

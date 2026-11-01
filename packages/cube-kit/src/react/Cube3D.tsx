@@ -1,5 +1,5 @@
-// React wrapper for our three.js cube, pyraminx (or one-piece or two-layer pyraminx), or small cuboid
-// (1x1x1, 1x1x2…). three.js loads only when one is on screen.
+// React wrapper for our three.js cube, pyraminx (or one-piece, two-layer or corner twist pyraminx),
+// or small cuboid (1x1x1, 1x1x2…). three.js loads only when one is on screen.
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { parseAlg, type CubeState, type Move } from "../cube/model";
 import { CUBOIDS, type CuboidId } from "../cuboid/model";
@@ -17,14 +17,15 @@ interface PuzzleScene {
 
 type SceneOptions = { fromBelow?: boolean; stickerless?: boolean };
 
-export type PuzzleKind = "cube" | "pyraminx" | "pyraminx1" | "pyraminx2" | CuboidId;
+export type PuzzleKind = "cube" | "pyraminx" | "pyraminx1" | "pyraminx2" | "cornerTwist" | CuboidId;
 
 type MakeScene = (el: HTMLElement, colors: StickerColors, state: string, options: SceneOptions) => PuzzleScene;
 
 /**
  * Loads the puzzle's scene code, then makes one. A cuboid is drawn by the cube's scene, the
- * one-piece pyraminx by the pyraminx's, turning whole, and the two-layer one by the pyraminx's too,
- * with each tip and its center as one piece.
+ * one-piece pyraminx by the pyraminx's, turning whole, the two-layer one by the pyraminx's too,
+ * with each tip and its center as one piece, and the corner twist by the pyraminx's, its corners
+ * turning on their own.
  */
 function loadScene(puzzle: PuzzleKind): Promise<MakeScene> {
   if (puzzle === "pyraminx1")
@@ -41,6 +42,15 @@ function loadScene(puzzle: PuzzleKind): Promise<MakeScene> {
       ([{ PyraminxScene }, { applyPyraMove, cutOf }, { PYRA_2_STICKERS }]) =>
         (el, colors, state, options) =>
           new PyraminxScene(el, colors, state, { ...options, shape: { stickers: PYRA_2_STICKERS, apply: applyPyraMove, cut: cutOf } }),
+    );
+  if (puzzle === "cornerTwist")
+    return Promise.all([import("../three/pyraminxScene"), import("../pyraminx/twist")]).then(
+      ([{ PyraminxScene }, { PYRA_TWIST_STICKERS, applyPyraTwistMove }]) =>
+        (el, colors, state, options) =>
+          new PyraminxScene(el, colors, state, {
+            ...options,
+            shape: { stickers: PYRA_TWIST_STICKERS, apply: applyPyraTwistMove, cut: () => "corner" },
+          }),
     );
   if (puzzle === "pyraminx")
     return import("../three/pyraminxScene").then(
@@ -88,7 +98,7 @@ export interface Cube3DProps {
   fromBelow?: boolean;
   /** Colored plastic pieces with no black body, like a stickerless speed cube. */
   stickerless?: boolean;
-  /** A pyraminx (or a one-piece or two-layer one) or a small cuboid instead of a cube; the state and moves are that puzzle's. */
+  /** A pyraminx (or a one-piece, two-layer or corner twist one) or a small cuboid instead of a cube; the state and moves are that puzzle's. */
   puzzle?: PuzzleKind;
   label: string;
   timing?: Timing;

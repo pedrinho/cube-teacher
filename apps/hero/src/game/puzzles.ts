@@ -4,6 +4,7 @@ import type { Color, Move } from "cube-kit/cube/model";
 import { PYRA_SOLVED, applyPyraMove, isPyraSolved, type PyraMove } from "cube-kit/pyraminx/model";
 import { PYRA_1_SOLVED, applyPyra1Move, isPyra1Solved } from "cube-kit/pyraminx/one";
 import { PYRA_2_SOLVED, applyPyra2Move, isPyra2Solved } from "cube-kit/pyraminx/two";
+import { PYRA_TWIST_SOLVED, applyPyraTwistMove, isPyraTwistSolved } from "cube-kit/pyraminx/twist";
 import {
   CUBE_1,
   CUBE_1x2,
@@ -33,7 +34,7 @@ import {
 } from "./lanes";
 
 export interface Puzzle extends Track {
-  id: CuboidId | "pyraminx1" | "pyraminx2" | "pyraminx";
+  id: CuboidId | "pyraminx1" | "pyraminx2" | "pyraminx" | "cornerTwist";
   /** Keys the puzzle always plays with, whatever the player chose: the 1x1x1's space bar. */
   fixedKeys?: Partial<KeyMap>;
   solved: string;
@@ -185,6 +186,20 @@ export const PYRA_THREE: Puzzle = {
   // Its songs only have pyraminx moves.
   apply: (state, move) => applyPyraMove(state, move as PyraMove),
   isSolved: isPyraSolved,
+  laneColor: PYRA_TWO.laneColor,
+};
+
+/**
+ * The corner twist pyraminx, all tips: its corners only twist in place, U, L, R and B, big notes
+ * since they're the whole puzzle. It isn't turned over either: the two-layer one's lanes.
+ */
+export const PYRA_TWIST: Puzzle = {
+  ...PYRAMINX_TRACK,
+  id: "cornerTwist",
+  solved: PYRA_TWIST_SOLVED,
+  // Its songs only have pyraminx moves.
+  apply: (state, move) => applyPyraTwistMove(state, move as PyraMove),
+  isSolved: isPyraTwistSolved,
   laneColor: PYRA_TWO.laneColor,
 };
 

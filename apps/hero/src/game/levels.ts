@@ -15,6 +15,7 @@ import {
   POCKET,
   PYRA_ONE,
   PYRA_THREE,
+  PYRA_TWIST,
   PYRA_TWO,
   TOWER,
   TOWER_3,
@@ -418,6 +419,42 @@ export const LEVELS: Level[] = [
       { title: "pyra3.s4", parts: [{ kind: "intuitive", moves: repeat("B R' B' R", 2) }] },
       { title: "pyra3.s5", parts: [{ kind: "intuitive", moves: parseAlg("L R U B") }] },
       { title: "pyra3.s6", parts: [{ kind: "intuitive", moves: parseAlg("u l r b") }] },
+    ],
+  },
+  {
+    id: "medium-corner-twist",
+    chapter: "medium",
+    title: "level.twist.title",
+    text: "level.twist.text",
+    about: "level.twist.about",
+    puzzle: PYRA_TWIST,
+    // The song played backwards, at its shortest: each corner twisted once. They're all twisted,
+    // so no corner's twist can solve it before the end.
+    scramble: parseAlg("U L' R B'"),
+    // The simplest pieces, at the 2x2x2's speed: the step up is the runs across the lanes.
+    bpm: 60,
+    // Every corner twists on its own, so all that counts is how far each goes round. U and L' three
+    // times come back; left to right twice (L U B R) is twice round each corner, and right to left
+    // twice brings them back; L R' and U B' three times come back too. L U' B R', across once more,
+    // twists each corner back, solving it on the last note.
+    sections: [
+      {
+        title: "twist.s1",
+        parts: [
+          { kind: "align", moves: repeat("U", 3) },
+          { kind: "align", moves: repeat("L'", 3) },
+        ],
+      },
+      { title: "twist.s2", parts: [{ kind: "intuitive", moves: repeat("L U B R", 2) }] },
+      { title: "twist.s3", parts: [{ kind: "intuitive", moves: repeat("R' B' U' L'", 2) }] },
+      {
+        title: "twist.s4",
+        parts: [
+          { kind: "intuitive", moves: repeat("L R'", 3) },
+          { kind: "intuitive", moves: repeat("U B'", 3) },
+        ],
+      },
+      { title: "twist.s5", parts: [{ kind: "intuitive", moves: parseAlg("L U' B R'") }] },
     ],
   },
 ];

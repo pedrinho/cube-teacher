@@ -5,7 +5,9 @@
 // Stickerless has no body: the cut is closed with the colors of the pieces next to it, darker,
 // like the inside walls of the stickerless cube. The turn queue works like the cube's. It can also
 // draw a puzzle shaped like a pyraminx with other stickers and turns, like the one-piece pyraminx,
-// whose every move turns it whole.
+// whose every move turns it whole, or the corner twist, whose corners turn on their own: each is
+// the part of the puzzle nearer to it than to any other corner, cut where it meets the others,
+// halfway between.
 import {
   AmbientLight,
   BufferGeometry,
@@ -14,6 +16,7 @@ import {
   DoubleSide,
   Float32BufferAttribute,
   Group,
+  Matrix4,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
@@ -29,6 +32,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import {
   CORNERS,
   CORNER_POS,
+  FACE_CORNERS,
   PYRA_FACES,
   PYRA_STICKERS,
   applyPyraMove,
@@ -38,6 +42,7 @@ import {
   type Corner,
   type PieceKind,
   type PyraBase,
+  type PyraFace,
   type PyraMove,
   type PyraState,
   type Vec,
@@ -45,18 +50,21 @@ import {
 import type { StickerColors, Visible } from "./cubeScene";
 
 /**
+ * Where a move cuts: how far along its corner's axis (see cutOf), "corner" when its corner turns
+ * on its own (the part of the puzzle nearer to it than to any other corner), or null when it turns
+ * the whole puzzle.
+ */
+export type PyraCut = number | "corner" | null;
+
+/**
  * What the scene draws: its stickers (each an outline on the surface, empty for one not drawn),
- * how a move changes the state, and where a move cuts.
+ * how a move changes the state, and where a move cuts. Stickerless cuts across an axis are closed
+ * with the pyraminx's pieces, so a shape that cuts that way has its stickers.
  */
 export interface PyraShape {
   stickers: readonly { outline: readonly Vec[]; center: Vec; normal: Vec }[];
   apply: (state: PyraState, move: PyraMove) => PyraState;
-  /**
-   * How far along its corner's axis a move cuts (see cutOf), or null when it turns the whole
-   * puzzle. Stickerless cuts are closed with the pyraminx's pieces, so a shape that cuts has its
-   * stickers.
-   */
-  cut: (base: PyraBase) => number | null;
+  cut: (base: PyraBase) => PyraCut;
 }
 
 const PYRAMINX: PyraShape = {
@@ -82,6 +90,15 @@ const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
 
 const corner = (c: Corner) => new Vector3(...CORNER_POS[c]).multiplyScalar(SIZE);
 const middle = (pts: Vector3[]) => pts.reduce((sum, p) => sum.add(p), new Vector3()).divideScalar(pts.length);
+
+/** The corner a point is nearest to. */
+const nearestCorner = (p: Vec) => {
+  const v = new Vector3(...p);
+  return CORNERS.reduce((best, c) => (v.dot(corner(c)) > v.dot(corner(best)) ? c : best));
+};
+
+/** The plane halfway between two corners, through the center: what's on `from`'s side is kept. */
+const between = (from: Corner, to: Corner) => new Plane(corner(from).sub(corner(to)).normalize(), 0);
 
 /**
  * Triangles as one geometry, each wound so it faces `out` (away from the center unless given).
@@ -194,6 +211,8 @@ interface Turn {
   stickers: Mesh[];
   /** Stickerless: the two sides of the cut. */
   caps: Mesh[];
+  /** Where the turning part of the body is clipped, as it starts: the planes go round with it. */
+  planes: Plane[];
   pivot: Group;
   axis: Vector3;
   angle: number;
@@ -215,8 +234,6 @@ export class PyraminxScene {
   private body: Mesh;
   private still: Mesh;
   private turning: Mesh;
-  private stillCut = new Plane();
-  private turningCut = new Plane();
   private resize: ResizeObserver;
   private shape: PyraShape;
 
@@ -249,8 +266,7 @@ export class PyraminxScene {
 
     for (const [name, value] of Object.entries(colors))
       if (name !== "body") this.materials[name] = new MeshBasicMaterial({ color: new Color(value), vertexColors: this.stickerless });
-    const plastic = (clippingPlanes: Plane[]) =>
-      new MeshStandardMaterial({ color: new Color(colors.body), roughness: 0.8, metalness: 0, side: DoubleSide, clippingPlanes });
+    const plastic = () => new MeshStandardMaterial({ color: new Color(colors.body), roughness: 0.8, metalness: 0, side: DoubleSide });
 
     this.scene.add(new AmbientLight(0xffffff, 1.2));
     const light = new DirectionalLight(0xffffff, 2.2);
@@ -259,9 +275,9 @@ export class PyraminxScene {
     this.scene.add(this.root);
 
     const tetra = facing(CORNERS.map((c) => CORNERS.filter((o) => o !== c).map(corner)));
-    this.body = new Mesh(tetra, plastic([]));
-    this.still = new Mesh(tetra, plastic([this.stillCut]));
-    this.turning = new Mesh(tetra, plastic([this.turningCut]));
+    this.body = new Mesh(tetra, plastic());
+    this.still = new Mesh(tetra, plastic());
+    this.turning = new Mesh(tetra, plastic());
     this.body.visible = !this.stickerless;
     this.still.visible = this.turning.visible = false;
     this.root.add(this.body, this.still, this.turning);
@@ -309,11 +325,35 @@ export class PyraminxScene {
   }
 
   /**
+   * Where a corner meets the others when it turns on its own: on each plane halfway between it and
+   * another corner, a triangle for each face the two share, from the middle of their side to the
+   * middle of the face and the puzzle's center. Above it is the corner's sticker on that face,
+   * below it the other corner's.
+   */
+  private cornerParts(c: Corner): CutPart[] {
+    const sticker = (face: PyraFace, owner: Corner) => {
+      const normal = middle(FACE_CORNERS[face].map(corner)).normalize();
+      return this.shape.stickers.findIndex(
+        (s) => s.outline.length > 0 && new Vector3(...s.normal).dot(normal) > 0.99 && nearestCorner(s.center) === owner,
+      );
+    };
+    const parts: CutPart[] = [];
+    for (const o of CORNERS.filter((o) => o !== c)) {
+      const side = middle([corner(c), corner(o)]);
+      for (const face of PYRA_FACES) {
+        const corners = FACE_CORNERS[face];
+        if (!corners.includes(c) || !corners.includes(o)) continue;
+        parts.push({ triangle: [side, middle(corners.map(corner)), new Vector3()], above: sticker(face, c), below: sticker(face, o) });
+      }
+    }
+    return parts;
+  }
+
+  /**
    * Stickerless: the two sides of a move's cut, each in the darkened colors of the pieces next
    * to it. The turning side faces away from the corner, the still side toward it.
    */
-  private caps(base: PyraBase, axis: Vector3): [Mesh, Mesh] {
-    const parts = cutParts(base);
+  private caps(parts: CutPart[], axis: Vector3): [Mesh, Mesh] {
     const side = (pick: (p: CutPart) => number, out: Vector3) =>
       new Mesh(
         facing(
@@ -327,6 +367,13 @@ export class PyraminxScene {
         this.capMaterial,
       );
     return [side((p) => p.above, axis.clone().negate()), side((p) => p.below, axis)];
+  }
+
+  /** Clips one of the body's two parts: it keeps what's on the side of every plane, or with `any`, of one. */
+  private clip(part: Mesh, planes: Plane[], any = false) {
+    const material = part.material as MeshStandardMaterial;
+    material.clippingPlanes = planes;
+    material.clipIntersection = any;
   }
 
   private fit() {
@@ -400,26 +447,40 @@ export class PyraminxScene {
       return;
     }
     item.onStep?.(item.index);
-    const unit = new Vector3(...CORNER_POS[cornerOf(item.move.base)]);
+    const c = cornerOf(item.move.base);
+    const unit = new Vector3(...CORNER_POS[c]);
     const cut = this.shape.cut(item.move.base);
-    const stickers = this.stickers.filter((_, i) => cut === null || new Vector3(...this.shape.stickers[i].center).dot(unit) > cut);
+    const turns = ({ center }: PyraShape["stickers"][number]) =>
+      cut === null || (cut === "corner" ? nearestCorner(center) === c : new Vector3(...center).dot(unit) > cut);
+    const stickers = this.stickers.filter((_, i) => turns(this.shape.stickers[i]));
     this.paint();
 
     const pivot = new Group();
     this.root.add(pivot);
+    let planes: Plane[] = [];
     if (cut === null) {
       // The whole puzzle turns: the body goes round in one piece.
       pivot.attach(this.body);
     } else {
-      // The body splits where the layer ends; the turning part goes round with the stickers.
-      this.turningCut.set(unit, -cut * SIZE);
-      this.stillCut.set(unit.clone().negate(), cut * SIZE);
+      // The body splits where the layer ends; the turning part goes round with the stickers. A
+      // corner turning on its own keeps what's nearer to it than to every other corner, and the
+      // still part what's nearer to any other.
+      if (cut === "corner") {
+        const others = CORNERS.filter((o) => o !== c);
+        planes = others.map((o) => between(c, o));
+        this.clip(this.still, others.map((o) => between(o, c)), true);
+      } else {
+        planes = [new Plane(unit, -cut * SIZE)];
+        this.clip(this.still, [new Plane(unit.clone().negate(), cut * SIZE)]);
+      }
+      this.clip(this.turning, planes.map((p) => p.clone()));
       this.body.visible = false;
       this.still.visible = this.turning.visible = !this.stickerless;
       pivot.attach(this.turning);
     }
     for (const s of stickers) pivot.attach(s);
-    const caps = this.stickerless && cut !== null ? this.caps(item.move.base, unit) : [];
+    const caps =
+      this.stickerless && cut !== null ? this.caps(cut === "corner" ? this.cornerParts(c) : cutParts(item.move.base), unit) : [];
     if (caps.length) {
       pivot.add(caps[0]);
       this.root.add(caps[1]);
@@ -434,6 +495,7 @@ export class PyraminxScene {
       group: item.group,
       stickers,
       caps,
+      planes,
       pivot,
       axis: unit,
       // A third of a turn; clockwise seen from the corner is a negative rotation.
@@ -450,6 +512,11 @@ export class PyraminxScene {
     if (!turn) return;
     const t = turn.duration === 0 ? 1 : Math.max(0, Math.min(1, (performance.now() - turn.start) / turn.duration));
     turn.pivot.quaternion.copy(new Quaternion().setFromAxisAngle(turn.axis, turn.angle * ease(t)));
+    // Clipping planes are fixed in the world, so the turning part's are turned with it. (A cut
+    // across the axis looks the same at any angle; a corner's planes don't.)
+    const turned = new Matrix4().makeRotationFromQuaternion(turn.pivot.quaternion);
+    const clipped = (this.turning.material as MeshStandardMaterial).clippingPlanes ?? [];
+    turn.planes.forEach((p, k) => clipped[k]?.copy(p).applyMatrix4(turned));
     if (t >= 1) {
       this.completeTurn();
       this.next();
