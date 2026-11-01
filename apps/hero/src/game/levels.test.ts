@@ -7,13 +7,28 @@ import { keysFor } from "./puzzles";
 const keys = DEFAULT_KEYS;
 
 describe("levels", () => {
-  it.each(LEVELS.map((l) => [l.id, l] as const))("%s is played on its puzzle's keys, every section ending solved", (_, level) => {
+  it.each(LEVELS.map((l) => [l.id, l] as const))("%s is played on its puzzle's keys", (_, level) => {
     const chart = levelChart(level);
     const played = keysFor(level.puzzle, keys);
     const puzzleKeys = new Set(level.puzzle.letters.map((l) => played[l]));
     expect(chart.notes.length).toBeGreaterThan(10);
     for (const note of chart.notes) expect(puzzleKeys.has(keyFor(note.move, played))).toBe(true);
-    for (const section of chart.sections) expect(level.puzzle.isSolved(section.after)).toBe(true);
+  });
+
+  it("starts chapter 1 solved and brings it back every section; from chapter 2 on, starts scrambled and solves it on the last note", () => {
+    for (const level of LEVELS) {
+      const chart = levelChart(level);
+      const { isSolved, solved } = level.puzzle;
+      if (level.chapter === "easy") {
+        expect(chart.start).toBe(solved);
+        for (const section of chart.sections) expect(isSolved(section.after)).toBe(true);
+      } else {
+        expect(isSolved(chart.start)).toBe(false);
+        expect(chart.notes.slice(0, -1).some((n) => isSolved(n.after))).toBe(false);
+        // Back the way it was, not just solved with the cube held some other way.
+        expect(chart.end).toBe(solved);
+      }
+    }
   });
 
   it("plays the 1x1x1 on the space bar, the 1x1x2 and 1x1x4 on U and D, the 1x1x3 on U, D and E, the 1x2x2 on R, L, U and D, the 1x2x3 on those and E, the 1x3x3 on those, E and M, the 2x2x3 on U, D, E, R and F, and the 2x2x2 on R, U, F and L", () => {
@@ -69,9 +84,6 @@ describe("levels", () => {
     expect(new Set(pocketChart.notes.map((n) => keyFor(n.move, pocketKeys)))).toEqual(new Set(["KeyR", "KeyU", "KeyF", "KeyL"]));
     expect(new Set(pocketChart.notes.map((n) => n.move.amount))).toEqual(new Set([1, 2, 3]));
     expect(holdCount(pocketChart)).toBe(pocketChart.notes.filter((n) => n.move.amount === 2).length);
-    // It's a real cube, so its sections come back to where they started, not just to a solved
-    // cube turned some other way.
-    for (const section of pocketChart.sections) expect(section.after).toBe(pocket.puzzle.solved);
   });
 
   it("teaches in chapter 1, with a tip for every part, and from chapter 2 on just plays", () => {

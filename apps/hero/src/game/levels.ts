@@ -1,8 +1,9 @@
 // The levels, in four chapters from easy to extreme. Each is a song written out by hand for a
-// puzzle, always at the same speed. Chapter 1's are tutorials, with a tip for every part of the
-// song; from chapter 2 on there are no tutorials and no tips, only what the level is about. Each
-// level opens once the one before it has three stars.
-import { parseAlg } from "cube-kit/cube/model";
+// puzzle, always at the same speed. Chapter 1's are tutorials: the puzzle starts solved, every
+// section brings it back, and every part of the song has a tip. From chapter 2 on there are no
+// tutorials and no tips, only what the level is about, and the puzzle comes scrambled: the song
+// solves it, on its last note. Each level opens once the one before it has three stars.
+import { parseAlg, type Move } from "cube-kit/cube/model";
 import type { MessageKey } from "../i18n/en";
 import type { Progress } from "../settings";
 import { layOut, type Chart, type SectionPlan } from "./chart";
@@ -19,6 +20,8 @@ export interface Level {
   text: MessageKey;
   tutorial?: boolean;
   puzzle: Puzzle;
+  /** From chapter 2 on: the turns that scramble the puzzle before the song, which solves it. */
+  scramble?: Move[];
   bpm: number;
   /** What the level is about, on the screen before it. */
   about: MessageKey;
@@ -270,10 +273,13 @@ export const LEVELS: Level[] = [
     text: "level.pocket.text",
     about: "level.pocket.about",
     puzzle: POCKET,
+    // The song played backwards, at its shortest.
+    scramble: parseAlg("R F R U' F2 U F' U' R'"),
     // A real cube now, and Medium: a quarter turn a second, the tap-heavy songs of real solves.
     bpm: 60,
-    // Every section comes back to where it started. R L' turns the whole cube (x), back after four;
-    // R U R' U' comes back after six, R2 U2 and R2 F2 after three.
+    // R and F' four times, and R L' four times (the whole cube turns over and back), come back to
+    // where they started: a warm-up that shows the scramble from every side. R U R' U' and R' F R F'
+    // three times each, then R2 U2 and R2 F2 twice each, solve it.
     sections: [
       {
         title: "pocket.s1",
@@ -283,25 +289,21 @@ export const LEVELS: Level[] = [
         ],
       },
       { title: "pocket.s2", parts: [{ kind: "intuitive", moves: repeat("R L'", 4) }] },
+      { title: "pocket.s3", parts: [{ kind: "intuitive", moves: repeat("R U R' U'", 3) }] },
+      { title: "pocket.s4", parts: [{ kind: "intuitive", moves: repeat("R' F R F'", 3) }] },
       {
-        title: "pocket.s3",
+        title: "pocket.s5",
         parts: [
-          { kind: "intuitive", moves: repeat("R U R' U'", 3) },
-          { kind: "intuitive", moves: repeat("R U R' U'", 3) },
-        ],
-      },
-      {
-        title: "pocket.s4",
-        parts: [
-          { kind: "intuitive", moves: repeat("R2 U2", 3) },
-          { kind: "intuitive", moves: repeat("R2 F2", 3) },
+          { kind: "intuitive", moves: repeat("R2 U2", 2) },
+          { kind: "intuitive", moves: repeat("R2 F2", 2) },
         ],
       },
     ],
   },
 ];
 
-export const levelChart = (level: Level): Chart => layOut(level.puzzle, level.puzzle.solved, level.sections);
+export const levelChart = ({ puzzle, scramble = [], sections }: Level): Chart =>
+  layOut(puzzle, scramble.reduce(puzzle.apply, puzzle.solved), sections);
 
 /** Stars a level needs to count as passed and open the next one. */
 export const PASS_STARS = 3;
