@@ -5,7 +5,7 @@ import { parseAlg } from "cube-kit/cube/model";
 import type { MessageKey } from "../i18n/en";
 import type { Progress } from "../settings";
 import { layOut, type Chart, type SectionPlan } from "./chart";
-import { ONE, TOWER, TOWER_3, TOWER_4, WALL, WALL_3, type Puzzle } from "./puzzles";
+import { FLOPPY, ONE, TOWER, TOWER_3, TOWER_4, WALL, WALL_3, type Puzzle } from "./puzzles";
 
 export const CHAPTERS = ["easy", "medium", "hard", "extreme"] as const;
 export type Chapter = (typeof CHAPTERS)[number];
@@ -233,6 +233,34 @@ export const LEVELS: Level[] = [
       },
       { title: "wall3.s4", parts: [{ kind: "intuitive", moves: repeat("R2 E2", 4), tip: "wall3.t4" }] },
       { title: "wall3.s5", parts: [{ kind: "intuitive", moves: repeat("R2 U2 R2 D2", 3), tip: "wall3.t5" }] },
+    ],
+  },
+  {
+    id: "easy-1x3x3",
+    chapter: "easy",
+    kind: "song",
+    tutorial: true,
+    title: "level.floppy.title",
+    text: "level.floppy.text",
+    about: "level.floppy.about",
+    puzzle: FLOPPY,
+    // The 1x2x3's speed and length again: the middle column, M2, is the step up.
+    bpm: 50,
+    // Every section turns it back in line. R2, M2 and L2 together turn the whole thing upside down.
+    // M2 E2 swaps the cubies around the center across it, and M2 U2 M2 D2 the corners left and right,
+    // turned around: twice and they're back. R2 U2 R2 U2 takes three corners around.
+    sections: [
+      { title: "floppy.s1", parts: [{ kind: "align", moves: repeat("M2", 2), tip: "floppy.t1" }] },
+      {
+        title: "floppy.s2",
+        parts: [
+          { kind: "intuitive", moves: parseAlg("R2 M2 L2"), tip: "floppy.t2" },
+          { kind: "intuitive", moves: parseAlg("L2 M2 R2"), tip: "floppy.t2b" },
+        ],
+      },
+      { title: "floppy.s3", parts: [{ kind: "intuitive", moves: repeat("M2 E2", 2), tip: "floppy.t3" }] },
+      { title: "floppy.s4", parts: [{ kind: "intuitive", moves: repeat("M2 U2 M2 D2", 2), tip: "floppy.t4" }] },
+      { title: "floppy.s5", parts: [{ kind: "intuitive", moves: repeat("R2 U2 R2 U2", 3), tip: "floppy.t5" }] },
     ],
   },
   REAL_CUBES,

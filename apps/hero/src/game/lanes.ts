@@ -3,8 +3,8 @@
 // with their face, and whole-cube turns take every lane. On the pyraminx there is one per corner,
 // for its turns and its tip's. The 1x1x2 has a lane for its top and one for its bottom (the 1x1x3's
 // middle layer, E, comes down D's lane, as on the cube, and the 1x1x4's wide u and d their face's),
-// the 1x2x2 one for each side (the 1x2x3's middle row, E, in D's), and the 1x1x1 a single wide one,
-// played with the space bar.
+// the 1x2x2 one for each side (the 1x2x3's middle row, E, in D's, and the 1x3x3's middle column, M,
+// in L's), and the 1x1x1 a single wide one, played with the space bar.
 import type { BaseMove, Face, Move } from "cube-kit/cube/model";
 
 /** Lanes from left to right: L and R on their own sides, the other faces in between. */
@@ -100,6 +100,9 @@ export const CUBE_1x2x2_TRACK: Track = { lanes: ["L", "U", "D", "R"], letters: [
 
 /** The 1x2x3 is a 1x2x2 with a middle row: E2, outlined notes in D's lane. */
 export const CUBE_1x2x3_TRACK: Track = { lanes: ["L", "U", "D", "R"], letters: ["U", "D", "E", "L", "R"], laneOf, shapeOf };
+
+/** The 1x3x3 is a 1x2x3 with a middle column: M2, outlined notes in L's lane. */
+export const CUBE_1x3x3_TRACK: Track = { lanes: ["L", "U", "D", "R"], letters: ["U", "D", "E", "L", "R", "M"], laneOf, shapeOf };
 
 /** Pyraminx moves are U L R B; the tips (u l r b) use their corner's lane and letter. */
 export const PYRAMINX_TRACK: Track = {

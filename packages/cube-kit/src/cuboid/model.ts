@@ -1,5 +1,5 @@
-// Sticker-level model of a small cuboid: the 1x1x1 to 1x1x4, the 1x2x2 and the 1x2x3 of Cube
-// Hero's first levels.
+// Sticker-level model of a small cuboid: the 1x1x1 to 1x1x4, the 1x2x2, the 1x2x3 and the 1x3x3 of
+// Cube Hero's first levels.
 //
 // Built from its geometry, like the 3x3's: cubies sit on a grid centered on the origin (at halves
 // when a side is even), every outer side of a cubie has a sticker, and moves are permutations of
@@ -10,6 +10,8 @@
 // D does. From three layers up, wide moves (u, d…) turn a face's layer and the one next to it: on a
 // 1x1x4, the top or bottom two. A 1x2x2 standing up, two by two seen from the front, only turns its
 // sides halfway: R2, L2, U2 and D2. A 1x2x3 standing up, three tall, also turns its middle row: E2.
+// A 1x3x3 standing up, three by three, its middle column too: M2. Its front is square, but one cubie
+// deep, so a quarter turn of it only turns the whole thing.
 import { DEFAULT_SCHEME, FACES, type BaseMove, type Face, type Move, type Vec } from "../cube/model";
 
 const NORMAL: Record<Face, Vec> = {
@@ -185,6 +187,8 @@ export const CUBE_1x4 = makeCuboid([1, 4, 1]);
 export const CUBE_1x2x2 = makeCuboid([2, 2, 1]);
 /** Six cubies standing up: two wide, three tall, one deep. */
 export const CUBE_1x2x3 = makeCuboid([2, 3, 1]);
+/** Nine cubies standing up, three by three: one deep. */
+export const CUBE_1x3x3 = makeCuboid([3, 3, 1]);
 
 export const CUBOIDS = {
   "1x1x1": CUBE_1,
@@ -193,5 +197,6 @@ export const CUBOIDS = {
   "1x1x4": CUBE_1x4,
   "1x2x2": CUBE_1x2x2,
   "1x2x3": CUBE_1x2x3,
+  "1x3x3": CUBE_1x3x3,
 } as const;
 export type CuboidId = keyof typeof CUBOIDS;

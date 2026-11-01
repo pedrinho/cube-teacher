@@ -1,13 +1,14 @@
 // The puzzles a song can be played on: how a move changes the state, how moves come down the
 // highway, the color of each lane, and which keys play it.
 import { SOLVED, applyMove, centers, isSolved as isCubeSolved, type Color, type Move } from "cube-kit/cube/model";
-import { CUBE_1, CUBE_1x2, CUBE_1x2x2, CUBE_1x2x3, CUBE_1x3, CUBE_1x4, type CuboidId } from "cube-kit/cuboid/model";
+import { CUBE_1, CUBE_1x2, CUBE_1x2x2, CUBE_1x2x3, CUBE_1x3, CUBE_1x3x3, CUBE_1x4, type CuboidId } from "cube-kit/cuboid/model";
 import { PYRA_SOLVED, applyPyraMove, isPyraSolved, type PyraMove } from "cube-kit/pyraminx/model";
 import {
   CUBE_1_TRACK,
   CUBE_1x2_TRACK,
   CUBE_1x2x2_TRACK,
   CUBE_1x2x3_TRACK,
+  CUBE_1x3x3_TRACK,
   CUBE_1x3_TRACK,
   CUBE_1x4_TRACK,
   CUBE_TRACK,
@@ -126,6 +127,17 @@ export const WALL_3: Puzzle = {
   solved: CUBE_1x2x3.solved,
   apply: CUBE_1x2x3.apply,
   isSolved: CUBE_1x2x3.isSolved,
+  laneColor: (_, lane) => WALL_COLORS[lane]!,
+};
+
+/** The 1x3x3, the floppy cube, has the 1x2x3's lanes too: its middle column comes down L's, orange. */
+export const FLOPPY: Puzzle = {
+  ...CUBE_1x3x3_TRACK,
+  id: "1x3x3",
+  keySet: "cube",
+  solved: CUBE_1x3x3.solved,
+  apply: CUBE_1x3x3.apply,
+  isSolved: CUBE_1x3x3.isSolved,
   laneColor: (_, lane) => WALL_COLORS[lane]!,
 };
 
