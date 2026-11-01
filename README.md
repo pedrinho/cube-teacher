@@ -44,8 +44,8 @@ The songs are levels, in four chapters from Easy to Extreme, and each opens once
 has three stars. Chapter 1 starts with a cube of just one piece and builds up, one new move at a
 time, through the 1×1×2 to 1×1×4 towers, the 1×2×2, 1×2×3 and 1×3×3, and the 2×2×3. Chapter 2
 opens with the 2×2×2, the first real cube, then pyraminxes: one of a single piece, the Corner Twist
-(just four corners that each twist on their own), the pyraminx itself, whose tips are small notes in
-their corner's lane, and one of two layers (its tips glued on). From chapter 2 on there are no hints,
+(just four corners that each twist on their own), one of two layers (its tips glued on) and three, the
+pyraminx itself, whose tips are small notes in their corner's lane. From chapter 2 on there are no hints,
 and each puzzle comes scrambled: the song solves it. The keys can be changed on the levels screen.
 
 ## Development

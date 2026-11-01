@@ -401,6 +401,34 @@ export const LEVELS: Level[] = [
     ],
   },
   {
+    id: "medium-pyraminx2",
+    chapter: "medium",
+    title: "level.pyra2.title",
+    text: "level.pyra2.text",
+    about: "level.pyra2.about",
+    puzzle: PYRA_TWO,
+    // The song played backwards, at its shortest.
+    scramble: parseAlg("R' U R' L B' R U L"),
+    // Two layers now, still at the 2x2x2's speed.
+    bpm: 60,
+    // U and L' three times come back to where they started: a warm-up. R U R' U' and its mirror
+    // L' U' L U come back after three, and so does R' L R L', so twice each is the same as once the
+    // other way; with U L R B, they solve it.
+    sections: [
+      {
+        title: "pyra2.s1",
+        parts: [
+          { kind: "align", moves: repeat("U", 3) },
+          { kind: "align", moves: repeat("L'", 3) },
+        ],
+      },
+      { title: "pyra2.s2", parts: [{ kind: "intuitive", moves: repeat("R U R' U'", 2) }] },
+      { title: "pyra2.s3", parts: [{ kind: "intuitive", moves: repeat("L' U' L U", 2) }] },
+      { title: "pyra2.s4", parts: [{ kind: "intuitive", moves: repeat("R' L R L'", 2) }] },
+      { title: "pyra2.s5", parts: [{ kind: "intuitive", moves: parseAlg("U L R B") }] },
+    ],
+  },
+  {
     id: "medium-pyraminx3",
     chapter: "medium",
     title: "level.pyra3.title",
@@ -427,34 +455,6 @@ export const LEVELS: Level[] = [
       { title: "pyra3.s4", parts: [{ kind: "intuitive", moves: repeat("B R' B' R", 2) }] },
       { title: "pyra3.s5", parts: [{ kind: "intuitive", moves: parseAlg("L R U B") }] },
       { title: "pyra3.s6", parts: [{ kind: "intuitive", moves: parseAlg("u l r b") }] },
-    ],
-  },
-  {
-    id: "medium-pyraminx2",
-    chapter: "medium",
-    title: "level.pyra2.title",
-    text: "level.pyra2.text",
-    about: "level.pyra2.about",
-    puzzle: PYRA_TWO,
-    // The song played backwards, at its shortest.
-    scramble: parseAlg("R' U R' L B' R U L"),
-    // Its tips glued on again, still at the 2x2x2's speed.
-    bpm: 60,
-    // U and L' three times come back to where they started: a warm-up. R U R' U' and its mirror
-    // L' U' L U come back after three, and so does R' L R L', so twice each is the same as once the
-    // other way; with U L R B, they solve it.
-    sections: [
-      {
-        title: "pyra2.s1",
-        parts: [
-          { kind: "align", moves: repeat("U", 3) },
-          { kind: "align", moves: repeat("L'", 3) },
-        ],
-      },
-      { title: "pyra2.s2", parts: [{ kind: "intuitive", moves: repeat("R U R' U'", 2) }] },
-      { title: "pyra2.s3", parts: [{ kind: "intuitive", moves: repeat("L' U' L U", 2) }] },
-      { title: "pyra2.s4", parts: [{ kind: "intuitive", moves: repeat("R' L R L'", 2) }] },
-      { title: "pyra2.s5", parts: [{ kind: "intuitive", moves: parseAlg("U L R B") }] },
     ],
   },
 ];
