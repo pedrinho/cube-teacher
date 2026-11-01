@@ -4,15 +4,15 @@
 // top and one for its bottom (the 1x1x3's middle layer, E, comes down D's lane, and the 1x1x4's wide
 // u and d their face's), the 1x2x2 one for each side (the 1x2x3's middle row, E, in D's, and the
 // 1x3x3's middle column, M, in L's), the 2x2x3 one for its top, front, bottom and right (E in D's
-// again), the 2x2x2 its left, top, front and right, the pyraminxes one per corner, and the 1x1x1 a
-// single wide one, played with the space bar.
+// again), the 2x2x2 its left, top, front and right, the pyraminxes one per corner (a tip in its
+// corner's), and the 1x1x1 a single wide one, played with the space bar.
 import type { BaseMove, Face, Move } from "cube-kit/cube/model";
 
 /** Lanes from left to right: L and R on their own sides, the other faces in between. */
 export const LANES = ["L", "U", "F", "D", "B", "R"] as const satisfies readonly Face[];
 export type Lane = (typeof LANES)[number];
 
-export type NoteShape = "face" | "wide" | "slice" | "rotation";
+export type NoteShape = "face" | "wide" | "slice" | "rotation" | "tip";
 
 const SLICE_LANE: Partial<Record<BaseMove, Lane>> = { M: "L", E: "D", S: "F" };
 
@@ -108,9 +108,15 @@ export const CUBE_2x2x2_TRACK: Track = { lanes: ["L", "U", "F", "R"], letters: [
 
 /**
  * The pyraminxes turn around one of their corners at a time, U, L, R or B: a lane per corner, left
- * to right as they're held (front left, top, back, front right).
+ * to right as they're held (front left, top, back, front right). A tip (u l r b) comes down its
+ * corner's lane, a small note played with the same key.
  */
-export const PYRAMINX_TRACK: Track = { lanes: ["L", "U", "B", "R"], letters: ["U", "L", "R", "B"], laneOf, shapeOf };
+export const PYRAMINX_TRACK: Track = {
+  lanes: ["L", "U", "B", "R"],
+  letters: ["U", "L", "R", "B"],
+  laneOf,
+  shapeOf: (move) => (move.base === move.base.toUpperCase() ? "face" : "tip"),
+};
 
 /** The lane where a key's notes come down ("all" for X, Y and Z), if the puzzle plays it. */
 export function laneOfKey(code: string, keys: KeyMap, track: Track): Lane | "all" | null {

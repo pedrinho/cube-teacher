@@ -8,7 +8,21 @@ import { parseAlg, type Move } from "cube-kit/cube/model";
 import type { MessageKey } from "../i18n/en";
 import type { Progress } from "../settings";
 import { layOut, type Chart, type SectionPlan } from "./chart";
-import { FLOPPY, ONE, PILLAR, POCKET, PYRA_ONE, PYRA_TWO, TOWER, TOWER_3, TOWER_4, WALL, WALL_3, type Puzzle } from "./puzzles";
+import {
+  FLOPPY,
+  ONE,
+  PILLAR,
+  POCKET,
+  PYRA_ONE,
+  PYRA_THREE,
+  PYRA_TWO,
+  TOWER,
+  TOWER_3,
+  TOWER_4,
+  WALL,
+  WALL_3,
+  type Puzzle,
+} from "./puzzles";
 
 export const CHAPTERS = ["easy", "medium", "hard", "extreme"] as const;
 export type Chapter = (typeof CHAPTERS)[number];
@@ -375,6 +389,35 @@ export const LEVELS: Level[] = [
       { title: "pyra2.s3", parts: [{ kind: "intuitive", moves: repeat("L' U' L U", 2) }] },
       { title: "pyra2.s4", parts: [{ kind: "intuitive", moves: repeat("R' L R L'", 2) }] },
       { title: "pyra2.s5", parts: [{ kind: "intuitive", moves: parseAlg("U L R B") }] },
+    ],
+  },
+  {
+    id: "medium-pyraminx3",
+    chapter: "medium",
+    title: "level.pyra3.title",
+    text: "level.pyra3.text",
+    about: "level.pyra3.about",
+    puzzle: PYRA_THREE,
+    // The song played backwards, at its shortest: its layers, then its tips.
+    scramble: parseAlg("L R' L' R' L' R B' U' u' l' r' b'"),
+    // The tips are the step up; still at the 2x2x2's speed.
+    bpm: 60,
+    // u and r' three times come back to where they started: a warm-up for the tips. U R' U' R, its
+    // mirror U' L U L' and B R' B' R come back after three, so twice each is once the other way;
+    // with L R U B they solve the layers, and every tip then solves it, on the last one.
+    sections: [
+      {
+        title: "pyra3.s1",
+        parts: [
+          { kind: "align", moves: repeat("u", 3) },
+          { kind: "align", moves: repeat("r'", 3) },
+        ],
+      },
+      { title: "pyra3.s2", parts: [{ kind: "intuitive", moves: repeat("U R' U' R", 2) }] },
+      { title: "pyra3.s3", parts: [{ kind: "intuitive", moves: repeat("U' L U L'", 2) }] },
+      { title: "pyra3.s4", parts: [{ kind: "intuitive", moves: repeat("B R' B' R", 2) }] },
+      { title: "pyra3.s5", parts: [{ kind: "intuitive", moves: parseAlg("L R U B") }] },
+      { title: "pyra3.s6", parts: [{ kind: "intuitive", moves: parseAlg("u l r b") }] },
     ],
   },
 ];

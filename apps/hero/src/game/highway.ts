@@ -1,7 +1,7 @@
 // Draws the highway on a canvas: a strip of black cube plastic in perspective, with sticker gems
 // sliding down to a row of receptors. A gem shows its move; when the player has moved that letter
-// to another key, a small keycap on the gem shows the key. Receptors show their lane's key. The
-// 1x1x1's one lane is a space bar: a wide road, with bars for notes and a bar for its receptor. A
+// to another key, a small keycap on the gem shows the key. Receptors show their lane's key. A
+// pyraminx tip's gem is a small one. The 1x1x1's one lane is a space bar: a wide road, with bars for notes and a bar for its receptor. A
 // half turn has a tail: once hit, it glows down to the strike line while its key is held, and goes
 // gray if let go.
 import { moveToString, type Color } from "cube-kit/cube/model";
@@ -276,7 +276,7 @@ export class Highway {
 
     const lane = this.lanes.indexOf(note.lane);
     const x = this.laneX(lane, half);
-    const size = laneW * 0.8;
+    const size = laneW * 0.8 * (note.shape === "tip" ? 0.62 : 1);
     const h = note.shape === "wide" ? size * 0.95 : size * 0.72;
     const prime = note.move.amount === 3;
 

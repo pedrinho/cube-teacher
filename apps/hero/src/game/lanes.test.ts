@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BASE_MOVES, parseMove } from "cube-kit/cube/model";
 import {
   CUBE_1x2_TRACK,
+  PYRAMINX_TRACK,
   DEFAULT_KEYS,
   LANES,
   LETTERS,
@@ -23,6 +24,15 @@ describe("lanes", () => {
   it.each(BASE_MOVES)("%s has a lane", (base) => {
     const lane = laneOf({ base, amount: 1 });
     expect(lane === "all" || LANES.includes(lane)).toBe(true);
+  });
+
+  it("puts a pyraminx's tips in their corner's lane, as small notes", () => {
+    expect(["U", "l'", "B", "r"].map((m) => [PYRAMINX_TRACK.laneOf(parseMove(m)), PYRAMINX_TRACK.shapeOf(parseMove(m))])).toEqual([
+      ["U", "face"],
+      ["L", "tip"],
+      ["B", "face"],
+      ["R", "tip"],
+    ]);
   });
 
   it("puts slices and wide moves with their faces, and whole-cube turns everywhere", () => {

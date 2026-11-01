@@ -1,7 +1,7 @@
 // The puzzles a song can be played on: how a move changes the state, how moves come down the
 // highway, the color of each lane, and which keys play it.
 import type { Color, Move } from "cube-kit/cube/model";
-import type { PyraMove } from "cube-kit/pyraminx/model";
+import { PYRA_SOLVED, applyPyraMove, isPyraSolved, type PyraMove } from "cube-kit/pyraminx/model";
 import { PYRA_1_SOLVED, applyPyra1Move, isPyra1Solved } from "cube-kit/pyraminx/one";
 import { PYRA_2_SOLVED, applyPyra2Move, isPyra2Solved } from "cube-kit/pyraminx/two";
 import {
@@ -33,7 +33,7 @@ import {
 } from "./lanes";
 
 export interface Puzzle extends Track {
-  id: CuboidId | "pyraminx1" | "pyraminx2";
+  id: CuboidId | "pyraminx1" | "pyraminx2" | "pyraminx";
   /** Keys the puzzle always plays with, whatever the player chose: the 1x1x1's space bar. */
   fixedKeys?: Partial<KeyMap>;
   solved: string;
@@ -175,6 +175,17 @@ export const PYRA_TWO: Puzzle = {
   apply: (state, move) => applyPyra2Move(state, move as PyraMove),
   isSolved: isPyra2Solved,
   laneColor: (_, lane) => PYRA_ONE.laneColor(PYRA_ONE.solved, lane),
+};
+
+/** The pyraminx, its tips loose, isn't turned over either: the two-layer one's lanes. */
+export const PYRA_THREE: Puzzle = {
+  ...PYRAMINX_TRACK,
+  id: "pyraminx",
+  solved: PYRA_SOLVED,
+  // Its songs only have pyraminx moves.
+  apply: (state, move) => applyPyraMove(state, move as PyraMove),
+  isSolved: isPyraSolved,
+  laneColor: PYRA_TWO.laneColor,
 };
 
 /** The keys a puzzle is played with: the player's, with the puzzle's fixed keys on top. */
