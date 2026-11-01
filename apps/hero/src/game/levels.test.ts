@@ -74,6 +74,14 @@ describe("levels", () => {
     for (const section of pocketChart.sections) expect(section.after).toBe(pocket.puzzle.solved);
   });
 
+  it("teaches in chapter 1, with a tip for every part, and from chapter 2 on just plays", () => {
+    for (const level of LEVELS) {
+      const tutorial = level.chapter === "easy";
+      expect(level.tutorial ?? false).toBe(tutorial);
+      for (const part of level.sections.flatMap((s) => s.parts)) expect(part.tip !== undefined).toBe(tutorial);
+    }
+  });
+
   it("opens each level once the one before has three stars", () => {
     const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket] = LEVELS;
     const pass = { stars: 3, points: 500 };

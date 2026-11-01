@@ -1,6 +1,7 @@
 // The levels, in four chapters from easy to extreme. Each is a song written out by hand for a
-// puzzle, always at the same speed, with tips (the first ones are tutorials). Each level opens once
-// the one before it has three stars.
+// puzzle, always at the same speed. Chapter 1's are tutorials, with a tip for every part of the
+// song; from chapter 2 on there are no tutorials and no tips, only what the level is about. Each
+// level opens once the one before it has three stars.
 import { parseAlg } from "cube-kit/cube/model";
 import type { MessageKey } from "../i18n/en";
 import type { Progress } from "../settings";
@@ -265,7 +266,6 @@ export const LEVELS: Level[] = [
   {
     id: "medium-2x2x2",
     chapter: "medium",
-    tutorial: true,
     title: "level.pocket.title",
     text: "level.pocket.text",
     about: "level.pocket.about",
@@ -278,23 +278,23 @@ export const LEVELS: Level[] = [
       {
         title: "pocket.s1",
         parts: [
-          { kind: "align", moves: repeat("R", 4), tip: "pocket.t1" },
-          { kind: "align", moves: repeat("F'", 4), tip: "pocket.t1b" },
+          { kind: "align", moves: repeat("R", 4) },
+          { kind: "align", moves: repeat("F'", 4) },
         ],
       },
-      { title: "pocket.s2", parts: [{ kind: "intuitive", moves: repeat("R L'", 4), tip: "pocket.t2" }] },
+      { title: "pocket.s2", parts: [{ kind: "intuitive", moves: repeat("R L'", 4) }] },
       {
         title: "pocket.s3",
         parts: [
-          { kind: "intuitive", moves: repeat("R U R' U'", 3), tip: "pocket.t3" },
-          { kind: "intuitive", moves: repeat("R U R' U'", 3), tip: "pocket.t3b" },
+          { kind: "intuitive", moves: repeat("R U R' U'", 3) },
+          { kind: "intuitive", moves: repeat("R U R' U'", 3) },
         ],
       },
       {
         title: "pocket.s4",
         parts: [
-          { kind: "intuitive", moves: repeat("R2 U2", 3), tip: "pocket.t4" },
-          { kind: "intuitive", moves: repeat("R2 F2", 3), tip: "pocket.t4b" },
+          { kind: "intuitive", moves: repeat("R2 U2", 3) },
+          { kind: "intuitive", moves: repeat("R2 F2", 3) },
         ],
       },
     ],

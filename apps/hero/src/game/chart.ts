@@ -1,6 +1,6 @@
 // A song chart: sections of moves laid out on a beat timeline, one note per move. A level writes its
-// sections and their parts out by hand, each part with a tip. Notes reach the strike line at their
-// beat.
+// sections and their parts out by hand; a tutorial's parts each have a tip. Notes reach the strike
+// line at their beat.
 import { isRotation, type CubeState, type Move } from "cube-kit/cube/model";
 import type { SegmentKind } from "cube-kit/methods/types";
 import type { MessageKey } from "../i18n/en";
@@ -36,7 +36,7 @@ export interface Note {
 
 export interface Part {
   kind: SegmentKind;
-  /** What the level says to do here. */
+  /** What a tutorial says to do here. */
   tip?: MessageKey;
   section: number;
   startBeat: number;

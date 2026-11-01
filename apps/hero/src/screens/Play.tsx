@@ -264,7 +264,7 @@ export function Play({ chart, bpm, keys, sound, onDone, onQuit }: Props) {
   const part = chart.parts[partIndex];
   const after = chart.parts[partIndex + 1];
   const current = chart.sections[section];
-  /** What a part says: the level's tip. */
+  /** What a part says: a tutorial's tip. */
   const lyric = (p?: Part) => p?.tip && t(p.tip, keyNames);
   const now = lyric(part);
   const then = after && after.section === part?.section ? lyric(after) : undefined;
