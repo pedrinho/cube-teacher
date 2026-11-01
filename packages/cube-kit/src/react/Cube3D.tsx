@@ -1,5 +1,5 @@
-// React wrapper for our three.js cube, pyraminx (or one-piece pyraminx), or small cuboid (1x1x1,
-// 1x1x2…). three.js loads only when one is on screen.
+// React wrapper for our three.js cube, pyraminx (or one-piece or two-layer pyraminx), or small cuboid
+// (1x1x1, 1x1x2…). three.js loads only when one is on screen.
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { parseAlg, type CubeState, type Move } from "../cube/model";
 import { CUBOIDS, type CuboidId } from "../cuboid/model";
@@ -17,13 +17,14 @@ interface PuzzleScene {
 
 type SceneOptions = { fromBelow?: boolean; stickerless?: boolean };
 
-export type PuzzleKind = "cube" | "pyraminx" | "pyraminx1" | CuboidId;
+export type PuzzleKind = "cube" | "pyraminx" | "pyraminx1" | "pyraminx2" | CuboidId;
 
 type MakeScene = (el: HTMLElement, colors: StickerColors, state: string, options: SceneOptions) => PuzzleScene;
 
 /**
  * Loads the puzzle's scene code, then makes one. A cuboid is drawn by the cube's scene, the
- * one-piece pyraminx by the pyraminx's, turning whole.
+ * one-piece pyraminx by the pyraminx's, turning whole, and the two-layer one by the pyraminx's too,
+ * with each tip and its center as one piece.
  */
 function loadScene(puzzle: PuzzleKind): Promise<MakeScene> {
   if (puzzle === "pyraminx1")
@@ -34,6 +35,12 @@ function loadScene(puzzle: PuzzleKind): Promise<MakeScene> {
             ...options,
             shape: { stickers: PYRA_1_STICKERS, apply: applyPyra1Move, cut: () => null },
           }),
+    );
+  if (puzzle === "pyraminx2")
+    return Promise.all([import("../three/pyraminxScene"), import("../pyraminx/model"), import("../pyraminx/two")]).then(
+      ([{ PyraminxScene }, { applyPyraMove, cutOf }, { PYRA_2_STICKERS }]) =>
+        (el, colors, state, options) =>
+          new PyraminxScene(el, colors, state, { ...options, shape: { stickers: PYRA_2_STICKERS, apply: applyPyraMove, cut: cutOf } }),
     );
   if (puzzle === "pyraminx")
     return import("../three/pyraminxScene").then(
@@ -81,7 +88,7 @@ export interface Cube3DProps {
   fromBelow?: boolean;
   /** Colored plastic pieces with no black body, like a stickerless speed cube. */
   stickerless?: boolean;
-  /** A pyraminx, a one-piece pyraminx or a small cuboid instead of a cube; the state and moves are that puzzle's. */
+  /** A pyraminx (or a one-piece or two-layer one) or a small cuboid instead of a cube; the state and moves are that puzzle's. */
   puzzle?: PuzzleKind;
   label: string;
   timing?: Timing;

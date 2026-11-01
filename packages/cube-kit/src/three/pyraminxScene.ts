@@ -44,9 +44,12 @@ import {
 } from "../pyraminx/model";
 import type { StickerColors, Visible } from "./cubeScene";
 
-/** What the scene draws: its stickers, how a move changes the state, and where a move cuts. */
+/**
+ * What the scene draws: its stickers (each an outline on the surface, empty for one not drawn),
+ * how a move changes the state, and where a move cuts.
+ */
 export interface PyraShape {
-  stickers: readonly { triangle: readonly Vec[]; center: Vec; normal: Vec }[];
+  stickers: readonly { outline: readonly Vec[]; center: Vec; normal: Vec }[];
   apply: (state: PyraState, move: PyraMove) => PyraState;
   /**
    * How far along its corner's axis a move cuts (see cutOf), or null when it turns the whole
@@ -56,11 +59,15 @@ export interface PyraShape {
   cut: (base: PyraBase) => number | null;
 }
 
-const PYRAMINX: PyraShape = { stickers: PYRA_STICKERS, apply: applyPyraMove, cut: cutOf };
+const PYRAMINX: PyraShape = {
+  stickers: PYRA_STICKERS.map((s) => ({ outline: s.triangle, center: s.center, normal: s.normal })),
+  apply: applyPyraMove,
+  cut: cutOf,
+};
 
 /** Distance from the center to a corner. */
 const SIZE = 2;
-/** How much of its triangle a sticker covers. */
+/** How much of its outline a sticker covers. */
 const STICKER = 0.8;
 /** Stickerless: how much of a piece's side is at full color; it darkens toward its edges. */
 const FLAT = 0.84;
@@ -99,30 +106,30 @@ function facing(triangles: Vector3[][], colors?: Color[][], out?: Vector3): Buff
   return geometry;
 }
 
-/** A stickerless piece's side: the whole triangle, darkening toward the edges where pieces meet. */
-function seamedGeometry(triangle: Vector3[]): BufferGeometry {
-  const mid = middle(triangle);
-  const inner = triangle.map((p) => mid.clone().lerp(p, FLAT));
+/** A stickerless piece's side: its whole outline, darkening toward the edges where pieces meet. */
+function seamedGeometry(shape: Vector3[]): BufferGeometry {
+  const mid = middle(shape);
+  const inner = shape.map((p) => mid.clone().lerp(p, FLAT));
   const flat = new Color(1, 1, 1);
   const seam = new Color(SEAM_SHADE, SEAM_SHADE, SEAM_SHADE);
-  const triangles = [inner];
-  const colors = [[flat, flat, flat]];
-  for (let k = 0; k < 3; k++) {
-    const n = (k + 1) % 3;
-    triangles.push([triangle[k], triangle[n], inner[n]], [triangle[k], inner[n], inner[k]]);
+  const triangles = inner.slice(1, -1).map((p, k) => [inner[0], p, inner[k + 2]]);
+  const colors = triangles.map(() => [flat, flat, flat]);
+  shape.forEach((p, k) => {
+    const n = (k + 1) % shape.length;
+    triangles.push([p, shape[n], inner[n]], [p, inner[n], inner[k]]);
     colors.push([seam, seam, flat], [seam, flat, flat]);
-  }
+  });
   return facing(triangles, colors);
 }
 
-/** A sticker: its triangle shrunk toward its middle, with rounded corners. */
-function stickerGeometry(triangle: Vector3[]): BufferGeometry {
-  const mid = middle(triangle);
-  const pts = triangle.map((p) => mid.clone().lerp(p, STICKER));
+/** A sticker: its outline shrunk toward its middle, with rounded corners. */
+function stickerGeometry(shape: Vector3[]): BufferGeometry {
+  const mid = middle(shape);
+  const pts = shape.map((p) => mid.clone().lerp(p, STICKER));
   const outline: Vector3[] = [];
   pts.forEach((v, k) => {
-    const from = v.clone().lerp(pts[(k + 2) % 3], ROUNDING);
-    const to = v.clone().lerp(pts[(k + 1) % 3], ROUNDING);
+    const from = v.clone().lerp(pts[(k + pts.length - 1) % pts.length], ROUNDING);
+    const to = v.clone().lerp(pts[(k + 1) % pts.length], ROUNDING);
     for (let s = 0; s <= 4; s++) {
       const t = s / 4;
       outline.push(
@@ -260,8 +267,9 @@ export class PyraminxScene {
     this.root.add(this.body, this.still, this.turning);
 
     for (const s of this.shape.stickers) {
-      const triangle = s.triangle.map((p) => new Vector3(...p).multiplyScalar(SIZE));
-      const mesh = new Mesh(this.stickerless ? seamedGeometry(triangle) : stickerGeometry(triangle), this.materials.gray);
+      const outline = s.outline.map((p) => new Vector3(...p).multiplyScalar(SIZE));
+      const geometry = !outline.length ? new BufferGeometry() : this.stickerless ? seamedGeometry(outline) : stickerGeometry(outline);
+      const mesh = new Mesh(geometry, this.materials.gray);
       // Stickers sit just above the body, so it never flickers through.
       if (!this.stickerless)
         mesh.geometry.translate(...(new Vector3(...s.normal).multiplyScalar(0.003).toArray() as [number, number, number]));

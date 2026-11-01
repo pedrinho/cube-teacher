@@ -8,9 +8,9 @@ describe("one-piece pyraminx", () => {
   it("has one sticker per face, the whole face", () => {
     expect(PYRA_1_STICKERS.map((s) => s.face)).toEqual([...PYRA_FACES]);
     expect(PYRA_1_SOLVED).toBe("GRBY");
-    // Each face's triangle is three of the four corners: all but the one across from it.
+    // Each face is a triangle of three of the four corners: all but the one across from it.
     for (const s of PYRA_1_STICKERS) {
-      const corners = s.triangle.map((p) => Object.values(CORNER_POS).findIndex((c) => c.every((x, i) => Math.abs(x - p[i]) < 1e-9)));
+      const corners = s.outline.map((p) => Object.values(CORNER_POS).findIndex((c) => c.every((x, i) => Math.abs(x - p[i]) < 1e-9)));
       expect(new Set(corners).size).toBe(3);
       expect(Math.hypot(...s.normal)).toBeCloseTo(1);
     }

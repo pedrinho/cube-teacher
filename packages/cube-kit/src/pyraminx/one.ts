@@ -21,18 +21,18 @@ const close = (a: Vec, b: Vec) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[
 export interface Pyra1Sticker {
   face: PyraFace;
   /** The whole face, and its middle. */
-  triangle: [Vec, Vec, Vec];
+  outline: [Vec, Vec, Vec];
   center: Vec;
   normal: Vec;
 }
 
 export const PYRA_1_STICKERS: Pyra1Sticker[] = PYRA_FACES.map((face) => {
-  const triangle = FACE_CORNERS[face].map((c) => CORNER_POS[c]) as [Vec, Vec, Vec];
-  const center = sum(triangle).map((x) => x / 3) as unknown as Vec;
+  const outline = FACE_CORNERS[face].map((c) => CORNER_POS[c]) as [Vec, Vec, Vec];
+  const center = sum(outline).map((x) => x / 3) as unknown as Vec;
   // A regular tetrahedron's faces are a third of the way from its center to a corner: the
   // middle of a face, made a unit long, is its normal.
   const length = Math.hypot(...center);
-  return { face, triangle, center, normal: center.map((x) => x / length) as unknown as Vec };
+  return { face, outline, center, normal: center.map((x) => x / length) as unknown as Vec };
 });
 
 export const PYRA_1_SOLVED: PyraState = PYRA_FACES.map((f) => PYRA_SCHEME[f]).join("");

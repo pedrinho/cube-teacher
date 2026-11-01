@@ -31,8 +31,8 @@ describe("levels", () => {
     }
   });
 
-  it("plays the 1x1x1 on the space bar, the 1x1x2 and 1x1x4 on U and D, the 1x1x3 on U, D and E, the 1x2x2 on R, L, U and D, the 1x2x3 on those and E, the 1x3x3 on those, E and M, the 2x2x3 on U, D, E, R and F, the 2x2x2 on R, U, F and L, and the one-piece pyraminx on its corners", () => {
-    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra] = LEVELS;
+  it("plays the 1x1x1 on the space bar, the 1x1x2 and 1x1x4 on U and D, the 1x1x3 on U, D and E, the 1x2x2 on R, L, U and D, the 1x2x3 on those and E, the 1x3x3 on those, E and M, the 2x2x3 on U, D, E, R and F, the 2x2x2 on R, U, F and L, and the pyraminxes on their corners", () => {
+    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra, pyra2] = LEVELS;
     const oneKeys = keysFor(one.puzzle, keys);
     expect(new Set(levelChart(one).notes.map((n) => keyFor(n.move, oneKeys)))).toEqual(new Set(["Space"]));
     // The 1x1x1 spins in fours: it ends the way it started.
@@ -94,6 +94,14 @@ describe("levels", () => {
     for (const n of pyraChart.notes) expect(pyra.puzzle.laneColor(n.after, n.lane as Lane)).toBe(pyra.puzzle.laneColor(n.before, n.lane as Lane));
     // And the lanes follow the puzzle as it's turned: the top corner's isn't always yellow.
     expect(new Set(pyraChart.notes.map((n) => pyra.puzzle.laneColor(n.before, "U")))).not.toEqual(new Set(["Y"]));
+    // The two-layer pyraminx plays the same corners, with no tips; it's never turned over, so its
+    // lanes keep the one-piece one's colors at home.
+    const pyra2Keys = keysFor(pyra2.puzzle, keys);
+    const pyra2Chart = levelChart(pyra2);
+    expect(new Set(pyra2Chart.notes.map((n) => keyFor(n.move, pyra2Keys)))).toEqual(new Set(["KeyU", "KeyL", "KeyR", "KeyB"]));
+    for (const n of pyra2Chart.notes) expect([n.lane, n.shape]).toEqual([n.move.base, "face"]);
+    expect(holdCount(pyra2Chart)).toBe(0);
+    expect(pyra2.puzzle.lanes.map((l) => pyra2.puzzle.laneColor(pyra2Chart.start, l))).toEqual(["B", "Y", "G", "R"]);
   });
 
   it("teaches in chapter 1, with a tip for every part, and from chapter 2 on just plays", () => {
@@ -105,7 +113,7 @@ describe("levels", () => {
   });
 
   it("opens each level once the one before has three stars", () => {
-    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra] = LEVELS;
+    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra, pyra2] = LEVELS;
     const pass = { stars: 3, points: 500 };
     expect(isOpen({}, one)).toBe(true);
     expect(isOpen({}, tower)).toBe(false);
@@ -132,6 +140,9 @@ describe("levels", () => {
     // The one-piece pyraminx comes after the 2x2x2.
     expect(isOpen({ ...firstSeven, [pillar.id]: pass }, pyra)).toBe(false);
     expect(isOpen({ ...firstSeven, [pillar.id]: pass, [pocket.id]: pass }, pyra)).toBe(true);
+    // Then the two-layer pyraminx.
+    expect(isOpen({ ...firstSeven, [pillar.id]: pass, [pocket.id]: pass }, pyra2)).toBe(false);
+    expect(isOpen({ ...firstSeven, [pillar.id]: pass, [pocket.id]: pass, [pyra.id]: pass }, pyra2)).toBe(true);
   });
 
   it("numbers the levels in each chapter", () => {
@@ -146,6 +157,7 @@ describe("levels", () => {
       ["easy", 8],
       ["medium", 1],
       ["medium", 2],
+      ["medium", 3],
     ]);
     expect(nextLevel(LEVELS[0])).toBe(LEVELS[1]);
     expect(nextLevel(LEVELS[LEVELS.length - 1])).toBeUndefined();

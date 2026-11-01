@@ -8,7 +8,7 @@ import { parseAlg, type Move } from "cube-kit/cube/model";
 import type { MessageKey } from "../i18n/en";
 import type { Progress } from "../settings";
 import { layOut, type Chart, type SectionPlan } from "./chart";
-import { FLOPPY, ONE, PILLAR, POCKET, PYRA_ONE, TOWER, TOWER_3, TOWER_4, WALL, WALL_3, type Puzzle } from "./puzzles";
+import { FLOPPY, ONE, PILLAR, POCKET, PYRA_ONE, PYRA_TWO, TOWER, TOWER_3, TOWER_4, WALL, WALL_3, type Puzzle } from "./puzzles";
 
 export const CHAPTERS = ["easy", "medium", "hard", "extreme"] as const;
 export type Chapter = (typeof CHAPTERS)[number];
@@ -347,6 +347,34 @@ export const LEVELS: Level[] = [
           { kind: "intuitive", moves: parseAlg("U L R") },
         ],
       },
+    ],
+  },
+  {
+    id: "medium-pyraminx2",
+    chapter: "medium",
+    title: "level.pyra2.title",
+    text: "level.pyra2.text",
+    about: "level.pyra2.about",
+    puzzle: PYRA_TWO,
+    // The song played backwards, at its shortest.
+    scramble: parseAlg("R' U R' L B' R U L"),
+    // Real pieces now, still at the 2x2x2's speed.
+    bpm: 60,
+    // U and L' three times come back to where they started: a warm-up. R U R' U' and its mirror
+    // L' U' L U come back after three, and so does R' L R L', so twice each is the same as once the
+    // other way; with U L R B, they solve it.
+    sections: [
+      {
+        title: "pyra2.s1",
+        parts: [
+          { kind: "align", moves: repeat("U", 3) },
+          { kind: "align", moves: repeat("L'", 3) },
+        ],
+      },
+      { title: "pyra2.s2", parts: [{ kind: "intuitive", moves: repeat("R U R' U'", 2) }] },
+      { title: "pyra2.s3", parts: [{ kind: "intuitive", moves: repeat("L' U' L U", 2) }] },
+      { title: "pyra2.s4", parts: [{ kind: "intuitive", moves: repeat("R' L R L'", 2) }] },
+      { title: "pyra2.s5", parts: [{ kind: "intuitive", moves: parseAlg("U L R B") }] },
     ],
   },
 ];
