@@ -32,7 +32,7 @@ describe("levels", () => {
   });
 
   it("plays the 1x1x1 on the space bar, the 1x1x2 and 1x1x4 on U and D, the 1x1x3 on U, D and E, the 1x2x2 on R, L, U and D, the 1x2x3 on those and E, the 1x3x3 on those, E and M, the 2x2x3 on U, D, E, R and F, the 2x2x2 on R, U, F and L, and the pyraminxes on their corners", () => {
-    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra, pyra2, pyra3, twist] = LEVELS;
+    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra, twist, pyra3, pyra2] = LEVELS;
     const oneKeys = keysFor(one.puzzle, keys);
     expect(new Set(levelChart(one).notes.map((n) => keyFor(n.move, oneKeys)))).toEqual(new Set(["Space"]));
     // The 1x1x1 spins in fours: it ends the way it started.
@@ -135,7 +135,7 @@ describe("levels", () => {
   });
 
   it("opens each level once the one before has three stars", () => {
-    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra, pyra2, pyra3, twist] = LEVELS;
+    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra, twist, pyra3, pyra2] = LEVELS;
     const pass = { stars: 3, points: 500 };
     expect(isOpen({}, one)).toBe(true);
     expect(isOpen({}, tower)).toBe(false);
@@ -162,16 +162,16 @@ describe("levels", () => {
     // The one-piece pyraminx comes after the 2x2x2.
     expect(isOpen({ ...firstSeven, [pillar.id]: pass }, pyra)).toBe(false);
     expect(isOpen({ ...firstSeven, [pillar.id]: pass, [pocket.id]: pass }, pyra)).toBe(true);
-    // Then the two-layer pyraminx.
-    expect(isOpen({ ...firstSeven, [pillar.id]: pass, [pocket.id]: pass }, pyra2)).toBe(false);
-    expect(isOpen({ ...firstSeven, [pillar.id]: pass, [pocket.id]: pass, [pyra.id]: pass }, pyra2)).toBe(true);
+    // Then the corner twist.
+    expect(isOpen({ ...firstSeven, [pillar.id]: pass, [pocket.id]: pass }, twist)).toBe(false);
+    expect(isOpen({ ...firstSeven, [pillar.id]: pass, [pocket.id]: pass, [pyra.id]: pass }, twist)).toBe(true);
     // Then the pyraminx, tips and all.
     const firstEleven = { ...firstSeven, [pillar.id]: pass, [pocket.id]: pass, [pyra.id]: pass };
     expect(isOpen(firstEleven, pyra3)).toBe(false);
-    expect(isOpen({ ...firstEleven, [pyra2.id]: pass }, pyra3)).toBe(true);
-    // Then the corner twist.
-    expect(isOpen({ ...firstEleven, [pyra2.id]: pass }, twist)).toBe(false);
-    expect(isOpen({ ...firstEleven, [pyra2.id]: pass, [pyra3.id]: pass }, twist)).toBe(true);
+    expect(isOpen({ ...firstEleven, [twist.id]: pass }, pyra3)).toBe(true);
+    // Then the two-layer pyraminx.
+    expect(isOpen({ ...firstEleven, [twist.id]: pass }, pyra2)).toBe(false);
+    expect(isOpen({ ...firstEleven, [twist.id]: pass, [pyra3.id]: pass }, pyra2)).toBe(true);
   });
 
   it("numbers the levels in each chapter", () => {

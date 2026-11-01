@@ -365,63 +365,6 @@ export const LEVELS: Level[] = [
     ],
   },
   {
-    id: "medium-pyraminx2",
-    chapter: "medium",
-    title: "level.pyra2.title",
-    text: "level.pyra2.text",
-    about: "level.pyra2.about",
-    puzzle: PYRA_TWO,
-    // The song played backwards, at its shortest.
-    scramble: parseAlg("R' U R' L B' R U L"),
-    // Real pieces now, still at the 2x2x2's speed.
-    bpm: 60,
-    // U and L' three times come back to where they started: a warm-up. R U R' U' and its mirror
-    // L' U' L U come back after three, and so does R' L R L', so twice each is the same as once the
-    // other way; with U L R B, they solve it.
-    sections: [
-      {
-        title: "pyra2.s1",
-        parts: [
-          { kind: "align", moves: repeat("U", 3) },
-          { kind: "align", moves: repeat("L'", 3) },
-        ],
-      },
-      { title: "pyra2.s2", parts: [{ kind: "intuitive", moves: repeat("R U R' U'", 2) }] },
-      { title: "pyra2.s3", parts: [{ kind: "intuitive", moves: repeat("L' U' L U", 2) }] },
-      { title: "pyra2.s4", parts: [{ kind: "intuitive", moves: repeat("R' L R L'", 2) }] },
-      { title: "pyra2.s5", parts: [{ kind: "intuitive", moves: parseAlg("U L R B") }] },
-    ],
-  },
-  {
-    id: "medium-pyraminx3",
-    chapter: "medium",
-    title: "level.pyra3.title",
-    text: "level.pyra3.text",
-    about: "level.pyra3.about",
-    puzzle: PYRA_THREE,
-    // The song played backwards, at its shortest: its layers, then its tips.
-    scramble: parseAlg("L R' L' R' L' R B' U' u' l' r' b'"),
-    // The tips are the step up; still at the 2x2x2's speed.
-    bpm: 60,
-    // u and r' three times come back to where they started: a warm-up for the tips. U R' U' R, its
-    // mirror U' L U L' and B R' B' R come back after three, so twice each is once the other way;
-    // with L R U B they solve the layers, and every tip then solves it, on the last one.
-    sections: [
-      {
-        title: "pyra3.s1",
-        parts: [
-          { kind: "align", moves: repeat("u", 3) },
-          { kind: "align", moves: repeat("r'", 3) },
-        ],
-      },
-      { title: "pyra3.s2", parts: [{ kind: "intuitive", moves: repeat("U R' U' R", 2) }] },
-      { title: "pyra3.s3", parts: [{ kind: "intuitive", moves: repeat("U' L U L'", 2) }] },
-      { title: "pyra3.s4", parts: [{ kind: "intuitive", moves: repeat("B R' B' R", 2) }] },
-      { title: "pyra3.s5", parts: [{ kind: "intuitive", moves: parseAlg("L R U B") }] },
-      { title: "pyra3.s6", parts: [{ kind: "intuitive", moves: parseAlg("u l r b") }] },
-    ],
-  },
-  {
     id: "medium-corner-twist",
     chapter: "medium",
     title: "level.twist.title",
@@ -455,6 +398,63 @@ export const LEVELS: Level[] = [
         ],
       },
       { title: "twist.s5", parts: [{ kind: "intuitive", moves: parseAlg("L U' B R'") }] },
+    ],
+  },
+  {
+    id: "medium-pyraminx3",
+    chapter: "medium",
+    title: "level.pyra3.title",
+    text: "level.pyra3.text",
+    about: "level.pyra3.about",
+    puzzle: PYRA_THREE,
+    // The song played backwards, at its shortest: its layers, then its tips.
+    scramble: parseAlg("L R' L' R' L' R B' U' u' l' r' b'"),
+    // The tips are the step up; still at the 2x2x2's speed.
+    bpm: 60,
+    // u and r' three times come back to where they started: a warm-up for the tips. U R' U' R, its
+    // mirror U' L U L' and B R' B' R come back after three, so twice each is once the other way;
+    // with L R U B they solve the layers, and every tip then solves it, on the last one.
+    sections: [
+      {
+        title: "pyra3.s1",
+        parts: [
+          { kind: "align", moves: repeat("u", 3) },
+          { kind: "align", moves: repeat("r'", 3) },
+        ],
+      },
+      { title: "pyra3.s2", parts: [{ kind: "intuitive", moves: repeat("U R' U' R", 2) }] },
+      { title: "pyra3.s3", parts: [{ kind: "intuitive", moves: repeat("U' L U L'", 2) }] },
+      { title: "pyra3.s4", parts: [{ kind: "intuitive", moves: repeat("B R' B' R", 2) }] },
+      { title: "pyra3.s5", parts: [{ kind: "intuitive", moves: parseAlg("L R U B") }] },
+      { title: "pyra3.s6", parts: [{ kind: "intuitive", moves: parseAlg("u l r b") }] },
+    ],
+  },
+  {
+    id: "medium-pyraminx2",
+    chapter: "medium",
+    title: "level.pyra2.title",
+    text: "level.pyra2.text",
+    about: "level.pyra2.about",
+    puzzle: PYRA_TWO,
+    // The song played backwards, at its shortest.
+    scramble: parseAlg("R' U R' L B' R U L"),
+    // Its tips glued on again, still at the 2x2x2's speed.
+    bpm: 60,
+    // U and L' three times come back to where they started: a warm-up. R U R' U' and its mirror
+    // L' U' L U come back after three, and so does R' L R L', so twice each is the same as once the
+    // other way; with U L R B, they solve it.
+    sections: [
+      {
+        title: "pyra2.s1",
+        parts: [
+          { kind: "align", moves: repeat("U", 3) },
+          { kind: "align", moves: repeat("L'", 3) },
+        ],
+      },
+      { title: "pyra2.s2", parts: [{ kind: "intuitive", moves: repeat("R U R' U'", 2) }] },
+      { title: "pyra2.s3", parts: [{ kind: "intuitive", moves: repeat("L' U' L U", 2) }] },
+      { title: "pyra2.s4", parts: [{ kind: "intuitive", moves: repeat("R' L R L'", 2) }] },
+      { title: "pyra2.s5", parts: [{ kind: "intuitive", moves: parseAlg("U L R B") }] },
     ],
   },
 ];
