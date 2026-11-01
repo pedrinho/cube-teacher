@@ -17,8 +17,8 @@ describe("levels", () => {
     for (const section of chart.sections) expect(level.puzzle.isSolved(section.after)).toBe(true);
   });
 
-  it("plays the 1x1x1 on the space bar, the 1x1x2 and 1x1x4 on U and D, the 1x1x3 on U, D and E, the 1x2x2 on R, L, U and D, the 1x2x3 on those and E, and the 1x3x3 on those, E and M", () => {
-    const [one, tower, tall, four, wall, wall3, floppy] = songs;
+  it("plays the 1x1x1 on the space bar, the 1x1x2 and 1x1x4 on U and D, the 1x1x3 on U, D and E, the 1x2x2 on R, L, U and D, the 1x2x3 on those and E, the 1x3x3 on those, E and M, and the 2x2x3 on U, D, E, R and F", () => {
+    const [one, tower, tall, four, wall, wall3, floppy, pillar] = songs;
     const oneKeys = keysFor(one.puzzle, keys);
     expect(new Set(levelChart(one).notes.map((n) => keyFor(n.move, oneKeys)))).toEqual(new Set(["Space"]));
     // The 1x1x1 spins in fours: it ends the way it started.
@@ -56,10 +56,18 @@ describe("levels", () => {
     expect(holdCount(floppyChart)).toBe(floppyChart.notes.length);
     const m2 = floppyChart.notes.find((n) => n.move.base === "M")!;
     expect([m2.lane, m2.shape]).toEqual(["L", "slice"]);
+    // The 2x2x3's layers turn a quarter, tapped, between its held half turns; F2 has its own lane.
+    const pillarKeys = keysFor(pillar.puzzle, keys);
+    const pillarChart = levelChart(pillar);
+    expect(new Set(pillarChart.notes.map((n) => keyFor(n.move, pillarKeys)))).toEqual(new Set(["KeyU", "KeyD", "KeyE", "KeyR", "KeyF"]));
+    expect(holdCount(pillarChart)).toBe(pillarChart.notes.filter((n) => n.move.amount === 2).length);
+    expect(holdCount(pillarChart)).toBeLessThan(pillarChart.notes.length);
+    const f2 = pillarChart.notes.find((n) => n.move.base === "F")!;
+    expect([f2.lane, f2.shape]).toEqual(["F", "face"]);
   });
 
   it("opens each level once the one before has three stars", () => {
-    const [one, tower, tall, four, wall, wall3, floppy] = LEVELS;
+    const [one, tower, tall, four, wall, wall3, floppy, pillar] = LEVELS;
     const pass = { stars: 3, points: 500 };
     expect(isOpen({}, one)).toBe(true);
     expect(isOpen({}, tower)).toBe(false);
@@ -76,8 +84,11 @@ describe("levels", () => {
     expect(isOpen(firstFive, floppy)).toBe(false);
     const firstSix = { ...firstFive, [wall3.id]: pass };
     expect(isOpen(firstSix, floppy)).toBe(true);
-    expect(isOpen(firstSix, REAL_CUBES)).toBe(false);
-    expect(isOpen({ ...firstSix, [floppy.id]: pass }, REAL_CUBES)).toBe(true);
+    expect(isOpen(firstSix, pillar)).toBe(false);
+    const firstSeven = { ...firstSix, [floppy.id]: pass };
+    expect(isOpen(firstSeven, pillar)).toBe(true);
+    expect(isOpen(firstSeven, REAL_CUBES)).toBe(false);
+    expect(isOpen({ ...firstSeven, [pillar.id]: pass }, REAL_CUBES)).toBe(true);
   });
 
   it("numbers the levels in each chapter", () => {
@@ -89,6 +100,7 @@ describe("levels", () => {
       ["easy", 5],
       ["easy", 6],
       ["easy", 7],
+      ["easy", 8],
       ["medium", 1],
     ]);
     expect(nextLevel(LEVELS[0])).toBe(LEVELS[1]);

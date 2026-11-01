@@ -5,7 +5,7 @@ import { parseAlg } from "cube-kit/cube/model";
 import type { MessageKey } from "../i18n/en";
 import type { Progress } from "../settings";
 import { layOut, type Chart, type SectionPlan } from "./chart";
-import { FLOPPY, ONE, TOWER, TOWER_3, TOWER_4, WALL, WALL_3, type Puzzle } from "./puzzles";
+import { FLOPPY, ONE, PILLAR, TOWER, TOWER_3, TOWER_4, WALL, WALL_3, type Puzzle } from "./puzzles";
 
 export const CHAPTERS = ["easy", "medium", "hard", "extreme"] as const;
 export type Chapter = (typeof CHAPTERS)[number];
@@ -261,6 +261,34 @@ export const LEVELS: Level[] = [
       { title: "floppy.s3", parts: [{ kind: "intuitive", moves: repeat("M2 E2", 2), tip: "floppy.t3" }] },
       { title: "floppy.s4", parts: [{ kind: "intuitive", moves: repeat("M2 U2 M2 D2", 2), tip: "floppy.t4" }] },
       { title: "floppy.s5", parts: [{ kind: "intuitive", moves: repeat("R2 U2 R2 U2", 3), tip: "floppy.t5" }] },
+    ],
+  },
+  {
+    id: "easy-2x2x3",
+    chapter: "easy",
+    kind: "song",
+    tutorial: true,
+    title: "level.pillar.title",
+    text: "level.pillar.text",
+    about: "level.pillar.about",
+    puzzle: PILLAR,
+    // The 1x3x3's speed and length in beats, with more notes: quarter turns are taps, a beat long,
+    // between the held half turns. F2 and mixing the two are the step up.
+    bpm: 50,
+    // Every section turns it back in line. U, E' and D' together turn the whole thing; R2 F2, U R2
+    // U R2 and F2 E F2 E' (three middle cubies) take cubies around and back in three.
+    sections: [
+      { title: "pillar.s1", parts: [{ kind: "align", moves: repeat("F2", 2), tip: "pillar.t1" }] },
+      {
+        title: "pillar.s2",
+        parts: [
+          { kind: "intuitive", moves: parseAlg("U E' D'"), tip: "pillar.t2" },
+          { kind: "intuitive", moves: parseAlg("D E U'"), tip: "pillar.t2b" },
+        ],
+      },
+      { title: "pillar.s3", parts: [{ kind: "intuitive", moves: repeat("R2 F2", 3), tip: "pillar.t3" }] },
+      { title: "pillar.s4", parts: [{ kind: "intuitive", moves: repeat("U R2 U R2", 3), tip: "pillar.t4" }] },
+      { title: "pillar.s5", parts: [{ kind: "intuitive", moves: repeat("F2 E F2 E'", 3), tip: "pillar.t5" }] },
     ],
   },
   REAL_CUBES,

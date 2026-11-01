@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseAlg } from "../cube/model";
-import { CUBE_1, CUBE_1x2, CUBE_1x2x2, CUBE_1x2x3, CUBE_1x3, CUBE_1x3x3, CUBE_1x4, makeCuboid, type Cuboid } from "./model";
+import { CUBE_1, CUBE_1x2, CUBE_1x2x2, CUBE_1x2x3, CUBE_1x3, CUBE_1x3x3, CUBE_1x4, CUBE_2x2x3, makeCuboid, type Cuboid } from "./model";
 
 const play = (c: Cuboid, alg: string, from = c.solved) => parseAlg(alg).reduce(c.apply, from);
 
@@ -20,6 +20,8 @@ describe("cuboid model", () => {
     expect(CUBE_1x2x3.stickers).toHaveLength(22);
     expect(CUBE_1x3x3.cubies).toHaveLength(9);
     expect(CUBE_1x3x3.stickers).toHaveLength(30);
+    expect(CUBE_2x2x3.cubies).toHaveLength(12);
+    expect(CUBE_2x2x3.stickers).toHaveLength(32);
     expect(makeCuboid([2, 2, 2]).stickers).toHaveLength(24);
   });
 
@@ -47,6 +49,11 @@ describe("cuboid model", () => {
     expect(CUBE_1x3x3.moves).toEqual(["F", "B", "z"]);
     expect(CUBE_1x3x3.halfMoves).toEqual(["U", "D", "R", "L", "M", "E", "u", "d", "r", "l", "x", "y"]);
     expect(() => play(CUBE_1x3x3, "M")).toThrow();
+    // A 2x2x3 is square seen from above: its layers turn a quarter, its sides only halfway.
+    expect(CUBE_2x2x3.moves).toEqual(["U", "D", "E", "u", "d", "y"]);
+    expect(CUBE_2x2x3.halfMoves).toEqual(["R", "L", "F", "B", "x", "z"]);
+    expect(() => play(CUBE_2x2x3, "F")).toThrow();
+    expect(() => play(CUBE_2x2x3, "R'")).toThrow();
   });
 
   it("turns a 1x1x1 whole, whichever side turns", () => {
@@ -159,5 +166,31 @@ describe("cuboid model", () => {
     expect(play(CUBE_1x3x3, "R2 U2 R2 U2 R2 U2 R2 U2 R2 U2 R2 U2")).toBe(CUBE_1x3x3.solved);
     // A quarter turn of its front turns the whole thing.
     expect(play(CUBE_1x3x3, "F")).toBe(play(CUBE_1x3x3, "z"));
+  });
+
+  it("turns a 2x2x3's layers a quarter and its sides halfway", () => {
+    expect(play(CUBE_2x2x3, "U U U U")).toBe(CUBE_2x2x3.solved);
+    expect(play(CUBE_2x2x3, "U E' D'")).toBe(play(CUBE_2x2x3, "y"));
+    expect(play(CUBE_2x2x3, "F2 F2")).toBe(CUBE_2x2x3.solved);
+    // F2 turns the front half over: its top and bottom trade places, and so do its left and right,
+    // but it still faces the front. The back half stays.
+    const s = play(CUBE_2x2x3, "F2");
+    const at = (face: string, x: number, y: number, z: number) =>
+      s[CUBE_2x2x3.stickers.findIndex((t) => t.face === face && t.pos.join() === [x, y, z].join())];
+    expect([at("U", 0.5, 1, 0.5), at("U", 0.5, 1, -0.5), at("R", 0.5, 0, 0.5), at("F", 0.5, 0, 0.5)]).toEqual(["Y", "W", "O", "G"]);
+    // The two halves turned together: the whole thing.
+    expect(play(CUBE_2x2x3, "F2 B2")).toBe(play(CUBE_2x2x3, "z2"));
+    expect(play(CUBE_2x2x3, "R2 L2")).toBe(play(CUBE_2x2x3, "x2"));
+    // R2 F2 and U R2 U R2 take cubies around: three times and they're back.
+    expect(CUBE_2x2x3.isSolved(play(CUBE_2x2x3, "R2 F2"))).toBe(false);
+    expect(play(CUBE_2x2x3, "R2 F2 R2 F2 R2 F2")).toBe(CUBE_2x2x3.solved);
+    expect(CUBE_2x2x3.isSolved(play(CUBE_2x2x3, "U R2 U R2"))).toBe(false);
+    expect(play(CUBE_2x2x3, "U R2 U R2 U R2 U R2 U R2 U R2")).toBe(CUBE_2x2x3.solved);
+    // F2 E F2 E' only moves middle cubies: three of them go around.
+    const middle = play(CUBE_2x2x3, "F2 E F2 E'");
+    const moved = CUBE_2x2x3.stickers.filter((_, i) => middle[i] !== CUBE_2x2x3.solved[i]);
+    expect(moved.length).toBeGreaterThan(0);
+    expect(moved.every((t) => t.pos[1] === 0)).toBe(true);
+    expect(play(CUBE_2x2x3, "F2 E F2 E' F2 E F2 E'", middle)).toBe(CUBE_2x2x3.solved);
   });
 });
