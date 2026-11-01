@@ -2,12 +2,13 @@
 // puzzle, always at the same speed. Chapter 1's are tutorials: the puzzle starts solved, every
 // section brings it back, and every part of the song has a tip. From chapter 2 on there are no
 // tutorials and no tips, only what the level is about, and the puzzle comes scrambled: the song
-// solves it, on its last note. Each level opens once the one before it has three stars.
+// solves it, on its last note. (A puzzle of one piece comes turned, and is solved only held the way
+// it started.) Each level opens once the one before it has three stars.
 import { parseAlg, type Move } from "cube-kit/cube/model";
 import type { MessageKey } from "../i18n/en";
 import type { Progress } from "../settings";
 import { layOut, type Chart, type SectionPlan } from "./chart";
-import { FLOPPY, ONE, PILLAR, POCKET, TOWER, TOWER_3, TOWER_4, WALL, WALL_3, type Puzzle } from "./puzzles";
+import { FLOPPY, ONE, PILLAR, POCKET, PYRA_ONE, TOWER, TOWER_3, TOWER_4, WALL, WALL_3, type Puzzle } from "./puzzles";
 
 export const CHAPTERS = ["easy", "medium", "hard", "extreme"] as const;
 export type Chapter = (typeof CHAPTERS)[number];
@@ -296,6 +297,54 @@ export const LEVELS: Level[] = [
         parts: [
           { kind: "intuitive", moves: repeat("R2 U2", 2) },
           { kind: "intuitive", moves: repeat("R2 F2", 2) },
+        ],
+      },
+    ],
+  },
+  {
+    id: "medium-pyraminx1",
+    chapter: "medium",
+    title: "level.pyra1.title",
+    text: "level.pyra1.text",
+    about: "level.pyra1.about",
+    puzzle: PYRA_ONE,
+    // The song played backwards, at its shortest. One piece can only be held another way: here, a
+    // half turn around an edge, since a single corner's turn would come home in the middle of the
+    // song, where each corner turns on its own.
+    scramble: parseAlg("U B'"),
+    // One piece, so gentle: a third of a turn a beat, at the 2x2x2's speed.
+    bpm: 60,
+    // A corner's turn three times, two corners' turns one each way twice (a half turn around an
+    // edge), and L U R come back to where they started; U L R, a half turn around another edge,
+    // turns it home.
+    sections: [
+      {
+        title: "pyra1.s1",
+        parts: [
+          { kind: "align", moves: repeat("U", 3) },
+          { kind: "align", moves: repeat("U'", 3) },
+        ],
+      },
+      {
+        title: "pyra1.s2",
+        parts: [
+          { kind: "align", moves: repeat("L", 3) },
+          { kind: "align", moves: repeat("R", 3) },
+          { kind: "align", moves: repeat("B", 3) },
+        ],
+      },
+      {
+        title: "pyra1.s3",
+        parts: [
+          { kind: "intuitive", moves: repeat("U L'", 2) },
+          { kind: "intuitive", moves: repeat("R B'", 2) },
+        ],
+      },
+      {
+        title: "pyra1.s4",
+        parts: [
+          { kind: "intuitive", moves: parseAlg("L U R") },
+          { kind: "intuitive", moves: parseAlg("U L R") },
         ],
       },
     ],

@@ -43,7 +43,9 @@ has gone by. Hits are judged Perfect or Good by timing; a missed note still turn
 The songs are levels, in four chapters from Easy to Extreme, and each opens once the level before it
 has three stars. Chapter 1 starts with a cube of just one piece and builds up, one new move at a
 time, through the 1×1×2 to 1×1×4 towers, the 1×2×2, 1×2×3 and 1×3×3, and the 2×2×3. Chapter 2
-opens with the 2×2×2, the first real cube. The keys can be changed on the levels screen.
+opens with the 2×2×2, the first real cube, then a one-piece pyraminx. From chapter 2 on there are no
+tips, and each puzzle comes scrambled: the song solves it. The keys can be changed on the levels
+screen.
 
 ## Development
 

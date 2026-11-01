@@ -3,7 +3,9 @@
 // its layer, then the colors are re-read from the new state and the layer snaps back. While a
 // layer turns, the black body is drawn as two parts cut where the layer ends, so both stay solid.
 // Stickerless has no body: the cut is closed with the colors of the pieces next to it, darker,
-// like the inside walls of the stickerless cube. The turn queue works like the cube's.
+// like the inside walls of the stickerless cube. The turn queue works like the cube's. It can also
+// draw a puzzle shaped like a pyraminx with other stickers and turns, like the one-piece pyraminx,
+// whose every move turns it whole.
 import {
   AmbientLight,
   BufferGeometry,
@@ -38,8 +40,23 @@ import {
   type PyraBase,
   type PyraMove,
   type PyraState,
+  type Vec,
 } from "../pyraminx/model";
 import type { StickerColors, Visible } from "./cubeScene";
+
+/** What the scene draws: its stickers, how a move changes the state, and where a move cuts. */
+export interface PyraShape {
+  stickers: readonly { triangle: readonly Vec[]; center: Vec; normal: Vec }[];
+  apply: (state: PyraState, move: PyraMove) => PyraState;
+  /**
+   * How far along its corner's axis a move cuts (see cutOf), or null when it turns the whole
+   * puzzle. Stickerless cuts are closed with the pyraminx's pieces, so a shape that cuts has its
+   * stickers.
+   */
+  cut: (base: PyraBase) => number | null;
+}
+
+const PYRAMINX: PyraShape = { stickers: PYRA_STICKERS, apply: applyPyraMove, cut: cutOf };
 
 /** Distance from the center to a corner. */
 const SIZE = 2;
@@ -131,7 +148,7 @@ const stickerAt = (face: string, kind: PieceKind, corners: Corner[]) =>
   PYRA_STICKERS.findIndex((s) => s.face === face && s.kind === kind && s.corners.length === corners.length && corners.every((c) => s.corners.includes(c)));
 
 /**
- * Where a move cuts the puzzle: a triangle across it, a third (tip) or two thirds (layer) of the
+ * Where a move cuts the pyraminx: a triangle across it, a third (tip) or two thirds (layer) of the
  * way from the corner. On each face around the corner, a tip's cut has the tip above it and the
  * corner's center below. A layer's cut has two edges above it and two other corners' centers
  * below, one for each half.
@@ -194,6 +211,7 @@ export class PyraminxScene {
   private stillCut = new Plane();
   private turningCut = new Plane();
   private resize: ResizeObserver;
+  private shape: PyraShape;
 
   private shown: PyraState;
   private visible: Visible = () => true;
@@ -210,8 +228,9 @@ export class PyraminxScene {
     private container: HTMLElement,
     private colors: StickerColors,
     initial: PyraState,
-    options: { stickerless?: boolean } = {},
+    options: { stickerless?: boolean; shape?: PyraShape } = {},
   ) {
+    this.shape = options.shape ?? PYRAMINX;
     this.shown = initial;
     this.stickerless = options.stickerless ?? false;
     this.reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -240,7 +259,7 @@ export class PyraminxScene {
     this.still.visible = this.turning.visible = false;
     this.root.add(this.body, this.still, this.turning);
 
-    for (const s of PYRA_STICKERS) {
+    for (const s of this.shape.stickers) {
       const triangle = s.triangle.map((p) => new Vector3(...p).multiplyScalar(SIZE));
       const mesh = new Mesh(this.stickerless ? seamedGeometry(triangle) : stickerGeometry(triangle), this.materials.gray);
       // Stickers sit just above the body, so it never flickers through.
@@ -362,7 +381,7 @@ export class PyraminxScene {
   private next() {
     while (this.groupsWaiting() > MAX_BEHIND + 1) {
       const skipped = this.queue.shift()!;
-      this.shown = applyPyraMove(this.shown, skipped.move);
+      this.shown = this.shape.apply(this.shown, skipped.move);
       skipped.onStep?.(skipped.index);
       skipped.done?.();
     }
@@ -374,20 +393,25 @@ export class PyraminxScene {
     }
     item.onStep?.(item.index);
     const unit = new Vector3(...CORNER_POS[cornerOf(item.move.base)]);
-    const cut = cutOf(item.move.base);
-    const stickers = this.stickers.filter((_, i) => new Vector3(...PYRA_STICKERS[i].center).dot(unit) > cut);
+    const cut = this.shape.cut(item.move.base);
+    const stickers = this.stickers.filter((_, i) => cut === null || new Vector3(...this.shape.stickers[i].center).dot(unit) > cut);
     this.paint();
 
-    // The body splits where the layer ends; the turning part goes round with the stickers.
-    this.turningCut.set(unit, -cut * SIZE);
-    this.stillCut.set(unit.clone().negate(), cut * SIZE);
-    this.body.visible = false;
-    this.still.visible = this.turning.visible = !this.stickerless;
     const pivot = new Group();
     this.root.add(pivot);
-    pivot.attach(this.turning);
+    if (cut === null) {
+      // The whole puzzle turns: the body goes round in one piece.
+      pivot.attach(this.body);
+    } else {
+      // The body splits where the layer ends; the turning part goes round with the stickers.
+      this.turningCut.set(unit, -cut * SIZE);
+      this.stillCut.set(unit.clone().negate(), cut * SIZE);
+      this.body.visible = false;
+      this.still.visible = this.turning.visible = !this.stickerless;
+      pivot.attach(this.turning);
+    }
     for (const s of stickers) pivot.attach(s);
-    const caps = this.stickerless ? this.caps(item.move.base, unit) : [];
+    const caps = this.stickerless && cut !== null ? this.caps(item.move.base, unit) : [];
     if (caps.length) {
       pivot.add(caps[0]);
       this.root.add(caps[1]);
@@ -437,7 +461,7 @@ export class PyraminxScene {
   private finishTurn(completed: boolean) {
     const turn = this.turn;
     if (!turn) return;
-    for (const mesh of [...turn.stickers, this.turning]) {
+    for (const mesh of [...turn.stickers, this.turning, this.body]) {
       this.root.attach(mesh);
       mesh.position.set(0, 0, 0);
       mesh.quaternion.identity();
@@ -450,15 +474,15 @@ export class PyraminxScene {
     this.body.visible = !this.stickerless;
     this.still.visible = this.turning.visible = false;
     this.turn = null;
-    if (completed) this.shown = applyPyraMove(this.shown, turn.move);
+    if (completed) this.shown = this.shape.apply(this.shown, turn.move);
     this.paint();
   }
 
   /** The state shown once all queued moves have played. */
   get finalState(): PyraState {
     let s = this.shown;
-    if (this.turn) s = applyPyraMove(s, this.turn.move);
-    for (const q of this.queue) s = applyPyraMove(s, q.move);
+    if (this.turn) s = this.shape.apply(s, this.turn.move);
+    for (const q of this.queue) s = this.shape.apply(s, q.move);
     return s;
   }
 

@@ -1,5 +1,5 @@
-// React wrapper for our three.js cube, pyraminx, or small cuboid (1x1x1, 1x1x2). three.js loads only
-// when one is on screen.
+// React wrapper for our three.js cube, pyraminx (or one-piece pyraminx), or small cuboid (1x1x1,
+// 1x1x2…). three.js loads only when one is on screen.
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { parseAlg, type CubeState, type Move } from "../cube/model";
 import { CUBOIDS, type CuboidId } from "../cuboid/model";
@@ -17,21 +17,36 @@ interface PuzzleScene {
 
 type SceneOptions = { fromBelow?: boolean; stickerless?: boolean };
 
-export type PuzzleKind = "cube" | "pyraminx" | CuboidId;
+export type PuzzleKind = "cube" | "pyraminx" | "pyraminx1" | CuboidId;
 
-/** Loads the puzzle's scene code, then makes one. A cuboid is drawn by the cube's scene. */
-const loadScene = (puzzle: PuzzleKind) =>
-  puzzle === "pyraminx"
-    ? import("../three/pyraminxScene").then(
-        ({ PyraminxScene }) =>
-          (el: HTMLElement, colors: StickerColors, state: string, options: SceneOptions): PuzzleScene =>
-            new PyraminxScene(el, colors, state, options),
-      )
-    : import("../three/cubeScene").then(
-        ({ CubeScene }) =>
-          (el: HTMLElement, colors: StickerColors, state: string, options: SceneOptions): PuzzleScene =>
-            new CubeScene(el, colors, state, { ...options, shape: puzzle === "cube" ? undefined : CUBOIDS[puzzle] }),
-      );
+type MakeScene = (el: HTMLElement, colors: StickerColors, state: string, options: SceneOptions) => PuzzleScene;
+
+/**
+ * Loads the puzzle's scene code, then makes one. A cuboid is drawn by the cube's scene, the
+ * one-piece pyraminx by the pyraminx's, turning whole.
+ */
+function loadScene(puzzle: PuzzleKind): Promise<MakeScene> {
+  if (puzzle === "pyraminx1")
+    return Promise.all([import("../three/pyraminxScene"), import("../pyraminx/one")]).then(
+      ([{ PyraminxScene }, { PYRA_1_STICKERS, applyPyra1Move }]) =>
+        (el, colors, state, options) =>
+          new PyraminxScene(el, colors, state, {
+            ...options,
+            shape: { stickers: PYRA_1_STICKERS, apply: applyPyra1Move, cut: () => null },
+          }),
+    );
+  if (puzzle === "pyraminx")
+    return import("../three/pyraminxScene").then(
+      ({ PyraminxScene }) =>
+        (el, colors, state, options) =>
+          new PyraminxScene(el, colors, state, options),
+    );
+  return import("../three/cubeScene").then(
+    ({ CubeScene }) =>
+      (el, colors, state, options) =>
+        new CubeScene(el, colors, state, { ...options, shape: puzzle === "cube" ? undefined : CUBOIDS[puzzle] }),
+  );
+}
 
 /** How long one quarter turn takes, and the pause between moves played together. */
 export interface Timing {
@@ -66,7 +81,7 @@ export interface Cube3DProps {
   fromBelow?: boolean;
   /** Colored plastic pieces with no black body, like a stickerless speed cube. */
   stickerless?: boolean;
-  /** A pyraminx or a small cuboid instead of a cube; the state and moves are that puzzle's. */
+  /** A pyraminx, a one-piece pyraminx or a small cuboid instead of a cube; the state and moves are that puzzle's. */
   puzzle?: PuzzleKind;
   label: string;
   timing?: Timing;

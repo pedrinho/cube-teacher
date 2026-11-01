@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { holdCount } from "./chart";
-import { DEFAULT_KEYS, keyFor } from "./lanes";
+import { DEFAULT_KEYS, keyFor, type Lane } from "./lanes";
 import { LEVELS, isOpen, levelChart, nextLevel, numberOf } from "./levels";
 import { keysFor } from "./puzzles";
 
@@ -31,8 +31,8 @@ describe("levels", () => {
     }
   });
 
-  it("plays the 1x1x1 on the space bar, the 1x1x2 and 1x1x4 on U and D, the 1x1x3 on U, D and E, the 1x2x2 on R, L, U and D, the 1x2x3 on those and E, the 1x3x3 on those, E and M, the 2x2x3 on U, D, E, R and F, and the 2x2x2 on R, U, F and L", () => {
-    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket] = LEVELS;
+  it("plays the 1x1x1 on the space bar, the 1x1x2 and 1x1x4 on U and D, the 1x1x3 on U, D and E, the 1x2x2 on R, L, U and D, the 1x2x3 on those and E, the 1x3x3 on those, E and M, the 2x2x3 on U, D, E, R and F, the 2x2x2 on R, U, F and L, and the one-piece pyraminx on its corners", () => {
+    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra] = LEVELS;
     const oneKeys = keysFor(one.puzzle, keys);
     expect(new Set(levelChart(one).notes.map((n) => keyFor(n.move, oneKeys)))).toEqual(new Set(["Space"]));
     // The 1x1x1 spins in fours: it ends the way it started.
@@ -84,6 +84,16 @@ describe("levels", () => {
     expect(new Set(pocketChart.notes.map((n) => keyFor(n.move, pocketKeys)))).toEqual(new Set(["KeyR", "KeyU", "KeyF", "KeyL"]));
     expect(new Set(pocketChart.notes.map((n) => n.move.amount))).toEqual(new Set([1, 2, 3]));
     expect(holdCount(pocketChart)).toBe(pocketChart.notes.filter((n) => n.move.amount === 2).length);
+    // The one-piece pyraminx plays its corners, U L R B, each in its own lane, both ways: no holds.
+    const pyraKeys = keysFor(pyra.puzzle, keys);
+    const pyraChart = levelChart(pyra);
+    expect(new Set(pyraChart.notes.map((n) => keyFor(n.move, pyraKeys)))).toEqual(new Set(["KeyU", "KeyL", "KeyR", "KeyB"]));
+    for (const n of pyraChart.notes) expect(n.lane).toBe(n.move.base);
+    expect(holdCount(pyraChart)).toBe(0);
+    // A corner's lane has the color of the face across from it, which stays put while it turns.
+    for (const n of pyraChart.notes) expect(pyra.puzzle.laneColor(n.after, n.lane as Lane)).toBe(pyra.puzzle.laneColor(n.before, n.lane as Lane));
+    // And the lanes follow the puzzle as it's turned: the top corner's isn't always yellow.
+    expect(new Set(pyraChart.notes.map((n) => pyra.puzzle.laneColor(n.before, "U")))).not.toEqual(new Set(["Y"]));
   });
 
   it("teaches in chapter 1, with a tip for every part, and from chapter 2 on just plays", () => {
@@ -95,7 +105,7 @@ describe("levels", () => {
   });
 
   it("opens each level once the one before has three stars", () => {
-    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket] = LEVELS;
+    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra] = LEVELS;
     const pass = { stars: 3, points: 500 };
     expect(isOpen({}, one)).toBe(true);
     expect(isOpen({}, tower)).toBe(false);
@@ -119,6 +129,9 @@ describe("levels", () => {
     expect(isOpen(firstSeven, pocket)).toBe(false);
     expect(isOpen({ ...firstSeven, [pillar.id]: { stars: 2, points: 900 } }, pocket)).toBe(false);
     expect(isOpen({ ...firstSeven, [pillar.id]: pass }, pocket)).toBe(true);
+    // The one-piece pyraminx comes after the 2x2x2.
+    expect(isOpen({ ...firstSeven, [pillar.id]: pass }, pyra)).toBe(false);
+    expect(isOpen({ ...firstSeven, [pillar.id]: pass, [pocket.id]: pass }, pyra)).toBe(true);
   });
 
   it("numbers the levels in each chapter", () => {
@@ -132,6 +145,7 @@ describe("levels", () => {
       ["easy", 7],
       ["easy", 8],
       ["medium", 1],
+      ["medium", 2],
     ]);
     expect(nextLevel(LEVELS[0])).toBe(LEVELS[1]);
     expect(nextLevel(LEVELS[LEVELS.length - 1])).toBeUndefined();

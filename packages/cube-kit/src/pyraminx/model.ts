@@ -36,7 +36,7 @@ export const CORNER_POS: Record<Corner, Vec> = {
 };
 
 /** Each face's corners as seen from outside: the top one, then left and right. */
-const FACE_CORNERS: Record<PyraFace, [Corner, Corner, Corner]> = {
+export const FACE_CORNERS: Record<PyraFace, [Corner, Corner, Corner]> = {
   F: ["U", "L", "R"],
   L: ["U", "B", "L"],
   R: ["U", "R", "B"],
@@ -115,7 +115,7 @@ export const isTip = (base: PyraBase) => base !== base.toUpperCase();
 export const cutOf = (base: PyraBase) => (isTip(base) ? 5 / 9 : 1 / 9);
 
 /** Clockwise third of a turn, seen from the tip of `axis` (a unit vector). */
-function turnVec(v: Vec, axis: Vec): Vec {
+export function turnVec(v: Vec, axis: Vec): Vec {
   // Rodrigues' rotation by -120°.
   const cos = -1 / 2;
   const sin = -Math.sqrt(3) / 2;
