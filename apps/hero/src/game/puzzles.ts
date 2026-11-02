@@ -253,3 +253,18 @@ export const DEFAULT_KEYS: Record<KeySet, KeyMap> = {
 
 /** The keys a puzzle is played with: the player's for its kind, with the puzzle's fixed keys on top. */
 export const keysFor = (puzzle: Puzzle, keys: Record<KeySet, KeyMap>): KeyMap => ({ ...keys[puzzle.keySet], ...puzzle.fixedKeys });
+
+/** The whole-cube turns: when a cube's song doesn't play them, their keys spin it on screen. */
+const SPINS = ["X", "Y", "Z"] as const;
+
+/**
+ * The keys that spin the cube on screen, to look at its other sides, and the turn each one makes: a
+ * cube's whole-cube turns X, Y and Z, unless its song plays one of them (the 1x1x1's y). A pyraminx
+ * doesn't spin. `keys` are the ones the puzzle is played with.
+ */
+export const spinKeys = (puzzle: Puzzle, keys: KeyMap): Map<string, "x" | "y" | "z"> =>
+  new Map(
+    puzzle.keySet === "cube" && !SPINS.some((l) => puzzle.letters.includes(l))
+      ? SPINS.map((l) => [keys[l], l.toLowerCase() as "x" | "y" | "z"])
+      : [],
+  );

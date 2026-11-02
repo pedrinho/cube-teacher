@@ -1,9 +1,12 @@
 // React wrapper for our three.js cube, pyraminx (or one-piece, two-layer or corner twist pyraminx),
 // or small cuboid (1x1x1, 1x1x2…). three.js loads only when one is on screen.
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
-import { parseAlg, type CubeState, type Move } from "../cube/model";
+import { parseAlg, type Amount, type CubeState, type Move, type Vec } from "../cube/model";
 import { CUBOIDS, type CuboidId } from "../cuboid/model";
 import type { StickerColors, Visible } from "../three/cubeScene";
+
+/** The axis of each whole-cube turn: x through R, y through U, z through F. */
+const AXES: Record<"x" | "y" | "z", Vec> = { x: [1, 0, 0], y: [0, 1, 0], z: [0, 0, 1] };
 
 /** What both 3D puzzles can do. A state is the puzzle's sticker string. */
 interface PuzzleScene {
@@ -12,6 +15,8 @@ interface PuzzleScene {
   setVisible(visible?: Visible): void;
   setTiming(turnMs: number, pauseMs: number): void;
   play(moves: Move[], options?: { done?: () => void; onStep?: (index: number) => void }): void;
+  /** Only the cube's (and the cuboids') scene spins. */
+  spin?(axis: Vec, amount: 1 | 2 | 3): void;
   dispose(): void;
 }
 
@@ -84,6 +89,11 @@ export interface Cube3DHandle {
   ) => Promise<void>;
   /** Shows a state right away. */
   show: (state: CubeState) => void;
+  /**
+   * Spins the whole cube by a whole-cube turn (x, y or z), only to look at its other sides: its
+   * state stays the same, and moves still play on it as before. A pyraminx doesn't spin.
+   */
+  spin: (turn: "x" | "y" | "z", amount?: Amount) => void;
 }
 
 export interface Cube3DProps {
@@ -163,6 +173,7 @@ export function Cube3D({ state, visible, fromBelow, stickerless, puzzle = "cube"
           scene.play(typeof moves === "string" ? parseAlg(moves) : moves, { done: resolve, onStep });
         }),
       show: (s) => scene?.setState(s, visible),
+      spin: (turn, amount = 1) => scene?.spin?.(AXES[turn], amount),
     }),
     [scene, visible],
   );

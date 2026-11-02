@@ -1,6 +1,6 @@
 // The song: the highway in the middle, the score on the left, the cube on the right. One loop per
 // frame moves the clock, misses late notes, schedules the groove and draws; key presses are judged
-// as they come in.
+// as they come in. The whole-cube turn keys spin the cube on the right, to look at it.
 import { useEffect, useRef, useState } from "react";
 import { Cube3D, type Cube3DHandle } from "cube-kit/react/Cube3D";
 import { useI18n } from "../i18n";
@@ -11,6 +11,7 @@ import { Judge, type PlayEvent } from "../game/judge";
 import { LETTERS, gameKey, keyLabel, laneOfKey, type KeyMap } from "../game/lanes";
 import { held, multiplier, newScore, record, wrongKey, type Score } from "../game/score";
 import type { Sound } from "../game/audio";
+import { useSpinKeys } from "./spin";
 
 interface Props {
   chart: Chart;
@@ -56,6 +57,7 @@ export function Play({ chart, bpm, keys, sound, onDone, onQuit }: Props) {
   const [score, setScoreState] = useState<Score>(newScore);
   const [next, setNext] = useState(0);
   const [section, setSection] = useState(0);
+  useSpinKeys(cube, chart.puzzle, keys);
 
   // Everything the frame loop and key handlers share, without re-rendering every frame.
   const game = useRef({

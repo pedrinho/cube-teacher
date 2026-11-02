@@ -205,6 +205,8 @@ export const en = {
   "ready.best": "Your best on this level: {score}",
   "ready.length": "{notes} notes · {time}",
   "ready.keysTitle": "Keys in this song",
+  "ready.spinTitle": "Spin the cube to look at its other sides",
+  "ready.spinNote": "Shift spins it the other way. Spinning doesn't count in the song.",
   "ready.start": "Start",
   "ready.back": "Back",
 

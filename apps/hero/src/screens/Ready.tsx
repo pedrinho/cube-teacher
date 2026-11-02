@@ -1,10 +1,13 @@
 // Before a level's song: its puzzle in 3D, what the level is about, then the song's steps and the
-// keys it uses. Start is right under the title, so it never needs scrolling to.
-import { useEffect } from "react";
-import { Cube3D } from "cube-kit/react/Cube3D";
+// keys it uses, and the keys that spin the puzzle to look at it. Start is right under the title, so
+// it never needs scrolling to.
+import { useEffect, useRef } from "react";
+import { Cube3D, type Cube3DHandle } from "cube-kit/react/Cube3D";
 import { useI18n } from "../i18n";
 import type { Chart } from "../game/chart";
 import { LETTERS, keyLabel, kindOf, letterOf, moveOfLetter, type KeyMap } from "../game/lanes";
+import { spinKeys } from "../game/puzzles";
+import { useSpinKeys } from "./spin";
 
 interface Props {
   chart: Chart;
@@ -29,6 +32,9 @@ function minutes(seconds: number) {
 export function Ready({ chart, title, subtitle, bpm, about, keys, best, onStart, onBack }: Props) {
   const { t } = useI18n();
   const used = LETTERS.filter((l) => chart.notes.some((n) => letterOf(n.move) === l));
+  const cube = useRef<Cube3DHandle>(null);
+  useSpinKeys(cube, chart.puzzle, keys);
+  const spins = [...spinKeys(chart.puzzle, keys)];
 
   // Enter starts too, unless it is pressing another button.
   useEffect(() => {
@@ -44,7 +50,7 @@ export function Ready({ chart, title, subtitle, bpm, about, keys, best, onStart,
   return (
     <div className="screen ready">
       <div className="ready-cube">
-        <Cube3D state={chart.start} puzzle={chart.puzzle.id} stickerless label={t("ready.cube")} />
+        <Cube3D ref={cube} state={chart.start} puzzle={chart.puzzle.id} stickerless label={t("ready.cube")} />
       </div>
 
       <div className="ready-info">
@@ -95,6 +101,24 @@ export function Ready({ chart, title, subtitle, bpm, about, keys, best, onStart,
               </li>
             ))}
           </ul>
+          {spins.length > 0 && (
+            <>
+              <p className="ready-keys-title ready-spin-title" id="ready-spin">
+                {t("ready.spinTitle")}
+              </p>
+              <ul className="ready-keys" aria-labelledby="ready-spin">
+                {spins.map(([code, turn]) => (
+                  <li key={code} className="ready-key">
+                    {turn}
+                    <span className="kb-key" data-kind="turn">
+                      {keyLabel(code)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="ready-spin-note">{t("ready.spinNote")}</p>
+            </>
+          )}
         </section>
       </div>
     </div>

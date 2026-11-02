@@ -50,6 +50,8 @@ opens with the 2×2×2, the first real cube, then pyraminxes: one of a single pi
 pyraminx itself, whose tips are small notes in their corner's lane. It ends with the 3×3×3, its six
 faces in six lanes, left to right in the order of their number keys. From chapter 2 on there are no hints,
 and each puzzle comes scrambled: the song solves it. The keys can be changed on the levels screen.
+On a cube, the X, Y and Z keys spin it on screen to look at its other sides (with Shift, the other
+way), before and during the song; spinning doesn't change the song or the score.
 
 ## Development
 

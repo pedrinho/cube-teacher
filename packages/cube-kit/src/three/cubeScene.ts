@@ -1,6 +1,7 @@
 // Our own 3D cube in three.js: black rounded cubies with rounded stickers, or stickerless cubies
 // made all of colored plastic. Stickers are fixed to positions; a move animates its layer, then the colors are re-read from
 // the new state and the layer snaps back. So the picture always comes straight from a CubeState.
+// The whole puzzle can also be spun to look at its other sides, which doesn't change the state.
 import {
   AmbientLight,
   BoxGeometry,
@@ -56,6 +57,8 @@ const SEAM_SHADE = 0.55;
 const HURRY = 0.35;
 /** When more taps than this are waiting, the older ones are applied at once. */
 const MAX_BEHIND = 2;
+/** How long spinning the whole puzzle a quarter turn takes. */
+const SPIN_MS = 260;
 
 function roundedSquare(size: number, radius: number): ShapeGeometry {
   const h = size / 2;
@@ -142,11 +145,21 @@ interface Turn {
   duration: number;
 }
 
+/** The whole puzzle spinning to be looked at from another side. */
+interface Spin {
+  from: Quaternion;
+  to: Quaternion;
+  start: number;
+  duration: number;
+}
+
 export class CubeScene {
   private renderer: WebGLRenderer;
   private scene = new Scene();
   private camera = new PerspectiveCamera(30, 1, 0.1, 100);
   private controls: OrbitControls;
+  /** Holds the puzzle, and spins it to show its other sides; turns happen inside it, in `root`. */
+  private view = new Group();
   private root = new Group();
   private cubies = new Map<string, Group>();
   /** Where each sticker is drawn: its own mesh, or one side of its cubie when stickerless. */
@@ -159,6 +172,7 @@ export class CubeScene {
   private queue: Queued[] = [];
   private turn: Turn | null = null;
   private turnDone?: () => void;
+  private spinning: Spin | null = null;
   private lastGroup = -1;
   private nextGroup = 0;
   private turnMs = 450;
@@ -192,7 +206,8 @@ export class CubeScene {
     const light = new DirectionalLight(0xffffff, 2.2);
     light.position.set(3, 6, 5);
     this.scene.add(light);
-    this.scene.add(this.root);
+    this.view.add(this.root);
+    this.scene.add(this.view);
 
     this.buildCubies(stickerless);
     this.paint();
@@ -343,7 +358,7 @@ export class CubeScene {
     }
     const item = this.queue.shift();
     if (!item) {
-      this.renderer.setAnimationLoop(null);
+      if (!this.spinning) this.renderer.setAnimationLoop(null);
       this.lastGroup = -1;
       return;
     }
@@ -376,16 +391,38 @@ export class CubeScene {
   }
 
   private tick() {
-    const turn = this.turn;
-    if (!turn) return;
-    const t = turn.duration === 0 ? 1 : Math.max(0, Math.min(1, (performance.now() - turn.start) / turn.duration));
-    turn.pivot.quaternion.copy(new Quaternion().setFromAxisAngle(turn.axis, turn.angle * ease(t)));
-    if (t >= 1) {
-      this.completeTurn();
-      this.next();
-    } else {
-      this.render();
+    const now = performance.now();
+    const spin = this.spinning;
+    if (spin) {
+      const t = spin.duration === 0 ? 1 : Math.max(0, Math.min(1, (now - spin.start) / spin.duration));
+      this.view.quaternion.slerpQuaternions(spin.from, spin.to, ease(t));
+      if (t >= 1) this.spinning = null;
     }
+    const turn = this.turn;
+    if (turn) {
+      const t = turn.duration === 0 ? 1 : Math.max(0, Math.min(1, (now - turn.start) / turn.duration));
+      turn.pivot.quaternion.copy(new Quaternion().setFromAxisAngle(turn.axis, turn.angle * ease(t)));
+      if (t >= 1) {
+        this.completeTurn();
+        this.next();
+      }
+    }
+    if (!this.turn && !this.spinning) this.renderer.setAnimationLoop(null);
+    this.render();
+  }
+
+  /**
+   * Spins the whole puzzle a quarter turn (`amount` 1, 2 or 3 like a move's) around an axis
+   * through it, to show its other sides, without changing its state or the moves still to play.
+   * The axes stay put as it spins, like a cube held in the hand: x through R, y through U and z
+   * through F, clockwise seen from that side. Spins pressed quickly add up.
+   */
+  spin(axis: Vec, amount: 1 | 2 | 3) {
+    const quarter = new Quaternion().setFromAxisAngle(new Vector3(...axis), (-Math.PI / 2) * (amount === 3 ? -1 : amount));
+    const to = (this.spinning?.to ?? this.view.quaternion).clone().premultiply(quarter).normalize();
+    const duration = this.reducedMotion ? 0 : SPIN_MS * (amount === 2 ? 1.4 : 1);
+    this.spinning = { from: this.view.quaternion.clone(), to, start: performance.now(), duration };
+    this.renderer.setAnimationLoop(() => this.tick());
   }
 
   private completeTurn() {

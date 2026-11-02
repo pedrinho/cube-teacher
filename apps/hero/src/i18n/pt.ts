@@ -206,6 +206,8 @@ export const pt: Messages = {
   "ready.best": "Seu recorde nesta fase: {score}",
   "ready.length": "{notes} notas · {time}",
   "ready.keysTitle": "Teclas desta música",
+  "ready.spinTitle": "Gire o cubo para ver os outros lados",
+  "ready.spinNote": "Com Shift ele gira para o outro lado. Girar não conta na música.",
   "ready.start": "Começar",
   "ready.back": "Voltar",
 

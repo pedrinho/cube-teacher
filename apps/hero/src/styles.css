@@ -451,6 +451,14 @@ p {
   height: 1.8rem;
   font-size: var(--step-0);
 }
+.ready-block .ready-spin-title {
+  margin-top: 1rem;
+}
+.ready-block .ready-spin-note {
+  margin: 0.5rem 0 0;
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+}
 .ready-actions {
   margin-bottom: 1.25rem;
 }
