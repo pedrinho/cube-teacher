@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import { invertAlg, parseAlg, type Move } from "cube-kit/cube/model";
 import { holdEnd, isHold, layOut } from "./chart";
 import { HOLD_SLACK, Judge } from "./judge";
-import { DEFAULT_KEYS, rebind } from "./lanes";
+import { keysByColor, rebind } from "./lanes";
 import { POCKET } from "./puzzles";
+
+/** Every letter on its own key: the R key plays R. */
+const OWN_KEYS = keysByColor({});
 
 // 60 turns per minute: one beat is one second.
 const MS = 1000;
@@ -25,7 +28,7 @@ describe("judge", () => {
   });
 
   it("scores perfect and good hits with the right keys", () => {
-    const judge = new Judge(chart.notes, DEFAULT_KEYS);
+    const judge = new Judge(chart.notes, OWN_KEYS);
     const [perfect] = judge.press("KeyU", first.beat + 0.05, MS);
     expect(perfect).toMatchObject({ type: "hit", note: 0, judgment: "perfect" });
     expect(perfect.type === "hit" && perfect.offsetMs).toBeCloseTo(50);
@@ -36,20 +39,20 @@ describe("judge", () => {
   });
 
   it("calls another letter a wrong key, and the note can still be hit", () => {
-    const judge = new Judge(chart.notes, DEFAULT_KEYS);
+    const judge = new Judge(chart.notes, OWN_KEYS);
     expect(judge.press("KeyD", first.beat, MS)).toEqual([{ type: "wrong", note: 0, code: "KeyD" }]);
     expect(judge.press("KeyR", first.beat, MS)[0].type).toBe("wrong");
     expect(judge.press("KeyU", first.beat + 0.1, MS)[0]).toMatchObject({ type: "hit", judgment: "perfect" });
   });
 
   it("ignores presses far from any note", () => {
-    const judge = new Judge(chart.notes, DEFAULT_KEYS);
+    const judge = new Judge(chart.notes, OWN_KEYS);
     expect(judge.press("KeyU", first.beat - 0.5, MS)).toEqual([{ type: "stray", code: "KeyU" }]);
     expect(judge.next).toBe(0);
   });
 
   it("misses notes whose window has passed, in order", () => {
-    const judge = new Judge(chart.notes, DEFAULT_KEYS);
+    const judge = new Judge(chart.notes, OWN_KEYS);
     expect(judge.update(first.beat + 0.19, MS)).toEqual([]);
     expect(judge.update(second.beat + 0.3, MS)).toEqual([
       { type: "miss", note: 0 },
@@ -59,20 +62,20 @@ describe("judge", () => {
   });
 
   it("plays with the player's keys", () => {
-    const judge = new Judge(chart.notes, rebind(DEFAULT_KEYS, "U", "KeyJ"));
+    const judge = new Judge(chart.notes, rebind(OWN_KEYS, "U", "KeyJ"));
     expect(judge.press("KeyU", first.beat, MS)[0].type).toBe("wrong");
     expect(judge.press("KeyJ", first.beat, MS)[0]).toMatchObject({ type: "hit", note: 0 });
   });
 
   it("settles a missed note before judging a late press for the next one", () => {
-    const judge = new Judge(chart.notes, DEFAULT_KEYS);
+    const judge = new Judge(chart.notes, OWN_KEYS);
     const events = judge.press("KeyR", second.beat, MS);
     expect(events.map((e) => e.type)).toEqual(["miss", "hit"]);
   });
 
   it("takes the letter of a half turn and of a whole-cube turn", () => {
     const c = songOf(parseAlg("y F2"));
-    const judge = new Judge(c.notes, DEFAULT_KEYS);
+    const judge = new Judge(c.notes, OWN_KEYS);
     expect(judge.press("KeyY", c.notes[0].beat, MS)[0].type).toBe("hit");
     expect(judge.press("KeyF", c.notes[1].beat, MS)[0].type).toBe("hit");
   });
@@ -85,7 +88,7 @@ describe("holds", () => {
 
   /** A judge that has just hit both notes, right on the beat. */
   function played() {
-    const judge = new Judge(chart.notes, DEFAULT_KEYS);
+    const judge = new Judge(chart.notes, OWN_KEYS);
     judge.press("KeyU", quarter.beat, MS);
     judge.press("KeyR", half.beat, MS);
     return judge;

@@ -1,6 +1,6 @@
 // The puzzles a song can be played on: how a move changes the state, how moves come down the
 // highway, the color of each lane, and which keys play it.
-import type { Color, Move } from "cube-kit/cube/model";
+import { DEFAULT_SCHEME, SOLVED, applyMove, isSolved as isCubeSolved, type Color, type Move } from "cube-kit/cube/model";
 import { PYRA_SOLVED, applyPyraMove, isPyraSolved, type PyraMove } from "cube-kit/pyraminx/model";
 import { PYRA_1_SOLVED, applyPyra1Move, isPyra1Solved } from "cube-kit/pyraminx/one";
 import { PYRA_2_SOLVED, applyPyra2Move, isPyra2Solved } from "cube-kit/pyraminx/two";
@@ -27,14 +27,21 @@ import {
   CUBE_1x4_TRACK,
   CUBE_2x2x2_TRACK,
   CUBE_2x2x3_TRACK,
+  CUBE_3_TRACK,
   PYRAMINX_TRACK,
+  keysByColor,
   type KeyMap,
   type Lane,
+  type Letter,
   type Track,
 } from "./lanes";
 
+/** The cubes share their keys, and the pyraminxes theirs: U, L, R and B are letters of both. */
+export type KeySet = "cube" | "pyraminx";
+
 export interface Puzzle extends Track {
-  id: CuboidId | "pyraminx1" | "pyraminx2" | "pyraminx" | "cornerTwist";
+  id: CuboidId | "cube" | "pyraminx1" | "pyraminx2" | "pyraminx" | "cornerTwist";
+  keySet: KeySet;
   /** Keys the puzzle always plays with, whatever the player chose: the 1x1x1's space bar. */
   fixedKeys?: Partial<KeyMap>;
   solved: string;
@@ -48,6 +55,7 @@ export interface Puzzle extends Track {
 export const ONE: Puzzle = {
   ...CUBE_1_TRACK,
   id: "1x1x1",
+  keySet: "cube",
   fixedKeys: { Y: "Space" },
   solved: CUBE_1.solved,
   apply: CUBE_1.apply,
@@ -59,6 +67,7 @@ export const ONE: Puzzle = {
 export const TOWER: Puzzle = {
   ...CUBE_1x2_TRACK,
   id: "1x1x2",
+  keySet: "cube",
   solved: CUBE_1x2.solved,
   apply: CUBE_1x2.apply,
   isSolved: CUBE_1x2.isSolved,
@@ -69,6 +78,7 @@ export const TOWER: Puzzle = {
 export const TOWER_3: Puzzle = {
   ...CUBE_1x3_TRACK,
   id: "1x1x3",
+  keySet: "cube",
   solved: CUBE_1x3.solved,
   apply: CUBE_1x3.apply,
   isSolved: CUBE_1x3.isSolved,
@@ -79,6 +89,7 @@ export const TOWER_3: Puzzle = {
 export const TOWER_4: Puzzle = {
   ...CUBE_1x4_TRACK,
   id: "1x1x4",
+  keySet: "cube",
   solved: CUBE_1x4.solved,
   apply: CUBE_1x4.apply,
   isSolved: CUBE_1x4.isSolved,
@@ -91,6 +102,7 @@ const WALL_COLORS: Partial<Record<Lane, Color>> = { L: "O", U: "W", D: "Y", R: "
 export const WALL: Puzzle = {
   ...CUBE_1x2x2_TRACK,
   id: "1x2x2",
+  keySet: "cube",
   solved: CUBE_1x2x2.solved,
   apply: CUBE_1x2x2.apply,
   isSolved: CUBE_1x2x2.isSolved,
@@ -101,6 +113,7 @@ export const WALL: Puzzle = {
 export const WALL_3: Puzzle = {
   ...CUBE_1x2x3_TRACK,
   id: "1x2x3",
+  keySet: "cube",
   solved: CUBE_1x2x3.solved,
   apply: CUBE_1x2x3.apply,
   isSolved: CUBE_1x2x3.isSolved,
@@ -111,6 +124,7 @@ export const WALL_3: Puzzle = {
 export const FLOPPY: Puzzle = {
   ...CUBE_1x3x3_TRACK,
   id: "1x3x3",
+  keySet: "cube",
   solved: CUBE_1x3x3.solved,
   apply: CUBE_1x3x3.apply,
   isSolved: CUBE_1x3x3.isSolved,
@@ -126,6 +140,7 @@ const PILLAR_COLORS: Partial<Record<Lane, Color>> = { U: "W", F: "G", D: "Y", R:
 export const PILLAR: Puzzle = {
   ...CUBE_2x2x3_TRACK,
   id: "2x2x3",
+  keySet: "cube",
   solved: CUBE_2x2x3.solved,
   apply: CUBE_2x2x3.apply,
   isSolved: CUBE_2x2x3.isSolved,
@@ -141,6 +156,7 @@ const POCKET_COLORS: Partial<Record<Lane, Color>> = { L: "O", U: "W", F: "G", R:
 export const POCKET: Puzzle = {
   ...CUBE_2x2x2_TRACK,
   id: "2x2x2",
+  keySet: "cube",
   solved: CUBE_2x2x2.solved,
   apply: CUBE_2x2x2.apply,
   isSolved: CUBE_2x2x2.isSolved,
@@ -148,60 +164,92 @@ export const POCKET: Puzzle = {
 };
 
 /**
- * The one-piece pyraminx only ever turns whole, around a corner. Each corner's lane takes the color
- * of the face across from it, the one that spins in place while it turns around that corner: the
- * lanes follow the puzzle as it's turned. A state is its faces' colors, in the order F L R D.
+ * The 3x3x3's song only turns its faces, never its middle layers or the whole cube, so its centers
+ * stay put: each lane keeps its face's color.
  */
-const ACROSS: Partial<Record<Lane, number>> = { U: 3, L: 2, R: 1, B: 0 };
+export const CUBE_3: Puzzle = {
+  ...CUBE_3_TRACK,
+  id: "cube",
+  keySet: "cube",
+  solved: SOLVED,
+  apply: applyMove,
+  isSolved: isCubeSolved,
+  laneColor: (_, lane) => DEFAULT_SCHEME[lane],
+};
 
+/**
+ * The pyraminxes' lanes keep one color each, left to right: green, yellow, red and blue, the order
+ * of their number keys. They stay put while the puzzle turns, even when the one-piece one turns
+ * over whole.
+ */
+const PYRA_COLORS: Partial<Record<Lane, Color>> = { L: "G", U: "Y", B: "R", R: "B" };
+const pyraLaneColor = (_: string, lane: Lane) => PYRA_COLORS[lane]!;
+
+/** The one-piece pyraminx only ever turns whole, around a corner. */
 export const PYRA_ONE: Puzzle = {
   ...PYRAMINX_TRACK,
   id: "pyraminx1",
+  keySet: "pyraminx",
   solved: PYRA_1_SOLVED,
   // Its songs only have pyraminx moves.
   apply: (state, move) => applyPyra1Move(state, move as PyraMove),
   isSolved: isPyra1Solved,
-  laneColor: (state, lane) => state[ACROSS[lane]!] as Color,
+  laneColor: pyraLaneColor,
 };
 
-/**
- * The two-layer pyraminx (its tips glued on) is never turned over, so its lanes keep the colors the
- * one-piece one's have at home: each corner's, the face across from it.
- */
+/** The two-layer pyraminx, its tips glued on. */
 export const PYRA_TWO: Puzzle = {
   ...PYRAMINX_TRACK,
   id: "pyraminx2",
+  keySet: "pyraminx",
   solved: PYRA_2_SOLVED,
   // Its songs only have pyraminx moves, and no tips.
   apply: (state, move) => applyPyra2Move(state, move as PyraMove),
   isSolved: isPyra2Solved,
-  laneColor: (_, lane) => PYRA_ONE.laneColor(PYRA_ONE.solved, lane),
+  laneColor: pyraLaneColor,
 };
 
-/** The pyraminx, its tips loose, isn't turned over either: the two-layer one's lanes. */
+/** The pyraminx, its tips loose. */
 export const PYRA_THREE: Puzzle = {
   ...PYRAMINX_TRACK,
   id: "pyraminx",
+  keySet: "pyraminx",
   solved: PYRA_SOLVED,
   // Its songs only have pyraminx moves.
   apply: (state, move) => applyPyraMove(state, move as PyraMove),
   isSolved: isPyraSolved,
-  laneColor: PYRA_TWO.laneColor,
+  laneColor: pyraLaneColor,
 };
 
 /**
  * The corner twist pyraminx, all tips: its corners only twist in place, U, L, R and B, big notes
- * since they're the whole puzzle. It isn't turned over either: the two-layer one's lanes.
+ * since they're the whole puzzle.
  */
 export const PYRA_TWIST: Puzzle = {
   ...PYRAMINX_TRACK,
   id: "cornerTwist",
+  keySet: "pyraminx",
   solved: PYRA_TWIST_SOLVED,
   // Its songs only have pyraminx moves.
   apply: (state, move) => applyPyraTwistMove(state, move as PyraMove),
   isSolved: isPyraTwistSolved,
-  laneColor: PYRA_TWO.laneColor,
+  laneColor: pyraLaneColor,
 };
 
-/** The keys a puzzle is played with: the player's, with the puzzle's fixed keys on top. */
-export const keysFor = (puzzle: Puzzle, keys: KeyMap): KeyMap => ({ ...keys, ...puzzle.fixedKeys });
+/**
+ * The color of each letter's lane: a cube's faces their center's (white on top, green in front), a
+ * pyraminx's corners their lane's.
+ */
+export const HOME_COLORS: Record<KeySet, Partial<Record<Letter, Color>>> = {
+  cube: DEFAULT_SCHEME,
+  pyraminx: PYRA_COLORS,
+};
+
+/** The keys each kind of puzzle starts with: its home colors on their number keys. */
+export const DEFAULT_KEYS: Record<KeySet, KeyMap> = {
+  cube: keysByColor(HOME_COLORS.cube),
+  pyraminx: keysByColor(HOME_COLORS.pyraminx),
+};
+
+/** The keys a puzzle is played with: the player's for its kind, with the puzzle's fixed keys on top. */
+export const keysFor = (puzzle: Puzzle, keys: Record<KeySet, KeyMap>): KeyMap => ({ ...keys[puzzle.keySet], ...puzzle.fixedKeys });

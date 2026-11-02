@@ -3,13 +3,13 @@ import { BASE_MOVES, parseMove } from "cube-kit/cube/model";
 import {
   CUBE_1x2_TRACK,
   PYRAMINX_TRACK,
-  DEFAULT_KEYS,
   LANES,
   LETTERS,
   gameKey,
   isKeyMap,
   keyFor,
   keyLabel,
+  keysByColor,
   laneOf,
   laneOfKey,
   rebind,
@@ -41,9 +41,12 @@ describe("lanes", () => {
   });
 });
 
+/** Every letter on its own key. */
+const OWN_KEYS = keysByColor({});
+
 describe("keys", () => {
-  it("plays each move with its own letter by default, whatever the direction", () => {
-    expect(["R", "R'", "R2", "U", "u'", "M", "y'", "z2"].map((m) => keyFor(parseMove(m), DEFAULT_KEYS))).toEqual([
+  it("plays each move with its letter's key, whatever the direction", () => {
+    expect(["R", "R'", "R2", "U", "u'", "M", "y'", "z2"].map((m) => keyFor(parseMove(m), OWN_KEYS))).toEqual([
       "KeyR",
       "KeyR",
       "KeyR",
@@ -55,12 +58,20 @@ describe("keys", () => {
     ]);
   });
 
+  it("puts each color on its number key: 1 green, 2 yellow, 3 orange, 4 white, 5 red, 6 blue", () => {
+    const keys = keysByColor({ F: "G", D: "Y", L: "O", U: "W", R: "R", B: "B" });
+    expect((["F", "D", "L", "U", "R", "B"] as const).map((l) => keyLabel(keys[l]))).toEqual(["1", "2", "3", "4", "5", "6"]);
+    // The letters without a color stay on their own key.
+    expect([keys.M, keys.E, keys.Y]).toEqual(["KeyM", "KeyE", "KeyY"]);
+    expect(isKeyMap(keys)).toBe(true);
+  });
+
   it("listens to twelve letters", () => {
-    expect(Object.values(DEFAULT_KEYS).sort()).toEqual(["B", "D", "E", "F", "L", "M", "R", "S", "U", "X", "Y", "Z"].map((l) => `Key${l}`));
+    expect(Object.values(OWN_KEYS).sort()).toEqual(["B", "D", "E", "F", "L", "M", "R", "S", "U", "X", "Y", "Z"].map((l) => `Key${l}`));
   });
 
   it("knows the lane of each key", () => {
-    expect(["KeyR", "KeyM", "KeyE", "KeyS", "KeyY", "KeyQ", "Space"].map((c) => laneOfKey(c, DEFAULT_KEYS, ALL))).toEqual([
+    expect(["KeyR", "KeyM", "KeyE", "KeyS", "KeyY", "KeyQ", "Space"].map((c) => laneOfKey(c, OWN_KEYS, ALL))).toEqual([
       "R",
       "L",
       "D",
@@ -72,7 +83,7 @@ describe("keys", () => {
   });
 
   it("knows only the keys a puzzle plays", () => {
-    expect(["KeyU", "KeyD", "KeyR", "KeyM", "KeyY"].map((c) => laneOfKey(c, DEFAULT_KEYS, CUBE_1x2_TRACK))).toEqual([
+    expect(["KeyU", "KeyD", "KeyR", "KeyM", "KeyY"].map((c) => laneOfKey(c, OWN_KEYS, CUBE_1x2_TRACK))).toEqual([
       "U",
       "D",
       null,
@@ -82,7 +93,7 @@ describe("keys", () => {
   });
 
   it("moves a letter to a free key", () => {
-    const keys = rebind(DEFAULT_KEYS, "R", "KeyJ");
+    const keys = rebind(OWN_KEYS, "R", "KeyJ");
     expect(keyFor(parseMove("R'"), keys)).toBe("KeyJ");
     expect(keyFor(parseMove("r"), keys)).toBe("KeyJ");
     expect(laneOfKey("KeyJ", keys, ALL)).toBe("R");
@@ -90,7 +101,7 @@ describe("keys", () => {
   });
 
   it("swaps two letters when the key is taken", () => {
-    const keys = rebind(DEFAULT_KEYS, "R", "KeyU");
+    const keys = rebind(OWN_KEYS, "R", "KeyU");
     expect(keys.R).toBe("KeyU");
     expect(keys.U).toBe("KeyR");
     expect(laneOfKey("KeyR", keys, ALL)).toBe("U");
@@ -98,7 +109,7 @@ describe("keys", () => {
   });
 
   it("plays letters on number keys too, from the number row or the numpad", () => {
-    const keys = rebind(DEFAULT_KEYS, "U", "Digit1");
+    const keys = rebind(OWN_KEYS, "U", "Digit1");
     expect(keyLabel(keys.U)).toBe("1");
     expect(laneOfKey(gameKey("Numpad1"), keys, ALL)).toBe("U");
     expect(laneOfKey(gameKey("Digit1"), keys, ALL)).toBe("U");
@@ -106,13 +117,13 @@ describe("keys", () => {
   });
 
   it("only keeps stored key maps that give every letter its own letter or number key", () => {
-    expect(isKeyMap(DEFAULT_KEYS)).toBe(true);
-    expect(isKeyMap(rebind(DEFAULT_KEYS, "M", "KeyK"))).toBe(true);
-    expect(isKeyMap(rebind(DEFAULT_KEYS, "M", "Digit7"))).toBe(true);
-    expect(isKeyMap({ ...DEFAULT_KEYS, M: "Numpad7" })).toBe(false);
-    expect(isKeyMap({ ...DEFAULT_KEYS, R: "KeyU" })).toBe(false);
-    expect(isKeyMap({ ...DEFAULT_KEYS, R: "Space" })).toBe(false);
-    expect(isKeyMap({ ...DEFAULT_KEYS, R: undefined })).toBe(false);
+    expect(isKeyMap(OWN_KEYS)).toBe(true);
+    expect(isKeyMap(rebind(OWN_KEYS, "M", "KeyK"))).toBe(true);
+    expect(isKeyMap(rebind(OWN_KEYS, "M", "Digit7"))).toBe(true);
+    expect(isKeyMap({ ...OWN_KEYS, M: "Numpad7" })).toBe(false);
+    expect(isKeyMap({ ...OWN_KEYS, R: "KeyU" })).toBe(false);
+    expect(isKeyMap({ ...OWN_KEYS, R: "Space" })).toBe(false);
+    expect(isKeyMap({ ...OWN_KEYS, R: undefined })).toBe(false);
     expect(isKeyMap(null)).toBe(false);
   });
 });

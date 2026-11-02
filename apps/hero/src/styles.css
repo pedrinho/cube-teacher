@@ -272,6 +272,18 @@ p {
   color: #fff;
   box-shadow: 0 3px 0 #4a2d9c;
 }
+/* A colored letter's keycap, in its lane's color, with the ink the notes use: dark on the light
+   colors, white on the others. */
+.kb-key[data-color] {
+  background: var(--c);
+  color: #fff;
+  box-shadow: 0 3px 0 var(--cube-body);
+}
+.kb-key[data-color="W"],
+.kb-key[data-color="Y"],
+.kb-key[data-color="O"] {
+  color: var(--key-ink);
+}
 /* The space bar, wide enough for its name. */
 .kb-key[data-wide] {
   width: auto;

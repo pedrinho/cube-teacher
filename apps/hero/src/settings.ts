@@ -1,8 +1,14 @@
-// Choices that stick between visits (per browser): the keys, sound and how far the player got in
-// the levels. Storage can be blocked (private windows), so every read and write falls back quietly.
-import { DEFAULT_KEYS, isKeyMap, type KeyMap } from "./game/lanes";
+// Choices that stick between visits (per browser): the cubes' and the pyraminxes' keys, sound and
+// how far the player got in the levels. Storage can be blocked (private windows), so every read
+// and write falls back quietly.
+import { isKeyMap, type KeyMap } from "./game/lanes";
+import { DEFAULT_KEYS, type KeySet } from "./game/puzzles";
 
-const KEYS_KEY = "cube-hero.keys";
+/**
+ * Each kind of puzzle's keys. Not under the old "cube-hero.keys": those started on their letters,
+ * and everyone starts on the number keys by color now.
+ */
+const KEYS_KEY: Record<KeySet, string> = { cube: "cube-hero.colorKeys.cube", pyraminx: "cube-hero.colorKeys.pyraminx" };
 const MUTED_KEY = "cube-hero.muted";
 const LEVELS_KEY = "cube-hero.levels";
 
@@ -27,8 +33,8 @@ function write(key: string, value: unknown) {
   }
 }
 
-export const loadKeys = (): KeyMap => read(KEYS_KEY, DEFAULT_KEYS, isKeyMap);
-export const saveKeys = (keys: KeyMap) => write(KEYS_KEY, keys);
+export const loadKeys = (set: KeySet): KeyMap => read(KEYS_KEY[set], DEFAULT_KEYS[set], isKeyMap);
+export const saveKeys = (set: KeySet, keys: KeyMap) => write(KEYS_KEY[set], keys);
 
 export const loadMuted = () => read(MUTED_KEY, false, (v): v is boolean => typeof v === "boolean");
 export const saveMuted = (muted: boolean) => write(MUTED_KEY, muted);

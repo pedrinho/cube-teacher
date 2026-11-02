@@ -1,9 +1,10 @@
-// The player's keys: each letter the songs play, next to the key that plays it. Click one, then
-// press another letter or number key; a letter that had that key takes the old one.
+// The player's keys: each letter the songs play, next to the key that plays it, the cubes' and the
+// pyraminxes' apart. Click one, then press another letter or number key; a letter that had that
+// key takes the old one. The colored letters go in the order of their number keys, 1 to 6, each
+// keycap in its color.
 import { useEffect, useState } from "react";
 import { useI18n, type MessageKey } from "../i18n";
 import {
-  DEFAULT_KEYS,
   LETTERS,
   gameKey,
   isBindableKey,
@@ -15,21 +16,35 @@ import {
   type KeyMap,
   type Letter,
 } from "../game/lanes";
+import { DEFAULT_KEYS, HOME_COLORS, type KeySet } from "../game/puzzles";
 
-type KeyGroup = { title: MessageKey; letters: Letter[] };
+type KeyGroup = { set: KeySet; title: MessageKey; letters: Letter[] };
+
+/** A kind of puzzle's colored letters, in the order of their number keys. */
+const byNumber = (set: KeySet) =>
+  (Object.keys(HOME_COLORS[set]) as Letter[]).sort((a, b) => DEFAULT_KEYS[set][a].localeCompare(DEFAULT_KEYS[set][b]));
 
 const KEY_GROUPS: KeyGroup[] = [
-  { title: "keys.faces", letters: ["U", "D", "L", "R", "F", "B"] },
-  { title: "keys.slices", letters: ["M", "E", "S"] },
-  { title: "keys.turns", letters: ["X", "Y", "Z"] },
+  { set: "cube", title: "keys.faces", letters: byNumber("cube") },
+  { set: "cube", title: "keys.slices", letters: ["M", "E", "S"] },
+  { set: "cube", title: "keys.turns", letters: ["X", "Y", "Z"] },
+  { set: "pyraminx", title: "keys.corners", letters: byNumber("pyraminx") },
 ];
 
-/** Change a letter's key: click it, then press the new key. Esc cancels. */
-export function KeyEditor({ keys, onChange }: { keys: KeyMap; onChange: (keys: KeyMap) => void }) {
+const SETS: KeySet[] = ["cube", "pyraminx"];
+
+/** Whether a kind of puzzle shows a letter here: the pyraminx only has its four corners. */
+const shown = (set: KeySet, letter: Letter) => KEY_GROUPS.some((g) => g.set === set && g.letters.includes(letter));
+
+/**
+ * Change a letter's key: click it, then press the new key. Esc cancels. Only the letters shown
+ * count: on the pyraminx, a key taken from a letter it doesn't play (M) quietly gives it the old one.
+ */
+export function KeyEditor({ keys, onChange }: { keys: Record<KeySet, KeyMap>; onChange: (set: KeySet, keys: KeyMap) => void }) {
   const { t } = useI18n();
-  const [waiting, setWaiting] = useState<Letter | null>(null);
+  const [waiting, setWaiting] = useState<{ set: KeySet; letter: Letter } | null>(null);
   const [status, setStatus] = useState("");
-  const standard = LETTERS.every((l) => keys[l] === DEFAULT_KEYS[l]);
+  const standard = SETS.every((set) => LETTERS.every((l) => !shown(set, l) || keys[set][l] === DEFAULT_KEYS[set][l]));
 
   useEffect(() => {
     if (!waiting) return;
@@ -44,23 +59,27 @@ export function KeyEditor({ keys, onChange }: { keys: KeyMap; onChange: (keys: K
       const code = gameKey(e.code);
       if (!isBindableKey(code)) return;
       e.preventDefault();
-      const other = letterOfKey(code, keys);
-      const move = moveOfLetter(waiting);
+      const { set, letter } = waiting;
+      const setKeys = keys[set];
+      const other = letterOfKey(code, setKeys);
+      const move = moveOfLetter(letter);
       const key = keyLabel(code);
       setStatus(
-        other && other !== waiting
-          ? t("keys.swapped", { move, key, other: moveOfLetter(other), otherKey: keyLabel(keys[waiting]) })
+        other && other !== letter && shown(set, other)
+          ? t("keys.swapped", { move, key, other: moveOfLetter(other), otherKey: keyLabel(setKeys[letter]) })
           : t("keys.done", { move, key }),
       );
-      onChange(rebind(keys, waiting, code));
+      onChange(set, rebind(setKeys, letter, code));
       setWaiting(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [waiting, keys, onChange, t]);
 
-  const pick = (letter: Letter) => {
-    setWaiting(waiting === letter ? null : letter);
+  const isWaiting = (set: KeySet, letter: Letter) => waiting?.set === set && waiting.letter === letter;
+
+  const pick = (set: KeySet, letter: Letter) => {
+    setWaiting(isWaiting(set, letter) ? null : { set, letter });
     setStatus("");
   };
 
@@ -76,13 +95,13 @@ export function KeyEditor({ keys, onChange }: { keys: KeyMap; onChange: (keys: K
                 key={l}
                 type="button"
                 className="keybind"
-                aria-pressed={waiting === l}
-                aria-label={t("keys.change", { move: moveOfLetter(l), key: keyLabel(keys[l]) })}
-                onClick={() => pick(l)}
+                aria-pressed={isWaiting(g.set, l)}
+                aria-label={t("keys.change", { move: moveOfLetter(l), key: keyLabel(keys[g.set][l]) })}
+                onClick={() => pick(g.set, l)}
               >
                 <span className="keybind-move">{moveOfLetter(l)}</span>
-                <span className="kb-key" data-kind={kindOf(l)}>
-                  {waiting === l ? "…" : keyLabel(keys[l])}
+                <span className="kb-key" data-kind={kindOf(l)} data-color={HOME_COLORS[g.set][l]}>
+                  {isWaiting(g.set, l) ? "…" : keyLabel(keys[g.set][l])}
                 </span>
               </button>
             ))}
@@ -90,14 +109,14 @@ export function KeyEditor({ keys, onChange }: { keys: KeyMap; onChange: (keys: K
         </div>
       ))}
       <p className="keys-status" aria-live="polite">
-        {waiting ? t("keys.waiting", { move: moveOfLetter(waiting) }) : status || t("keys.hint")}
+        {waiting ? t("keys.waiting", { move: moveOfLetter(waiting.letter) }) : status || t("keys.hint")}
       </p>
       {!standard && (
         <button
           type="button"
           className="btn btn-quiet keys-reset"
           onClick={() => {
-            onChange(DEFAULT_KEYS);
+            for (const set of SETS) onChange(set, DEFAULT_KEYS[set]);
             setWaiting(null);
             setStatus("");
           }}

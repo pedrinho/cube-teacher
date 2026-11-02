@@ -4,13 +4,14 @@
 import { useI18n, type MessageKey } from "../i18n";
 import { CHAPTERS, LEVELS, isOpen, numberOf, type Level } from "../game/levels";
 import type { KeyMap } from "../game/lanes";
+import type { KeySet } from "../game/puzzles";
 import type { Progress } from "../settings";
 import { KeyEditor } from "./Keys";
 
 interface Props {
   progress: Progress;
-  keys: KeyMap;
-  onKeysChange: (keys: KeyMap) => void;
+  keys: Record<KeySet, KeyMap>;
+  onKeysChange: (set: KeySet, keys: KeyMap) => void;
   onPlay: (level: Level) => void;
 }
 

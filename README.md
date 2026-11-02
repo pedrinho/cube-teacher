@@ -35,9 +35,11 @@ For kids who already solve the cube, following
 **Play it:** https://pedrinho.github.io/cube-teacher/hero/
 
 A Guitar Hero–style game: a song of turns comes down a highway as notes, and you play it on the
-keyboard. Each note is played with its own letter: `R`, `R'` and `R2` with the R key, `y` with the
-Y key, the middle layer `M` with the M key (wide moves like `r` use their face's letter). Each lane
-is a face, and notes are painted in that face's color. Half turns have a tail: hold the key until it
+keyboard. Each lane is a face, and notes are painted in that face's color. The faces are played on
+the number keys, one for each color on every puzzle: 1 green, 2 yellow, 3 orange, 4 white, 5 red
+and 6 blue. `R`, `R'` and `R2` are all the red 5 key (wide moves like `r` use their face's key), and
+the other moves are played with their own letter: `y` with the Y key, the middle layer `M` with the
+M key. The cubes and the pyraminxes keep their keys apart. Half turns have a tail: hold the key until it
 has gone by. Hits are judged Perfect or Good by timing; a missed note still turns the cube.
 
 The songs are levels, in four chapters from Easy to Extreme, and each opens once the level before it
@@ -45,7 +47,8 @@ has three stars. Chapter 1 starts with a cube of just one piece and builds up, o
 time, through the 1×1×2 to 1×1×4 towers, the 1×2×2, 1×2×3 and 1×3×3, and the 2×2×3. Chapter 2
 opens with the 2×2×2, the first real cube, then pyraminxes: one of a single piece, the Corner Twist
 (just four corners that each twist on their own), one of two layers (its tips glued on) and three, the
-pyraminx itself, whose tips are small notes in their corner's lane. From chapter 2 on there are no hints,
+pyraminx itself, whose tips are small notes in their corner's lane. It ends with the 3×3×3, its six
+faces in six lanes, left to right in the order of their number keys. From chapter 2 on there are no hints,
 and each puzzle comes scrambled: the song solves it. The keys can be changed on the levels screen.
 
 ## Development

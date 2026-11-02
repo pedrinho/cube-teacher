@@ -9,6 +9,7 @@ import type { MessageKey } from "../i18n/en";
 import type { Progress } from "../settings";
 import { layOut, type Chart, type SectionPlan } from "./chart";
 import {
+  CUBE_3,
   FLOPPY,
   ONE,
   PILLAR,
@@ -455,6 +456,51 @@ export const LEVELS: Level[] = [
       { title: "pyra3.s4", parts: [{ kind: "intuitive", moves: repeat("B R' B' R", 2) }] },
       { title: "pyra3.s5", parts: [{ kind: "intuitive", moves: parseAlg("L R U B") }] },
       { title: "pyra3.s6", parts: [{ kind: "intuitive", moves: parseAlg("u l r b") }] },
+    ],
+  },
+  {
+    id: "medium-3x3x3",
+    chapter: "medium",
+    title: "level.cube.title",
+    text: "level.cube.text",
+    about: "level.cube.about",
+    puzzle: CUBE_3,
+    // The song played backwards, without the sections that come back to where they started.
+    scramble: parseAlg(
+      "D2 B2 D2 B2 U2 R2 U2 R2 F R' F' R F R' F' R F R' F' R U' L' U L U' L' U L U' L' U L U R U' R' U R U' R' U R U' R'",
+    ),
+    // Six lanes now: the step up. Still at the 2x2x2's speed.
+    bpm: 60,
+    // R and L' four times, then U D' and F B' four times (two faces at once: the middle stays, so
+    // the cube doesn't turn over), come back to where they started: a warm-up that shows the
+    // scramble and every lane. R U R' U', its mirror L' U' L U and R' F R F' three times each, then
+    // R2 U2 and B2 D2 twice each, solve it. Only faces turn, so the centers and the lanes' colors
+    // stay put.
+    sections: [
+      {
+        title: "cube.s1",
+        parts: [
+          { kind: "align", moves: repeat("R", 4) },
+          { kind: "align", moves: repeat("L'", 4) },
+        ],
+      },
+      {
+        title: "cube.s2",
+        parts: [
+          { kind: "intuitive", moves: repeat("U D'", 4) },
+          { kind: "intuitive", moves: repeat("F B'", 4) },
+        ],
+      },
+      { title: "cube.s3", parts: [{ kind: "intuitive", moves: repeat("R U R' U'", 3) }] },
+      { title: "cube.s4", parts: [{ kind: "intuitive", moves: repeat("L' U' L U", 3) }] },
+      { title: "cube.s5", parts: [{ kind: "intuitive", moves: repeat("R' F R F'", 3) }] },
+      {
+        title: "cube.s6",
+        parts: [
+          { kind: "intuitive", moves: repeat("R2 U2", 2) },
+          { kind: "intuitive", moves: repeat("B2 D2", 2) },
+        ],
+      },
     ],
   },
 ];

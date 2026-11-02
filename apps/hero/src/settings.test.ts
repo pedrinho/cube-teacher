@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_KEYS, rebind } from "./game/lanes";
+import { rebind } from "./game/lanes";
+import { DEFAULT_KEYS } from "./game/puzzles";
 import { loadKeys, loadProgress, saveKeys, saveLevel } from "./settings";
 
 // The tests run in node: a Map stands in for the browser's storage.
@@ -12,21 +13,30 @@ beforeEach(() => {
 });
 
 describe("keys", () => {
-  it("are the standard keys until changed", () => {
-    expect(loadKeys()).toEqual(DEFAULT_KEYS);
+  it("are the number keys by color until changed, the cubes' and the pyraminxes' each", () => {
+    expect(loadKeys("cube")).toEqual(DEFAULT_KEYS.cube);
+    expect(loadKeys("pyraminx")).toEqual(DEFAULT_KEYS.pyraminx);
   });
 
-  it("keeps the keys the player chose", () => {
-    const keys = rebind(DEFAULT_KEYS, "R", "KeyJ");
-    saveKeys(keys);
-    expect(loadKeys()).toEqual(keys);
-    // Under the name they've always had.
-    expect(JSON.parse(localStorage.getItem("cube-hero.keys")!)).toEqual(keys);
+  it("keeps the keys the player chose, the cubes' apart from the pyraminxes'", () => {
+    const keys = rebind(DEFAULT_KEYS.cube, "R", "KeyJ");
+    saveKeys("cube", keys);
+    expect(loadKeys("cube")).toEqual(keys);
+    expect(loadKeys("pyraminx")).toEqual(DEFAULT_KEYS.pyraminx);
+    const pyraKeys = rebind(DEFAULT_KEYS.pyraminx, "U", "KeyK");
+    saveKeys("pyraminx", pyraKeys);
+    expect(loadKeys("pyraminx")).toEqual(pyraKeys);
+    expect(loadKeys("cube")).toEqual(keys);
+  });
+
+  it("starts everyone on the number keys, whatever the old letter keys were", () => {
+    localStorage.setItem("cube-hero.keys", JSON.stringify({ ...DEFAULT_KEYS.cube, F: "KeyF", B: "KeyB" }));
+    expect(loadKeys("cube")).toEqual(DEFAULT_KEYS.cube);
   });
 
   it("ignores keys it can't use", () => {
-    localStorage.setItem("cube-hero.keys", JSON.stringify({ ...DEFAULT_KEYS, R: "KeyU" }));
-    expect(loadKeys()).toEqual(DEFAULT_KEYS);
+    localStorage.setItem("cube-hero.colorKeys.cube", JSON.stringify({ ...DEFAULT_KEYS.cube, R: "Digit4" }));
+    expect(loadKeys("cube")).toEqual(DEFAULT_KEYS.cube);
   });
 });
 

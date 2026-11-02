@@ -6,8 +6,8 @@ import { Sound } from "./game/audio";
 import { holdCount, type Chart } from "./game/chart";
 import { CHAPTERS, isOpen, levelChart, nextLevel, numberOf, type Level } from "./game/levels";
 import { maxPoints, stars as starsFor, type Score } from "./game/score";
-import type { KeyMap } from "./game/lanes";
-import { keysFor } from "./game/puzzles";
+import { LETTERS, keyLabel, type KeyMap } from "./game/lanes";
+import { keysFor, type KeySet } from "./game/puzzles";
 import { loadKeys, loadMuted, loadProgress, saveKeys, saveLevel, saveMuted, type Progress } from "./settings";
 import { Levels } from "./screens/Levels";
 import { Ready } from "./screens/Ready";
@@ -22,7 +22,7 @@ type Screen =
 
 export function App() {
   const { t, lang, setLang } = useI18n();
-  const [keys, setKeysState] = useState<KeyMap>(loadKeys);
+  const [keys, setKeysState] = useState(() => ({ cube: loadKeys("cube"), pyraminx: loadKeys("pyraminx") }));
   const [progress, setProgress] = useState(loadProgress);
   const [screen, setScreen] = useState<Screen>({ kind: "levels" });
   const [muted, setMutedState] = useState(loadMuted);
@@ -36,9 +36,9 @@ export function App() {
     return sound.current;
   };
 
-  const changeKeys = (next: KeyMap) => {
-    setKeysState(next);
-    saveKeys(next);
+  const changeKeys = (set: KeySet, next: KeyMap) => {
+    setKeysState((all) => ({ ...all, [set]: next }));
+    saveKeys(set, next);
   };
 
   const toggleMuted = () => {
@@ -108,7 +108,7 @@ export function App() {
             title={t(screen.level.title)}
             subtitle={whereIs(screen.level)}
             bpm={screen.level.bpm}
-            about={t(screen.level.about)}
+            about={t(screen.level.about, keyNames(keysFor(screen.chart.puzzle, keys)))}
             keys={keysFor(screen.chart.puzzle, keys)}
             best={progress[screen.level.id]?.points}
             onStart={() => play(screen.chart, screen.level)}
@@ -140,6 +140,9 @@ export function App() {
     </>
   );
 }
+
+/** What is printed on each letter's key, for texts that name them: "press {U}". */
+const keyNames = (keys: KeyMap) => Object.fromEntries(LETTERS.map((l) => [l, keyLabel(keys[l])]));
 
 /** Opens the level after this one, if there is one and it is open. */
 function nextOf(level: Level, progress: Progress, open: (level: Level) => void) {

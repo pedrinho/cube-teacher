@@ -1,7 +1,7 @@
 // Draws the highway on a canvas: a strip of black cube plastic in perspective, with sticker gems
 // sliding down to a row of receptors. A gem shows its move; when the player has moved that letter
 // to another key, a small keycap on the gem shows the key. Receptors show their lane's key. A
-// pyraminx tip's gem is a small one. The 1x1x1's one lane is a space bar: a wide road, with bars for notes and a bar for its receptor. A
+// pyraminx's gems and receptors are triangles, like its stickers, and a tip's gem is a small one. The 1x1x1's one lane is a space bar: a wide road, with bars for notes and a bar for its receptor. A
 // half turn has a tail: once hit, it glows down to the strike line while its key is held, and goes
 // gray if let go.
 import { moveToString, type Color } from "cube-kit/cube/model";
@@ -50,6 +50,8 @@ export interface HighwayFrame {
 }
 
 const DARK_TEXT = new Set<string>(["W", "Y", "O"]);
+/** A triangle gem's height for its width: an equilateral one, like a pyraminx sticker. */
+const TRIANGLE = Math.sqrt(3) / 2;
 
 export class Highway {
   private ctx: CanvasRenderingContext2D;
@@ -277,11 +279,15 @@ export class Highway {
     const lane = this.lanes.indexOf(note.lane);
     const x = this.laneX(lane, half);
     const size = laneW * 0.8 * (note.shape === "tip" ? 0.62 : 1);
-    const h = note.shape === "wide" ? size * 0.95 : size * 0.72;
+    const box = this.gemBox(size, note.shape === "wide");
+    const h = box.h;
     const prime = note.move.amount === 3;
 
     if (prime && result !== "miss") {
-      this.gemPath(x, y, size + 8 * s, h + 8 * s);
+      // A ring as thick all the way round: a triangle's corners stick out further than its sides.
+      const ring = 4 * s;
+      if (this.puzzle.triangles) this.gemPath(x, y, size + 2 * Math.sqrt(3) * ring, h + 3 * ring);
+      else this.gemPath(x, y, size + 2 * ring, h + 2 * ring);
       ctx.fillStyle = this.colors.accent;
       ctx.fill();
     }
@@ -298,28 +304,54 @@ export class Highway {
       ctx.lineWidth = Math.max(1, size * 0.05);
       ctx.strokeStyle = this.colors.body;
       ctx.stroke();
-      // A soft shine, like a sticker.
+      // A soft shine, like a sticker, across its top (kept inside a triangle's slanted sides).
+      ctx.save();
+      ctx.clip();
       ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
       ctx.beginPath();
-      ctx.rect(x - size / 2 + size * 0.1, y - h / 2 + h * 0.1, size * 0.8, h * 0.28);
+      ctx.rect(x - size / 2 + size * 0.1, y - box.top + h * 0.1, size * 0.8, h * 0.28);
       ctx.fill();
+      ctx.restore();
     }
 
     if (size > 22) {
       const face = this.puzzle.laneColor(note.before, note.lane);
       const ink = note.shape === "slice" || result === "miss" || !DARK_TEXT.has(face) ? "#ffffff" : this.colors.ink;
-      this.label(moveToString(note.move), x, y - h * 0.02, h * 0.5, ink);
+      this.label(moveToString(note.move), x, y + box.labelDy, box.text, ink);
       const key = this.movedKey(note);
-      if (key) this.keycap(key, x + size / 2, y + h / 2, Math.max(h * 0.5, 16));
+      if (key) this.keycap(key, x + size / 2, y + box.bottom, Math.max(box.text, 16));
     }
     ctx.globalAlpha = 1;
   }
 
-  /** The outline of a gem or receptor centered on (x, y). */
+  /**
+   * A gem or receptor `w` wide: its height, how far its top and bottom are from its middle, where
+   * its label goes and how big. A triangle points up and is centered on its middle, low down where
+   * it's widest, so the label sits there.
+   */
+  private gemBox(w: number, wide = false) {
+    if (this.puzzle.triangles) {
+      const h = w * TRIANGLE;
+      return { h, top: (2 * h) / 3, bottom: h / 3, labelDy: h * 0.05, text: w * 0.36 };
+    }
+    const h = w * (wide ? 0.95 : 0.72);
+    return { h, top: h / 2, bottom: h / 2, labelDy: -h * 0.02, text: h * 0.5 };
+  }
+
+  /** The outline of a gem or receptor centered on (x, y): a square, or a pyraminx's triangle. */
   private gemPath(x: number, y: number, w: number, h: number) {
     const { ctx } = this;
     ctx.beginPath();
-    ctx.rect(x - w / 2, y - h / 2, w, h);
+    if (this.puzzle.triangles) {
+      ctx.lineJoin = "round";
+      ctx.moveTo(x, y - (2 * h) / 3);
+      ctx.lineTo(x + w / 2, y + h / 3);
+      ctx.lineTo(x - w / 2, y + h / 3);
+      ctx.closePath();
+    } else {
+      ctx.lineJoin = "miter";
+      ctx.rect(x - w / 2, y - h / 2, w, h);
+    }
   }
 
   /** The label of the key that plays a note, when it isn't the note's own letter. */
@@ -355,7 +387,8 @@ export class Highway {
     const { y, half } = this.at(0);
     const laneW = (2 * half) / this.lanes.length;
     const size = laneW * 0.8;
-    const h = size * 0.72;
+    const box = this.gemBox(size);
+    const h = box.h;
     const heldLanes = new Set([...f.held].map((code) => laneOfKey(code, this.keys, this.puzzle)));
 
     const flashing = (lane: Lane | "all") =>
@@ -386,7 +419,7 @@ export class Highway {
       ctx.strokeStyle = color;
       ctx.stroke();
       const ink = lit ? (DARK_TEXT.has(faceColor(lane)) ? this.colors.ink : "#ffffff") : color;
-      this.label(keyLabel(this.keys[lane]), x, y, h * 0.46, ink);
+      this.label(keyLabel(this.keys[lane]), x, y + box.labelDy, box.text * 0.92, ink);
     });
 
     // Whole-cube turns light the line across every lane.
@@ -394,8 +427,8 @@ export class Highway {
       ctx.strokeStyle = this.colors.accent;
       ctx.lineWidth = 6;
       ctx.beginPath();
-      ctx.moveTo(this.w / 2 - half, y + h / 2 + 8);
-      ctx.lineTo(this.w / 2 + half, y + h / 2 + 8);
+      ctx.moveTo(this.w / 2 - half, y + box.bottom + 8);
+      ctx.lineTo(this.w / 2 + half, y + box.bottom + 8);
       ctx.stroke();
     }
   }
@@ -404,6 +437,8 @@ export class Highway {
     const { ctx } = this;
     const { y, half } = this.at(0);
     const laneW = (2 * half) / this.lanes.length;
+    // Words start just above the receptor's top.
+    const lift = this.gemBox(laneW * 0.8).top + laneW * 0.112;
     for (const p of f.pops) {
       const age = f.now - p.at;
       if (age > POP_MS || age < 0) continue;
@@ -422,9 +457,9 @@ export class Highway {
       ctx.textBaseline = "bottom";
       ctx.lineWidth = 4;
       ctx.strokeStyle = this.colors.body;
-      ctx.strokeText(text, x, y - laneW * 0.4 - rise);
+      ctx.strokeText(text, x, y - lift - rise);
       ctx.fillStyle = color;
-      ctx.fillText(text, x, y - laneW * 0.4 - rise);
+      ctx.fillText(text, x, y - lift - rise);
     }
     ctx.globalAlpha = 1;
   }

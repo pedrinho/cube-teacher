@@ -1,15 +1,29 @@
 import { describe, expect, it } from "vitest";
 import { holdCount } from "./chart";
-import { DEFAULT_KEYS, keyFor, type Lane } from "./lanes";
+import { keyFor, keyLabel, keysByColor, type Lane } from "./lanes";
 import { LEVELS, isOpen, levelChart, nextLevel, numberOf } from "./levels";
-import { keysFor } from "./puzzles";
+import { DEFAULT_KEYS, keysFor } from "./puzzles";
 
-const keys = DEFAULT_KEYS;
+/** Every letter on its own key, so which keys a song plays reads as its letters. */
+const keys = { cube: keysByColor({}), pyraminx: keysByColor({}) };
+
+describe("default keys", () => {
+  it("put the cubes' faces on the number keys by color: 1 green F, 2 yellow D, 3 orange L, 4 white U, 5 red R, 6 blue B", () => {
+    const { cube } = DEFAULT_KEYS;
+    expect((["F", "D", "L", "U", "R", "B"] as const).map((l) => keyLabel(cube[l]))).toEqual(["1", "2", "3", "4", "5", "6"]);
+    expect([cube.M, cube.E, cube.S, cube.X, cube.Y, cube.Z]).toEqual(["KeyM", "KeyE", "KeyS", "KeyX", "KeyY", "KeyZ"]);
+  });
+
+  it("put the pyraminxes' corners on the same numbers, by their lane's color: 1 green L, 2 yellow U, 5 red B, 6 blue R", () => {
+    const { pyraminx } = DEFAULT_KEYS;
+    expect((["L", "U", "B", "R"] as const).map((l) => keyLabel(pyraminx[l]))).toEqual(["1", "2", "5", "6"]);
+  });
+});
 
 describe("levels", () => {
   it.each(LEVELS.map((l) => [l.id, l] as const))("%s is played on its puzzle's keys", (_, level) => {
     const chart = levelChart(level);
-    const played = keysFor(level.puzzle, keys);
+    const played = keysFor(level.puzzle, DEFAULT_KEYS);
     const puzzleKeys = new Set(level.puzzle.letters.map((l) => played[l]));
     expect(chart.notes.length).toBeGreaterThan(10);
     for (const note of chart.notes) expect(puzzleKeys.has(keyFor(note.move, played))).toBe(true);
@@ -90,18 +104,15 @@ describe("levels", () => {
     expect(new Set(pyraChart.notes.map((n) => keyFor(n.move, pyraKeys)))).toEqual(new Set(["KeyU", "KeyL", "KeyR", "KeyB"]));
     for (const n of pyraChart.notes) expect(n.lane).toBe(n.move.base);
     expect(holdCount(pyraChart)).toBe(0);
-    // A corner's lane has the color of the face across from it, which stays put while it turns.
-    for (const n of pyraChart.notes) expect(pyra.puzzle.laneColor(n.after, n.lane as Lane)).toBe(pyra.puzzle.laneColor(n.before, n.lane as Lane));
-    // And the lanes follow the puzzle as it's turned: the top corner's isn't always yellow.
-    expect(new Set(pyraChart.notes.map((n) => pyra.puzzle.laneColor(n.before, "U")))).not.toEqual(new Set(["Y"]));
-    // The two-layer pyraminx plays the same corners, with no tips; it's never turned over, so its
-    // lanes keep the one-piece one's colors at home.
+    // Its lanes keep their colors, left to right green, yellow, red and blue, while it turns over.
+    for (const n of pyraChart.notes) expect(pyra.puzzle.lanes.map((l) => pyra.puzzle.laneColor(n.after, l))).toEqual(["G", "Y", "R", "B"]);
+    // The two-layer pyraminx plays the same corners, with no tips, in lanes of the same colors.
     const pyra2Keys = keysFor(pyra2.puzzle, keys);
     const pyra2Chart = levelChart(pyra2);
     expect(new Set(pyra2Chart.notes.map((n) => keyFor(n.move, pyra2Keys)))).toEqual(new Set(["KeyU", "KeyL", "KeyR", "KeyB"]));
     for (const n of pyra2Chart.notes) expect([n.lane, n.shape]).toEqual([n.move.base, "face"]);
     expect(holdCount(pyra2Chart)).toBe(0);
-    expect(pyra2.puzzle.lanes.map((l) => pyra2.puzzle.laneColor(pyra2Chart.start, l))).toEqual(["B", "Y", "G", "R"]);
+    expect(pyra2.puzzle.lanes.map((l) => pyra2.puzzle.laneColor(pyra2Chart.start, l))).toEqual(["G", "Y", "R", "B"]);
     // The pyraminx's tips are small notes in their corner's lane, played with the corner's key.
     const pyra3Keys = keysFor(pyra3.puzzle, keys);
     const pyra3Chart = levelChart(pyra3);
@@ -117,7 +128,7 @@ describe("levels", () => {
     expect(new Set(twistChart.notes.map((n) => keyFor(n.move, twistKeys)))).toEqual(new Set(["KeyU", "KeyL", "KeyR", "KeyB"]));
     for (const n of twistChart.notes) expect([n.lane, n.shape]).toEqual([n.move.base, "face"]);
     expect(holdCount(twistChart)).toBe(0);
-    expect(twist.puzzle.lanes.map((l) => twist.puzzle.laneColor(twistChart.start, l))).toEqual(["B", "Y", "G", "R"]);
+    expect(twist.puzzle.lanes.map((l) => twist.puzzle.laneColor(twistChart.start, l))).toEqual(["G", "Y", "R", "B"]);
     // It runs across the lanes, left to right and back.
     const lanesOf = (alg: string) => alg.split(" ") as Lane[];
     const played = twistChart.notes.map((n) => n.lane);
@@ -135,7 +146,7 @@ describe("levels", () => {
   });
 
   it("opens each level once the one before has three stars", () => {
-    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra, twist, pyra2, pyra3] = LEVELS;
+    const [one, tower, tall, four, wall, wall3, floppy, pillar, pocket, pyra, twist, pyra2, pyra3, cube] = LEVELS;
     const pass = { stars: 3, points: 500 };
     expect(isOpen({}, one)).toBe(true);
     expect(isOpen({}, tower)).toBe(false);
@@ -172,6 +183,26 @@ describe("levels", () => {
     // Then the pyraminx, tips and all.
     expect(isOpen({ ...firstEleven, [twist.id]: pass }, pyra3)).toBe(false);
     expect(isOpen({ ...firstEleven, [twist.id]: pass, [pyra2.id]: pass }, pyra3)).toBe(true);
+    // The 3x3x3 ends chapter 2, once the pyraminx has three stars.
+    const firstThirteen = { ...firstEleven, [twist.id]: pass, [pyra2.id]: pass };
+    expect(isOpen(firstThirteen, cube)).toBe(false);
+    expect(isOpen({ ...firstThirteen, [pyra3.id]: pass }, cube)).toBe(true);
+  });
+
+  it("plays the 3x3x3 on its six faces, each in its own lane, left to right green, yellow, orange, white, red and blue on keys 1 to 6", () => {
+    const cube = LEVELS.find((l) => l.puzzle.id === "cube")!;
+    const chart = levelChart(cube);
+    const { lanes, laneColor } = cube.puzzle;
+    expect(lanes.map((l) => laneColor(chart.start, l))).toEqual(["G", "Y", "O", "W", "R", "B"]);
+    expect(lanes.map((l) => keyLabel(keysFor(cube.puzzle, DEFAULT_KEYS)[l]))).toEqual(["1", "2", "3", "4", "5", "6"]);
+    // Every face's lane plays, each move in its face's, and only faces turn: the centers, and so the
+    // lanes' colors, stay put.
+    expect(new Set(chart.notes.map((n) => n.lane))).toEqual(new Set(lanes));
+    for (const n of chart.notes) expect([n.lane, n.shape]).toEqual([n.move.base, "face"]);
+    for (const n of chart.notes) expect(lanes.map((l) => laneColor(n.after, l))).toEqual(["G", "Y", "O", "W", "R", "B"]);
+    // Its half turns are held.
+    expect(holdCount(chart)).toBe(chart.notes.filter((n) => n.move.amount === 2).length);
+    expect(holdCount(chart)).toBeGreaterThan(0);
   });
 
   it("numbers the levels in each chapter", () => {
@@ -189,6 +220,7 @@ describe("levels", () => {
       ["medium", 3],
       ["medium", 4],
       ["medium", 5],
+      ["medium", 6],
     ]);
     expect(nextLevel(LEVELS[0])).toBe(LEVELS[1]);
     expect(nextLevel(LEVELS[LEVELS.length - 1])).toBeUndefined();
